@@ -6,13 +6,15 @@ class PomodoroTimer extends StatefulWidget {
   final int minutes;
   final FutureOr<void> Function() onComplete;
 
-  const PomodoroTimer({Key? key, this.minutes = 25, required this.onComplete}) : super(key: key);
+  const PomodoroTimer({Key? key, this.minutes = 25, required this.onComplete})
+    : super(key: key);
 
   @override
   State<PomodoroTimer> createState() => _PomodoroTimerState();
 }
 
-class _PomodoroTimerState extends State<PomodoroTimer> with TickerProviderStateMixin {
+class _PomodoroTimerState extends State<PomodoroTimer>
+    with TickerProviderStateMixin {
   late AnimationController _anim;
   Timer? _timer;
   bool running = false;
@@ -22,7 +24,10 @@ class _PomodoroTimerState extends State<PomodoroTimer> with TickerProviderStateM
   void initState() {
     super.initState();
     remainingSeconds = widget.minutes * 60;
-    _anim = AnimationController(vsync: this, duration: Duration(seconds: remainingSeconds));
+    _anim = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: remainingSeconds),
+    );
   }
 
   @override
@@ -75,60 +80,152 @@ class _PomodoroTimerState extends State<PomodoroTimer> with TickerProviderStateM
     final displaySec = remainingSeconds % 60;
     final progress = _anim.value;
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // focus animation layer (subtle)
-        SizedBox(
-          width: 260,
-          height: 260,
-          child: CustomPaint(
-            painter: _RadialPainter(progress: progress),
-          ),
-        ),
-        GestureDetector(
-          onTap: () => running ? _pause() : _start(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    return GestureDetector(
+      onTap: () => running ? _pause() : _start(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Timer circular
+          Stack(
+            alignment: Alignment.center,
             children: [
-              Text('${_pad(displayMin)}:${_pad(displaySec)}', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Text(running ? 'Focusing' : 'Tap to start', style: const TextStyle(color: Colors.white60)),
-              const SizedBox(height: 16),
-              Row(
+              SizedBox(
+                width: 280,
+                height: 280,
+                child: CustomPaint(painter: _RadialPainter(progress: progress)),
+              ),
+              Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton.icon(onPressed: _reset, icon: const Icon(Icons.refresh), label: const Text('Reset')),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(onPressed: running ? _pause : _start, icon: Icon(running ? Icons.pause : Icons.play_arrow), label: Text(running ? 'Pause' : 'Start')),
+                  Text(
+                    '${_pad(displayMin)}:${_pad(displaySec)}',
+                    style: const TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 5,
+                          color: Colors.deepPurpleAccent,
+                          offset: Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    running ? 'Em foco...' : 'Pressione para iniciar',
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ActionButton(
+                text: 'Recomeçar',
+                icon: Icons.refresh,
+                onPressed: _reset,
+              ),
+              const SizedBox(width: 16),
+              _ActionButton(
+                text: running ? 'Pausar' : 'Iniciar',
+                icon: running ? Icons.pause : Icons.play_arrow,
+                onPressed: running ? _pause : _start,
+                primary: true,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
+// Botão
+class _ActionButton extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool primary;
+
+  const _ActionButton({
+    Key? key,
+    required this.text,
+    required this.icon,
+    required this.onPressed,
+    this.primary = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = primary
+        ? Colors.deepPurpleAccent.withOpacity(0.8)
+        : Colors.transparent;
+    final borderColor = primary ? Colors.deepPurpleAccent : Colors.white38;
+
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: bgColor,
+        side: BorderSide(color: borderColor),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// Pintor radial
 class _RadialPainter extends CustomPainter {
   final double progress;
-  _RadialPainter({required this.progress});
+  final double rotation;
+
+  _RadialPainter({required this.progress, this.rotation = 0});
+
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width/2, size.height/2);
-    final radius = min(size.width, size.height)/2 - 8;
-    final bg = Paint()..color = Colors.white10..style = PaintingStyle.stroke..strokeWidth = 14;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = min(size.width, size.height) / 2 - 14;
+
+    final bg = Paint()
+      ..color = Colors.white10
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10;
+
     final fg = Paint()
-      ..shader = SweepGradient(startAngle: -pi/2, endAngle: 3*pi/2, colors: [Color(0xFFBB86FC), Color(0xFF7C4DFF)]).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..shader = SweepGradient(
+        startAngle: -pi / 2 + rotation,
+        endAngle: 3 * pi / 2 + rotation,
+        colors: [Color(0xFF7C4DFF), Color(0xFFBB86FC), Color(0xFF7C4DFF)],
+        stops: [0, 0.7, 1],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 14;
+      ..strokeWidth = 12;
+
     canvas.drawCircle(center, radius, bg);
-    final sweep = 2*pi*progress;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -pi/2, sweep, false, fg);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi * progress,
+      false,
+      fg,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _RadialPainter old) => old.progress != progress;
+  bool shouldRepaint(covariant _RadialPainter old) =>
+      old.progress != progress || old.rotation != rotation;
 }

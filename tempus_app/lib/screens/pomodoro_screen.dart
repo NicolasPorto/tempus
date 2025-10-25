@@ -12,8 +12,9 @@ class PomodoroScreen extends StatefulWidget {
   State<PomodoroScreen> createState() => _PomodoroScreenState();
 }
 
-class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStateMixin {
-  static const defaultMinutes = 25;
+class _PomodoroScreenState extends State<PomodoroScreen>
+    with TickerProviderStateMixin {
+  static var defaultMinutes = 25;
   String selectedSubjectId = '';
   final store = StorageService.instance;
 
@@ -24,7 +25,10 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
   }
 
   void _onSessionComplete(String subjectId) async {
-    await store.addSessionFromSubject(subjectId, _PomodoroScreenState.defaultMinutes);
+    await store.addSessionFromSubject(
+      subjectId,
+      _PomodoroScreenState.defaultMinutes,
+    );
     setState(() {});
   }
 
@@ -35,31 +39,96 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
         padding: const EdgeInsets.all(18.0),
         child: Column(
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              const Text('Focus', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-              DropdownButton<String>(
-                value: selectedSubjectId,
-                dropdownColor: const Color(0xFF0B0B0D),
-                underline: const SizedBox.shrink(),
-                items: store.subjects.map((s) => DropdownMenuItem(value: s.id, child: Row(children: [CircleAvatar(radius: 6, backgroundColor: Color(s.colorValue)), const SizedBox(width: 8), Text(s.name)]))).toList(),
-                onChanged: (v) => setState(() => selectedSubjectId = v ?? store.subjects.first.id),
-              )
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tempus',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
             const SizedBox(height: 18),
-            Expanded(child: Center(child: PomodoroTimer(onComplete: () async {
-              // add session record
-              await StorageService.instance.addSessionFromSubject(selectedSubjectId, defaultMinutes);
-              // refresh
-              setState(() {});
-            }))),
+            Expanded(
+              child: Center(
+                child: PomodoroTimer(
+                  key: ValueKey(
+                    defaultMinutes,
+                  ), // força reconstrução quando muda
+                  minutes: defaultMinutes, // passa o tempo atual
+                  onComplete: () async {
+                    await StorageService.instance.addSessionFromSubject(
+                      selectedSubjectId,
+                      defaultMinutes,
+                    );
+                    setState(() {});
+                  },
+                ),
+              ),
+            ),
+
             const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              OutlinedButton(onPressed: () {}, child: const Text('15 min')),
-              OutlinedButton(onPressed: () {}, child: const Text('25 min')),
-              OutlinedButton(onPressed: () {}, child: const Text('45 min')),
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [15, 25, 45].map((minutes) {
+                final isSelected = minutes == defaultMinutes;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      defaultMinutes = minutes; // Atualiza tempo
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [Color(0xFFA661FA), Color(0xFF7C4DFF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white10,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: isSelected ? Colors.transparent : Colors.white30,
+                        width: 1.5,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: const Color.fromARGB(
+                                  255,
+                                  105,
+                                  52,
+                                  252,
+                                ).withOpacity(0.4),
+                                blurRadius: 5,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      '$minutes min',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
             const SizedBox(height: 8),
-            Text('Sessions completed: ${store.sessions.length}', style: const TextStyle(color: Colors.white60)),
             const SizedBox(height: 6),
           ],
         ),

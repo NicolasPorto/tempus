@@ -49,6 +49,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  dynamic_background:
+    dependency: "direct main"
+    description:
+      name: dynamic_background
+      sha256: "65553ddbfce7d943909a772d55decb51e30b52802bbfe7fe653abba5093ecd83"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
   fake_async:
     dependency: transitive
     description:
@@ -86,6 +94,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  flutter_moving_background:
+    dependency: "direct main"
+    description:
+      name: flutter_moving_background
+      sha256: b2264100cd328c0e92e08538f5bbb2406add6403331c573e0df03bdb2eabc019
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.5"
   flutter_test:
     dependency: "direct dev"
     description: flutter
