@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../widgets/pomodoro_timer.dart';
 import '../models/subject.dart';
+import 'package:provider/provider.dart';
+import '../libraries/globals.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class PomodoroScreen extends StatefulWidget {
   const PomodoroScreen({Key? key}) : super(key: key);
@@ -24,6 +27,12 @@ class _PomodoroScreenState extends State<PomodoroScreen>
     if (store.subjects.isNotEmpty) selectedSubjectId = store.subjects.first.id;
   }
 
+  void _disableDimScreen()
+    => WakelockPlus.enable();
+
+  void disableDimScreen()
+    => WakelockPlus.disable();
+
   void _onSessionComplete(String subjectId) async {
     await store.addSessionFromSubject(
       subjectId,
@@ -34,6 +43,71 @@ class _PomodoroScreenState extends State<PomodoroScreen>
 
   @override
   Widget build(BuildContext context) {
+    final globals = Provider.of<TempusGlobals>(context, listen: true);
+
+    Widget _timerOptionsWidget() =>
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [15, 25, 45].map((minutes) {
+          final isSelected = minutes == defaultMinutes;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                defaultMinutes = minutes; // Atualiza tempo
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 14,
+              ),
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? const LinearGradient(
+                        colors: [Color(0xFFA661FA), Color(0xFF7C4DFF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: isSelected ? null : Colors.white10,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isSelected ? Colors.transparent : Colors.white30,
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color.fromARGB(
+                            255,
+                            105,
+                            52,
+                            252,
+                          ).withOpacity(0.4),
+                          blurRadius: 5,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                '$minutes min',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: isSelected
+                      ? FontWeight.bold
+                      : FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+
+      final _timerOptionsWidgetEnabled = globals.onFocus ? const SizedBox.shrink() : _timerOptionsWidget();
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(18.0),
@@ -54,8 +128,8 @@ class _PomodoroScreenState extends State<PomodoroScreen>
                 child: PomodoroTimer(
                   key: ValueKey(
                     defaultMinutes,
-                  ), // força reconstrução quando muda
-                  minutes: defaultMinutes, // passa o tempo atual
+                  ),
+                  minutes: defaultMinutes,
                   onComplete: () async {
                     await StorageService.instance.addSessionFromSubject(
                       selectedSubjectId,
@@ -68,65 +142,7 @@ class _PomodoroScreenState extends State<PomodoroScreen>
             ),
 
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [15, 25, 45].map((minutes) {
-                final isSelected = minutes == defaultMinutes;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      defaultMinutes = minutes; // Atualiza tempo
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [Color(0xFFA661FA), Color(0xFF7C4DFF)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isSelected ? null : Colors.white10,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: isSelected ? Colors.transparent : Colors.white30,
-                        width: 1.5,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: const Color.fromARGB(
-                                  255,
-                                  105,
-                                  52,
-                                  252,
-                                ).withOpacity(0.4),
-                                blurRadius: 5,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      '$minutes min',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+            _timerOptionsWidgetEnabled,
 
             const SizedBox(height: 8),
             const SizedBox(height: 6),

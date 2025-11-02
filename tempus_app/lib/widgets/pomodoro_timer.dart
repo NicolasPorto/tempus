@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../libraries/globals.dart';
+import '../libraries/screen_dimmer.dart';
+import 'package:vibration/vibration.dart';
 
 class PomodoroTimer extends StatefulWidget {
   final int minutes;
@@ -37,8 +41,10 @@ class _PomodoroTimerState extends State<PomodoroTimer>
     super.dispose();
   }
 
-  void _start() {
+  void _start(BuildContext context) {
     if (running) return;
+
+    final globals = Provider.of<TempusGlobals>(context, listen: false);
     setState(() => running = true);
     _anim.duration = Duration(seconds: remainingSeconds);
     _anim.forward(from: 0);
@@ -52,24 +58,47 @@ class _PomodoroTimerState extends State<PomodoroTimer>
           widget.onComplete();
         } else {
           remainingSeconds -= 1;
+
+          final int elapsedSeconds = (widget.minutes * 60) - remainingSeconds;
+
+          if (elapsedSeconds > 0 && elapsedSeconds % 600 == 0) {
+            Vibration.vibrate(duration: 2000);
+          }
+
+          if (elapsedSeconds > 0 && elapsedSeconds % 60 == 0) {
+            Vibration.vibrate;
+          }
+
+
         }
       });
     });
+
+    globals.onFocus = true;
+    screenDimmer.startBlackout();
   }
 
-  void _pause() {
+  void _pause(BuildContext context) {
+    final globals = Provider.of<TempusGlobals>(context, listen: false);
     _timer?.cancel();
     _anim.stop();
     setState(() => running = false);
+    
+    globals.onFocus = false;
+    screenDimmer.stopBlackout();
   }
 
-  void _reset() {
+  void _reset(BuildContext context) {
+    final globals = Provider.of<TempusGlobals>(context, listen: false);
     _timer?.cancel();
     _anim.reset();
     setState(() {
       running = false;
       remainingSeconds = widget.minutes * 60;
     });
+
+    globals.onFocus = false;
+    screenDimmer.stopBlackout();
   }
 
   String _pad(int x) => x.toString().padLeft(2, '0');
@@ -81,72 +110,72 @@ class _PomodoroTimerState extends State<PomodoroTimer>
     final progress = _anim.value;
 
     return GestureDetector(
-      onTap: () => running ? _pause() : _start(),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Timer circular
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 280,
-                height: 280,
-                child: CustomPaint(painter: _RadialPainter(progress: progress)),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${_pad(displayMin)}:${_pad(displaySec)}',
-                    style: const TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 5,
-                          color: Colors.deepPurpleAccent,
-                          offset: Offset(0, 0),
-                        ),
-                      ],
+        onTap: () => running ? () => _pause(context) : () => _start(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 280,
+                  height: 280,
+                  child: CustomPaint(painter: _RadialPainter(progress: progress)),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${_pad(displayMin)}:${_pad(displaySec)}',
+                      style: const TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 5,
+                            color: Colors.deepPurpleAccent,
+                            offset: Offset(0, 0),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    running ? 'Em foco...' : 'Pressione para iniciar',
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                    const SizedBox(height: 8),
+                    Text(
+                      running ? 'Em foco...' : 'Pressione para iniciar',
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ActionButton(
+                  text: 'Recomeçar',
+                  icon: Icons.refresh,
+                  onPressed: () => _reset(context),
+                ),
+                const SizedBox(width: 16),
+                _ActionButton(
+                  text: running ? 'Pausar' : 'Iniciar',
+                  icon: running ? Icons.pause : Icons.play_arrow,
+                  onPressed: running ? () => _pause(context) : () => _start(context),
+                  primary: true,
                   ),
                 ],
-              ),
+              )
             ],
           ),
-          const SizedBox(height: 24),
+        );
 
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActionButton(
-                text: 'Recomeçar',
-                icon: Icons.refresh,
-                onPressed: _reset,
-              ),
-              const SizedBox(width: 16),
-              _ActionButton(
-                text: running ? 'Pausar' : 'Iniciar',
-                icon: running ? Icons.pause : Icons.play_arrow,
-                onPressed: running ? _pause : _start,
-                primary: true,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }
 
