@@ -9,6 +9,7 @@ class ScreenDimmer with ChangeNotifier {
 
   static const double _blackoutLevel = 0.99;
   static const Duration _restoreDuration = Duration(seconds: 5);
+  static const Duration _startDuration = Duration(seconds: 5);
   
   double _blackoutOpacity = 0.9;
   Timer? _reBlackoutTimer;
@@ -35,13 +36,14 @@ class ScreenDimmer with ChangeNotifier {
     if (_isActive) return;
 
     try {
-      _blackoutOpacity = _blackoutLevel;
-      _isActive = true;
-      notifyListeners();
-      
+      _reBlackoutTimer = Timer(_startDuration, () {
+        _blackoutOpacity = _blackoutLevel;
+        _isActive = true;
+        notifyListeners();
+      });
+
       await WakelockPlus.enable();
-      
-      print('Escurecimento do App ativo.'); 
+      print('Escurecimento do App ativo.');
     } catch (e) {
       print('Erro ao iniciar escurecimento: $e'); 
       _isActive = false;

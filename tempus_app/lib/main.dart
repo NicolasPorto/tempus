@@ -78,14 +78,17 @@ class BlackoutWrapper extends StatelessWidget {
                   width: double.infinity,
                   child: Padding(
                       padding: const EdgeInsets.only(bottom: 50.0),
-                      child: const Text(
-                          'Arraste para revelar...',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: Colors.white54, 
-                              fontSize: 20, 
-                              fontWeight: FontWeight.w900,
-                          ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: const Text(
+                            'Arraste para revelar...',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white54, 
+                                fontSize: 20, 
+                                fontWeight: FontWeight.w900,
+                            ),
+                        ),
                       ),
                   ),
                 ),

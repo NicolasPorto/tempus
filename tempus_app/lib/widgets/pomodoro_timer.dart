@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../libraries/globals.dart';
@@ -62,14 +63,12 @@ class _PomodoroTimerState extends State<PomodoroTimer>
           final int elapsedSeconds = (widget.minutes * 60) - remainingSeconds;
 
           if (elapsedSeconds > 0 && elapsedSeconds % 600 == 0) {
-            Vibration.vibrate(duration: 2000);
+            Vibration.vibrate(duration: 4500);
           }
 
           if (elapsedSeconds > 0 && elapsedSeconds % 60 == 0) {
-            Vibration.vibrate;
+            Vibration.vibrate(duration: 2000);
           }
-
-
         }
       });
     });
@@ -108,9 +107,11 @@ class _PomodoroTimerState extends State<PomodoroTimer>
     final displayMin = remainingSeconds ~/ 60;
     final displaySec = remainingSeconds % 60;
     final progress = _anim.value;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final boxSize = screenWidth * 0.7;
 
     return GestureDetector(
-        onTap: () => running ? () => _pause(context) : () => _start(context),
+        onTap: running ? () => _pause(context) : () => _start(context),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -118,8 +119,8 @@ class _PomodoroTimerState extends State<PomodoroTimer>
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 280,
-                  height: 280,
+                  width: boxSize,
+                  height: boxSize,
                   child: CustomPaint(painter: _RadialPainter(progress: progress)),
                 ),
                 Column(
