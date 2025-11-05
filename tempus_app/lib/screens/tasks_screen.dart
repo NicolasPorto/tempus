@@ -34,9 +34,9 @@ class _TasksScreenState extends State<TasksScreen> {
   Widget build(BuildContext context) {
     return OrbDynamicBackground(
       child: Scaffold(
-        backgroundColor: Colors.transparent, // importante
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('Tasks'),
+          title: const Text('Tarefas'),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -49,7 +49,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   Expanded(
                     child: TextField(
                       controller: _ctrl,
-                      decoration: const InputDecoration(hintText: 'New task'),
+                      decoration: const InputDecoration(hintText: 'Nova tarefa'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -88,7 +88,7 @@ class _TasksScreenState extends State<TasksScreen> {
   Widget _buildTasks() {
     if (store.tasks.isEmpty)
       return const Center(
-        child: Text('No tasks yet.', style: TextStyle(color: Colors.white60)),
+        child: Text('Sem tarefas.', style: TextStyle(color: Colors.white60)),
       );
     return ListView.builder(
       itemCount: store.tasks.length,

@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icons.book,
             Icons.show_chart,
           ];
-          final labels = ['Tempus', 'Tasks', 'Subjects', 'Stats'];
+          final labels = ['Tempus', 'Tarefas', 'Assunto', 'Stats'];
           final selected = index == _current;
 
           return GestureDetector(

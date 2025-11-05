@@ -22,7 +22,7 @@ class StatsScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('Statistics'),
+          title: const Text('Estatísticas'),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -32,12 +32,12 @@ class StatsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Total focused time',
+                'Total tempo de foco',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
-                '$totalMinutes minutes',
+                '$totalMinutes minutos',
                 style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
@@ -45,7 +45,7 @@ class StatsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Per subject',
+                'Por assunto',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -68,7 +68,7 @@ class StatsScreen extends StatelessWidget {
               }).toList(),
               const SizedBox(height: 16),
               const Text(
-                'Recent sessions',
+                'Sessões recentes',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -84,7 +84,7 @@ class StatsScreen extends StatelessWidget {
     final list = store.sessions.reversed.take(10).toList();
     if (list.isEmpty)
       return const Center(
-        child: Text('No sessions yet', style: TextStyle(color: Colors.white60)),
+        child: Text('Sem sessões', style: TextStyle(color: Colors.white60)),
       );
     return ListView.builder(
       itemCount: list.length,

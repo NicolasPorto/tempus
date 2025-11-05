@@ -10,7 +10,6 @@ class SubjectsScreen extends StatefulWidget {
   State<SubjectsScreen> createState() => _SubjectsScreenState();
 }
 
-// Removemos 'with SingleTickerProviderStateMixin'
 class _SubjectsScreenState extends State<SubjectsScreen> { 
   final store = StorageService.instance;
   final TextEditingController _ctrl = TextEditingController();
@@ -49,7 +48,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent, // importante
         appBar: AppBar(
-          title: const Text('Subjects'),
+          title: const Text('Assunto'),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -62,10 +61,9 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                   Expanded(
                       child: TextField(
                     controller: _ctrl,
-                    // Garanta que o texto seja visível no fundo escuro
                     style: const TextStyle(color: Colors.white), 
                     decoration: InputDecoration(
-                        hintText: 'New subject',
+                        hintText: 'Novo assunto',
                         hintStyle: TextStyle(color: Colors.white70),
                         enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
                         focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white))),
@@ -93,7 +91,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
 
   Widget _buildList() {
     if (store.subjects.isEmpty) {
-      return const Center(child: Text('No subjects yet.', style: TextStyle(color: Colors.white60)));
+      return const Center(child: Text('Sem assuntos.', style: TextStyle(color: Colors.white60)));
     }
     return ListView.builder(
       itemCount: store.subjects.length,
