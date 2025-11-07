@@ -50,15 +50,10 @@ class _OrbDynamicBackgroundState extends State<OrbDynamicBackground>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Fundo gradiente mais escuro e suave
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF06040A),
-                Color(0xFF0E0820),
-                Color(0xFF1A1030),
-              ],
+              colors: [Color(0xFF06040A), Color(0xFF0E0820), Color(0xFF1A1030)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -69,9 +64,8 @@ class _OrbDynamicBackgroundState extends State<OrbDynamicBackground>
         Positioned.fill(
           child: AnimatedBuilder(
             animation: _controller,
-            builder: (_, __) => CustomPaint(
-              painter: _OrbPainter(_controller.value, _orbs),
-            ),
+            builder: (_, __) =>
+                CustomPaint(painter: _OrbPainter(_controller.value, _orbs)),
           ),
         ),
 
