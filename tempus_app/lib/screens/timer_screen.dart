@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../widgets/timer_painter.dart';
+import '../widgets/timer_controls.dart';
+import '../widgets/subject_manager_modal.dart';
+import '../models/subject.dart';
+import '../services/storage_service.dart';
 
 class TimerScreen extends StatelessWidget {
   const TimerScreen({super.key});
@@ -13,8 +16,57 @@ class TimerScreen extends StatelessWidget {
   }
 }
 
-class _FigmaDesignContent extends StatelessWidget {
+class _FigmaDesignContent extends StatefulWidget {
   const _FigmaDesignContent();
+
+  @override
+  State<_FigmaDesignContent> createState() => _FigmaDesignContentState();
+}
+
+class _FigmaDesignContentState extends State<_FigmaDesignContent> {
+  List<Subject> _subjects = [];
+  Subject? _selectedSubject;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSubjects();
+  }
+
+  void _loadSubjects() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final subjects = StorageService.instance.subjects;
+
+      setState(() {
+        _subjects = subjects;
+        if (_selectedSubject == null || !subjects.contains(_selectedSubject)) {
+          _selectedSubject = subjects.isNotEmpty ? subjects.first : null;
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showSubjectManagerModal() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return const SubjectManagerModal();
+      },
+    );
+
+    _loadSubjects();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +164,6 @@ class _FigmaDesignContent extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 Positioned(
                   left: 0,
                   right: 0,
@@ -144,7 +195,6 @@ class _FigmaDesignContent extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 Positioned(
                   left: 0,
                   right: 0,
@@ -225,7 +275,6 @@ class _FigmaDesignContent extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-
                               child: Row(
                                 children: [
                                   Row(
@@ -240,14 +289,18 @@ class _FigmaDesignContent extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Text(
-                                        'Gerenciar',
-                                        style: TextStyle(
-                                          color: Color(0xFFA0A0A0),
-                                          fontSize: 14,
-                                          fontFamily: 'Arimo',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.43,
+                                      GestureDetector(
+                                        onTap:
+                                            _showSubjectManagerModal, // Chama a função que recarrega após o modal
+                                        child: const Text(
+                                          'Gerenciar',
+                                          style: TextStyle(
+                                            color: Color(0xFFD4D4D4),
+                                            fontSize: 16,
+                                            fontFamily: 'Arimo',
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.50,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -259,285 +312,213 @@ class _FigmaDesignContent extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        height: 36,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: ShapeDecoration(
-                          color: const Color(0x7F171717),
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 1,
-                              color: Color(0x19FFFEFE),
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Escolha uma matéria...',
-                              style: TextStyle(
-                                color: Color(0xFF717182),
-                                fontSize: 14,
-                                fontFamily: 'Arimo',
-                                fontWeight: FontWeight.w400,
-                                height: 1.43,
-                              ),
-                            ),
-                            Opacity(
-                              opacity: 0.50,
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                child: const Icon(
-                                  Icons.keyboard_arrow_down,
-                                  color: Color(0xFF717182),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
 
-                Center(
-                  // Centraliza o círculo na tela
-                  child: Container(
-                    width: 346, // Largura total do seu círculo
-                    height: 346, // Altura total do seu círculo
-                    decoration: ShapeDecoration(
-                      // Decoração do card de fundo
-                      gradient: const LinearGradient(
-                        begin: Alignment(0.00, 0.00),
-                        end: Alignment(1.00, 1.00),
-                        colors: [Color(0xCC171717), Color(0xCC0A0A0A)],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        side: const BorderSide(
-                          width: 2,
-                          color: Color(0x19FFFEFE),
-                        ),
-                        borderRadius: BorderRadius.circular(
-                          48,
-                        ), // Borda do card (não do círculo principal)
-                      ),
-                      shadows: const [
-                        BoxShadow(
-                          color: Color(0x3F000000),
-                          blurRadius: 50,
-                          offset: Offset(0, 25),
-                          spreadRadius: -12,
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      // Usamos um Stack para sobrepor o CustomPaint e os textos
-                      alignment:
-                          Alignment.center, // Centraliza os filhos do Stack
-                      children: [
-                        // O CustomPaint que desenha o círculo e os arcos
-                        SizedBox(
-                          width:
-                              280, // Tamanho do círculo efetivo (um pouco menor que o container pai)
-                          height: 280,
-                          child: CustomPaint(
-                            painter: TimerPainter(
-                              backgroundColor: const Color(0xFF2C2C34),
-                              progressColor: const Color(0xFF9042FF),
-                            ),
-                          ),
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '25:00',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 80,
-                                fontFamily: 'Arimo',
-                                fontWeight: FontWeight.w400,
-                                height: 1.20,
-                                letterSpacing: -2.40,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Center(
-                              child: ShaderMask(
-                                blendMode: BlendMode.srcIn,
-                                shaderCallback: (bounds) {
-                                  return const LinearGradient(
-                                    colors: [
-                                      Color(0xFFAC46FF),
-                                      Color(0xFF2B7FFF),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ).createShader(bounds);
-                                },
-                                child: Text(
-                                  'Pressione para começar',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xFFA0A0A0),
-                                    fontSize: 16,
-                                    fontFamily: 'Arimo',
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.50,
+                      // *** COMPONENTE DE SELEÇÃO FUNCIONAL (DropdownButton) ***
+                      _isLoading
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-                Center(
-                  child: Container(
-                    width: 230,
-                    height: 56,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Opacity(
-                            opacity: 0.50,
-                            child: Container(
-                              height: 56,
+                            )
+                          : Container(
+                              width: double.infinity,
+                              height: 36,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: ShapeDecoration(
-                                gradient: const LinearGradient(
-                                  begin: Alignment(0.00, 0.50),
-                                  end: Alignment(1.00, 0.50),
-                                  colors: [
-                                    Color(0xFFAC46FF),
-                                    Color(0xFF2B7FFF),
-                                  ],
-                                ),
+                                color: _subjects.isEmpty
+                                    ? const Color(0x40171717)
+                                    : const Color(0x7F171717),
                                 shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                    width: 1,
+                                    color: _subjects.isEmpty
+                                        ? const Color(0x19FFFEFE).withOpacity(
+                                            0.5,
+                                          ) // Borda mais fraca
+                                        : const Color(0x19FFFEFE),
+                                  ),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                shadows: const [
-                                  BoxShadow(
-                                    color: Color(0x19000000),
-                                    blurRadius: 6,
-                                    offset: Offset(0, 4),
-                                    spreadRadius: -4,
-                                  ),
-                                  BoxShadow(
-                                    color: Color(0x19000000),
-                                    blurRadius: 15,
-                                    offset: Offset(0, 10),
-                                    spreadRadius: -3,
-                                  ),
-                                ],
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.play_arrow, color: Colors.white),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Iniciar Foco',
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<Subject>(
+                                  value: _selectedSubject,
+                                  icon: Opacity(
+                                    opacity: _subjects.isEmpty ? 0.2 : 0.50,
+                                    child: const Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: Color(0xFFD4D4D4),
+                                    ),
+                                  ),
+                                  dropdownColor: const Color.fromARGB(
+                                    202,
+                                    23,
+                                    23,
+                                    23,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  isExpanded: true,
+
+                                  onChanged: _subjects.isEmpty
+                                      ? null
+                                      : (Subject? newValue) {
+                                          setState(() {
+                                            _selectedSubject = newValue;
+                                          });
+                                        },
+
+                                  hint: const Text(
+                                    'Escolha uma matéria...',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: Color(0xFF717182),
                                       fontSize: 14,
                                       fontFamily: 'Arimo',
                                       fontWeight: FontWeight.w400,
                                       height: 1.43,
                                     ),
                                   ),
-                                ],
+
+                                  items: _subjects.map((Subject subject) {
+                                    final isSelected =
+                                        subject == _selectedSubject;
+
+                                    final textStyle = TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFFD4D4D4),
+                                      fontSize: 14,
+                                      fontFamily: 'Arimo',
+                                      fontWeight: isSelected
+                                          ? FontWeight
+                                                .w600 // Negrito para o selecionado
+                                          : FontWeight.w400,
+                                      height: 1.43,
+                                    );
+
+                                    return DropdownMenuItem<Subject>(
+                                      value: subject,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 10,
+                                            height: 10,
+                                            margin: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Color(subject.colorValue),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          Text(
+                                            subject.name,
+                                            style:
+                                                textStyle, // Aplica o estilo condicional
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return _subjects.map<Widget>((
+                                      Subject item,
+                                    ) {
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          if (_selectedSubject != null)
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  width: 10,
+                                                  height: 10,
+                                                  margin: const EdgeInsets.only(
+                                                    right: 8,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Color(
+                                                      _selectedSubject!
+                                                          .colorValue,
+                                                    ),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _selectedSubject!.name,
+                                                  style: const TextStyle(
+                                                    color: Color(0xFFF4F4F4),
+                                                    fontSize: 14,
+                                                    fontFamily: 'Arimo',
+                                                    fontWeight: FontWeight.w400,
+                                                    height: 1.43,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                        ],
+                                      );
+                                    }).toList();
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: ShapeDecoration(
-                            color: const Color(0x7F171717),
-                            shape: RoundedRectangleBorder(
-                              side: const BorderSide(
-                                width: 2,
-                                color: Color(0x19FFFEFE),
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            shadows: const [
-                              BoxShadow(
-                                color: Color(0x19000000),
-                                blurRadius: 6,
-                                offset: Offset(0, 4),
-                                spreadRadius: -4,
-                              ),
-                              BoxShadow(
-                                color: Color(0x19000000),
-                                blurRadius: 15,
-                                offset: Offset(0, 10),
-                                spreadRadius: -3,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.settings,
-                            color: Color(0xFFD4D4D4),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Card Adicione uma matéria
-                Container(
-                  width: double.infinity,
-                  height: 170,
-                  decoration: ShapeDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment(0.00, 0.00),
-                      end: Alignment(1.00, 1.00),
-                      colors: [Color(0x7F171717), Color(0x7F0A0A0A)],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      side: const BorderSide(
-                        width: 1,
-                        color: Color(0x19FFFEFE),
+                TimerControls(selectedSubject: _selectedSubject),
+                const SizedBox(height: 40),
+
+                // Card Adicione uma matéria (Visível apenas se a lista de matérias estiver vazia)
+                if (_subjects.isEmpty && !_isLoading)
+                  Container(
+                    width: double.infinity,
+                    height: 170,
+                    decoration: ShapeDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment(0.00, 0.00),
+                        end: Alignment(1.00, 1.00),
+                        colors: [Color(0x7F171717), Color(0x7F0A0A0A)],
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      const Positioned(
-                        left: 157,
-                        top: 25,
-                        child: Icon(
-                          Icons.book,
-                          color: Color(0xFFD4D4D4),
-                          size: 32,
+                      shape: RoundedRectangleBorder(
+                        side: const BorderSide(
+                          width: 1,
+                          color: Color(0x19FFFEFE),
                         ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 69,
-                        child: SizedBox(
-                          height: 24,
+                    ),
+                    child: Stack(
+                      children: [
+                        const Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 25,
                           child: Center(
-                            child: const Text(
+                            child: Icon(
+                              Icons.book,
+                              color: Color(0xFFD4D4D4),
+                              size: 32,
+                            ),
+                          ),
+                        ),
+                        const Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 69,
+                          child: Center(
+                            child: Text(
                               'Adicione uma matéria para começar',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -550,49 +531,59 @@ class _FigmaDesignContent extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ),
-                      // Botão Criar Matéria
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 109,
-                        child: Center(
-                          child: Container(
-                            width: 138.69,
-                            height: 36,
-                            decoration: ShapeDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment(0.00, 0.50),
-                                end: Alignment(1.00, 0.50),
-                                colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.add, color: Colors.white, size: 16),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Criar Matéria',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontFamily: 'Arimo',
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.43,
+                        // Botão Criar Matéria
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 109,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap:
+                                  _showSubjectManagerModal, // Chama a função que recarrega após o modal
+                              child: Container(
+                                width: 138.69,
+                                height: 36,
+                                decoration: ShapeDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment(0.00, 0.50),
+                                    end: Alignment(1.00, 0.50),
+                                    colors: [
+                                      Color(0xFFAC46FF),
+                                      Color(0xFF2B7FFF),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Criar Matéria',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontFamily: 'Arimo',
+                                        fontWeight: FontWeight.w400,
+                                        height: 1.43,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 const SizedBox(height: 32),
               ],
             ),

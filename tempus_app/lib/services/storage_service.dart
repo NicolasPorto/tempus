@@ -27,9 +27,6 @@ class StorageService {
       subjects = (jsonDecode(sJson) as List)
           .map((e) => Subject.fromMap(e))
           .toList();
-    } else {
-      subjects = [Subject(name: 'Geral', colorValue: 0xFF3F51B5)];
-      await saveSubjects();
     }
 
     final tJson = _prefs.getString('tasks');
@@ -48,14 +45,20 @@ class StorageService {
   }
 
   // ---------- MÉTODOS DE SALVAR ----------
-  Future<void> saveSubjects() async =>
-      _prefs.setString('subjects', jsonEncode(subjects.map((e) => e.toMap()).toList()));
+  Future<void> saveSubjects() async => _prefs.setString(
+    'subjects',
+    jsonEncode(subjects.map((e) => e.toMap()).toList()),
+  );
 
-  Future<void> saveTasks() async =>
-      _prefs.setString('tasks', jsonEncode(tasks.map((e) => e.toMap()).toList()));
+  Future<void> saveTasks() async => _prefs.setString(
+    'tasks',
+    jsonEncode(tasks.map((e) => e.toMap()).toList()),
+  );
 
-  Future<void> saveSessions() async =>
-      _prefs.setString('sessions', jsonEncode(sessions.map((e) => e.toMap()).toList()));
+  Future<void> saveSessions() async => _prefs.setString(
+    'sessions',
+    jsonEncode(sessions.map((e) => e.toMap()).toList()),
+  );
 
   // ---------- CRUD DE SUBJECTS ----------
   Future<void> addSubject(Subject s) async {

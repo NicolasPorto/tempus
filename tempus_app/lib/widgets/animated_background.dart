@@ -60,7 +60,6 @@ class _OrbDynamicBackgroundState extends State<OrbDynamicBackground>
           ),
         ),
 
-        // Orbs animados discretos
         Positioned.fill(
           child: AnimatedBuilder(
             animation: _controller,
@@ -69,7 +68,6 @@ class _OrbDynamicBackgroundState extends State<OrbDynamicBackground>
           ),
         ),
 
-        // Conteúdo principal
         widget.child,
       ],
     );

@@ -9,7 +9,7 @@ class TimerPainter extends CustomPainter {
   TimerPainter({
     required this.backgroundColor,
     required this.progressColor,
-    this.animationValue = 1.0,
+    this.animationValue = 1.0, required double progress,
   });
 
   @override
