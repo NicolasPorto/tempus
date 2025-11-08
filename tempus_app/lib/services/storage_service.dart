@@ -93,4 +93,6 @@ class StorageService {
     sessions.add(SessionLog(subjectId: subjectId, durationMinutes: minutes));
     await saveSessions();
   }
+
+  static Future loadSubjects() async {}
 }

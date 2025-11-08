@@ -6,8 +6,21 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class TimerControls extends StatefulWidget {
   final Subject? selectedSubject;
+  final VoidCallback onToggleTimer; // Novo: Lidar com clique no botão
+  final VoidCallback? onResetTimer; // Novo: Lidar com clique no botão Reset
+  final int currentDuration; // Novo: Tempo restante atual
+  final int initialDuration; // Novo: Duração total (25 min)
+  final bool isRunning; // Novo: Estado de execução
 
-  const TimerControls({super.key, required this.selectedSubject});
+  const TimerControls({
+    super.key,
+    required this.selectedSubject,
+    required this.onToggleTimer, // Deve ser required
+    this.onResetTimer,
+    required this.currentDuration, // Deve ser required
+    required this.initialDuration, // Deve ser required
+    required this.isRunning, // Deve ser required
+  });
 
   @override
   State<TimerControls> createState() => _TimerControlsState();
@@ -15,64 +28,17 @@ class TimerControls extends StatefulWidget {
 
 class _TimerControlsState extends State<TimerControls>
     with TickerProviderStateMixin {
-  static const int _initialDuration = 25 * 60;
-  int _currentDuration = _initialDuration;
-  Timer? _timer;
-  bool _isRunning = false;
   late AnimationController _rotationController;
 
+  // Lógica de formatação de tempo (usa as props do widget)
   String get _formattedTime {
-    final minutes = (_currentDuration ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_currentDuration % 60).toString().padLeft(2, '0');
+    final minutes = (widget.currentDuration ~/ 60).toString().padLeft(2, '0');
+    final seconds = (widget.currentDuration % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
-  }
-
-  void _startTimer() {
-    if (widget.selectedSubject == null || _isRunning) return;
-
-    setState(() {
-      _isRunning = true;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_currentDuration <= 0) {
-        _stopTimer();
-      } else {
-        setState(() {
-          _currentDuration--;
-        });
-      }
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-      _currentDuration = _initialDuration;
-    });
-  }
-
-  void _pauseTimer() {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-    });
-  }
-
-  void _toggleTimer() {
-    if (widget.selectedSubject == null) return;
-
-    if (_isRunning) {
-      _pauseTimer();
-    } else {
-      _startTimer();
-    }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _rotationController.dispose();
     super.dispose();
   }
@@ -80,21 +46,13 @@ class _TimerControlsState extends State<TimerControls>
   @override
   void didUpdateWidget(covariant TimerControls oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedSubject != widget.selectedSubject) {
-      _stopTimer();
-    }
   }
 
   @override
   void initState() {
     super.initState();
-
-    // Altere este valor para diminuir ou aumentar a velocidade.
-    // Quanto MAIOR o número de segundos, mais LENTA será a rotação.
     _rotationController = AnimationController(
-      duration: const Duration(
-        seconds: 120,
-      ), 
+      duration: const Duration(seconds: 120),
       vsync: this,
     )..repeat();
   }
@@ -102,13 +60,15 @@ class _TimerControlsState extends State<TimerControls>
   @override
   Widget build(BuildContext context) {
     final isSubjectSelected = widget.selectedSubject != null;
+    final bool isPaused =
+        widget.currentDuration < widget.initialDuration && !widget.isRunning;
 
     String statusText;
     if (!isSubjectSelected) {
       statusText = 'Selecione uma matéria';
-    } else if (_isRunning) {
+    } else if (widget.isRunning) {
       statusText = 'Foco em andamento';
-    } else if (_currentDuration < _initialDuration) {
+    } else if (isPaused) {
       statusText = 'Pausado';
     } else {
       statusText = 'Pressione para começar';
@@ -116,10 +76,9 @@ class _TimerControlsState extends State<TimerControls>
 
     final playPauseButtonOpacity = isSubjectSelected ? 1.0 : 0.5;
 
-    final playPauseIcon = _isRunning ? Icons.pause : Icons.play_arrow;
-    final playPauseText = _isRunning ? 'Pausar Foco' : 'Iniciar Foco';
-    final bool showResetButton =
-        _isRunning || (_currentDuration < _initialDuration);
+    final playPauseIcon = widget.isRunning ? Icons.pause : Icons.play_arrow;
+    final playPauseText = widget.isRunning ? 'Pausar Foco' : 'Iniciar Foco';
+    final bool showResetButton = widget.isRunning || isPaused;
 
     return Column(
       children: [
@@ -160,7 +119,8 @@ class _TimerControlsState extends State<TimerControls>
                         progressColor: Color(
                           widget.selectedSubject?.colorValue ?? 0xFF9042FF,
                         ),
-                        progress: _currentDuration / _initialDuration,
+                        progress:
+                            widget.currentDuration / widget.initialDuration,
                       ),
                     ),
                   ),
@@ -222,7 +182,7 @@ class _TimerControlsState extends State<TimerControls>
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: _toggleTimer,
+                    onTap: widget.onToggleTimer,
                     child: Opacity(
                       opacity: playPauseButtonOpacity,
                       child: Container(
@@ -275,7 +235,7 @@ class _TimerControlsState extends State<TimerControls>
                 if (showResetButton) ...[
                   const SizedBox(width: 16),
                   GestureDetector(
-                    onTap: _stopTimer,
+                    onTap: widget.onResetTimer,
                     child: Container(
                       width: 56,
                       height: 56,
