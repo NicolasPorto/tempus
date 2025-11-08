@@ -9,7 +9,8 @@ class TimerPainter extends CustomPainter {
   TimerPainter({
     required this.backgroundColor,
     required this.progressColor,
-    this.animationValue = 1.0, required double progress,
+    this.animationValue = 1.0,
+    required double progress,
   });
 
   @override
@@ -31,27 +32,39 @@ class TimerPainter extends CustomPainter {
       ..strokeWidth = 4.0
       ..strokeCap = StrokeCap.round;
 
-    final startAngle = -math.pi / 2;
+    final startAngle = -math.pi / 2; // Inicia no topo
 
+    // Arco 1: Começa 0.15 * pi após o topo
     canvas.drawArc(
       Rect.fromCircle(center: size.center(Offset.zero), radius: size.width / 2),
-      startAngle + math.pi * 0.1,
+      startAngle + math.pi * 0.15,
+      math.pi * 0.2, // Sweep angle
+      false,
+      progressPaint,
+    );
+
+    // Arco 2: Espaçamento simétrico
+    canvas.drawArc(
+      Rect.fromCircle(center: size.center(Offset.zero), radius: size.width / 2),
+      startAngle + math.pi * 0.65,
       math.pi * 0.2,
       false,
       progressPaint,
     );
 
+    // Arco 3: Espaçamento simétrico
     canvas.drawArc(
       Rect.fromCircle(center: size.center(Offset.zero), radius: size.width / 2),
-      startAngle + math.pi * 0.55,
+      startAngle + math.pi * 1.15,
       math.pi * 0.2,
       false,
       progressPaint,
     );
 
+    // Arco 4: Espaçamento simétrico
     canvas.drawArc(
       Rect.fromCircle(center: size.center(Offset.zero), radius: size.width / 2),
-      startAngle + math.pi * 1.25,
+      startAngle + math.pi * 1.65,
       math.pi * 0.2,
       false,
       progressPaint,

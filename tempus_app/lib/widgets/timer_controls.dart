@@ -13,20 +13,19 @@ class TimerControls extends StatefulWidget {
   State<TimerControls> createState() => _TimerControlsState();
 }
 
-class _TimerControlsState extends State<TimerControls> {
-  static const int _initialDuration = 25 * 60; // 25 minutos em segundos
+class _TimerControlsState extends State<TimerControls>
+    with TickerProviderStateMixin {
+  static const int _initialDuration = 25 * 60;
   int _currentDuration = _initialDuration;
   Timer? _timer;
   bool _isRunning = false;
+  late AnimationController _rotationController;
 
-  // Formata a duração em minutos:segundos (ex: 25:00)
   String get _formattedTime {
     final minutes = (_currentDuration ~/ 60).toString().padLeft(2, '0');
     final seconds = (_currentDuration % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
-
-  // --- Funções de Controle do Timer ---
 
   void _startTimer() {
     if (widget.selectedSubject == null || _isRunning) return;
@@ -38,7 +37,6 @@ class _TimerControlsState extends State<TimerControls> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_currentDuration <= 0) {
         _stopTimer();
-        // Você pode adicionar lógica de notificação ou de troca para o 'break' aqui
       } else {
         setState(() {
           _currentDuration--;
@@ -51,11 +49,10 @@ class _TimerControlsState extends State<TimerControls> {
     _timer?.cancel();
     setState(() {
       _isRunning = false;
-      _currentDuration = _initialDuration; // Reseta para 25:00
+      _currentDuration = _initialDuration;
     });
   }
 
-  // A função de pausa apenas para o timer sem resetar a duração
   void _pauseTimer() {
     _timer?.cancel();
     setState(() {
@@ -63,7 +60,6 @@ class _TimerControlsState extends State<TimerControls> {
     });
   }
 
-  // Função chamada pelo botão principal
   void _toggleTimer() {
     if (widget.selectedSubject == null) return;
 
@@ -74,14 +70,13 @@ class _TimerControlsState extends State<TimerControls> {
     }
   }
 
-  // Limpa o timer quando o widget é descartado
   @override
   void dispose() {
     _timer?.cancel();
+    _rotationController.dispose();
     super.dispose();
   }
 
-  // Se a matéria mudar, paramos e resetamos o timer
   @override
   void didUpdateWidget(covariant TimerControls oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -90,14 +85,24 @@ class _TimerControlsState extends State<TimerControls> {
     }
   }
 
-  // --- UI do Timer ---
+  @override
+  void initState() {
+    super.initState();
+
+    // Altere este valor para diminuir ou aumentar a velocidade.
+    // Quanto MAIOR o número de segundos, mais LENTA será a rotação.
+    _rotationController = AnimationController(
+      duration: const Duration(
+        seconds: 120,
+      ), 
+      vsync: this,
+    )..repeat();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Verifica se há uma matéria selecionada para habilitar os botões
     final isSubjectSelected = widget.selectedSubject != null;
 
-    // Texto de Status
     String statusText;
     if (!isSubjectSelected) {
       statusText = 'Selecione uma matéria';
@@ -109,10 +114,8 @@ class _TimerControlsState extends State<TimerControls> {
       statusText = 'Pressione para começar';
     }
 
-    // Cor do botão Iniciar/Pausar
     final playPauseButtonOpacity = isSubjectSelected ? 1.0 : 0.5;
 
-    // Ícone e texto do botão Iniciar/Pausar
     final playPauseIcon = _isRunning ? Icons.pause : Icons.play_arrow;
     final playPauseText = _isRunning ? 'Pausar Foco' : 'Iniciar Foco';
     final bool showResetButton =
@@ -120,7 +123,6 @@ class _TimerControlsState extends State<TimerControls> {
 
     return Column(
       children: [
-        // 1. DISPLAY DO TIMER E TEXTO DE STATUS
         Center(
           child: Container(
             width: 346,
@@ -150,13 +152,16 @@ class _TimerControlsState extends State<TimerControls> {
                 SizedBox(
                   width: 280,
                   height: 280,
-                  child: CustomPaint(
-                    painter: TimerPainter(
-                      backgroundColor: const Color(0xFF2C2C34),
-                      progressColor: Color(
-                        widget.selectedSubject?.colorValue ?? 0xFF9042FF,
+                  child: RotationTransition(
+                    turns: _rotationController,
+                    child: CustomPaint(
+                      painter: TimerPainter(
+                        backgroundColor: const Color(0xFF2C2C34),
+                        progressColor: Color(
+                          widget.selectedSubject?.colorValue ?? 0xFF9042FF,
+                        ),
+                        progress: _currentDuration / _initialDuration,
                       ),
-                      progress: _currentDuration / _initialDuration,
                     ),
                   ),
                 ),
@@ -208,7 +213,7 @@ class _TimerControlsState extends State<TimerControls> {
         const SizedBox(height: 40),
 
         Center(
-          child: Container(
+          child: SizedBox(
             width: 230,
             height: 56,
             child: Row(

@@ -11,19 +11,19 @@ class TimerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
-      child: Center(child: _FigmaDesignContent()),
+      child: Center(child: _TimerScreenContent()),
     );
   }
 }
 
-class _FigmaDesignContent extends StatefulWidget {
-  const _FigmaDesignContent();
+class _TimerScreenContent extends StatefulWidget {
+  const _TimerScreenContent();
 
   @override
-  State<_FigmaDesignContent> createState() => _FigmaDesignContentState();
+  State<_TimerScreenContent> createState() => _TimerScreenContentState();
 }
 
-class _FigmaDesignContentState extends State<_FigmaDesignContent> {
+class _TimerScreenContentState extends State<_TimerScreenContent> {
   List<Subject> _subjects = [];
   Subject? _selectedSubject;
   bool _isLoading = true;
@@ -80,7 +80,7 @@ class _FigmaDesignContentState extends State<_FigmaDesignContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 32),
-          Container(
+          SizedBox(
             width: double.infinity,
             height: 162,
             child: Stack(
@@ -313,7 +313,6 @@ class _FigmaDesignContentState extends State<_FigmaDesignContent> {
                       ),
                       const SizedBox(height: 12),
 
-                      // *** COMPONENTE DE SELEÇÃO FUNCIONAL (DropdownButton) ***
                       _isLoading
                           ? const Center(
                               child: Padding(
@@ -422,7 +421,7 @@ class _FigmaDesignContentState extends State<_FigmaDesignContent> {
                                           Text(
                                             subject.name,
                                             style:
-                                                textStyle, // Aplica o estilo condicional
+                                                textStyle,
                                           ),
                                         ],
                                       ),

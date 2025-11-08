@@ -13,7 +13,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
-    final bool onFocus = context.select<TempusGlobals, bool>(
+    context.select<TempusGlobals, bool>(
       (globals) => globals.onFocus,
     );
 
