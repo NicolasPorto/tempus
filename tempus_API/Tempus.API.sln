@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempus.API", "Tempus.API\Tempus.API.csproj", "{C4DD40EB-3B30-497B-9C43-19C1D17D47F8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{307B6569-4352-468E-BA07-DFA90141D7F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{ABD32022-99E0-4ADB-B19E-E236CFA970C1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C4DD40EB-3B30-497B-9C43-19C1D17D47F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4DD40EB-3B30-497B-9C43-19C1D17D47F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4DD40EB-3B30-497B-9C43-19C1D17D47F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4DD40EB-3B30-497B-9C43-19C1D17D47F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{307B6569-4352-468E-BA07-DFA90141D7F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{307B6569-4352-468E-BA07-DFA90141D7F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{307B6569-4352-468E-BA07-DFA90141D7F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{307B6569-4352-468E-BA07-DFA90141D7F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABD32022-99E0-4ADB-B19E-E236CFA970C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABD32022-99E0-4ADB-B19E-E236CFA970C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABD32022-99E0-4ADB-B19E-E236CFA970C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABD32022-99E0-4ADB-B19E-E236CFA970C1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {734A3C02-45C3-4079-B3B3-D329CEE73ABB}
+	EndGlobalSection
+EndGlobal

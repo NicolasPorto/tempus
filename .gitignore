@@ -1,0 +1,15 @@
+﻿################################################################################
+# Este arquivo .gitignore foi criado automaticamente pelo Microsoft(R) Visual Studio.
+################################################################################
+
+/tempus_API/Domain/obj
+/tempus_API/Domain/bin/Debug/net8.0
+/tempus_API/Domain/Domain.csproj
+/tempus_API/.vs
+/tempus_API/Infra/bin/Debug
+/tempus_API/Infra/bin/Debug/net8.0/Domain.dll
+/tempus_API/Infra/obj
+/tempus_API/Tempus.API/.vs
+/tempus_API/Tempus.API/bin/Debug/net8.0
+/tempus_API/Tempus.API/bin/Debug/net8.0/runtimes/win/lib/net8.0/System.Windows.Extensions.dll
+/tempus_API/Tempus.API/obj
