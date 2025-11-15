@@ -2,7 +2,7 @@
 
 namespace Domain.Base.Repository;
 
-public abstract class RepositoryBase<T1>(DbContext context) : IRepositoryBase<T1> where T1 : EntityBase
+public abstract class RepositoryBase<T1>(DbContext context) : IRepositoryBase where T1 : EntityBase
 {
     private DbSet<T1> contextSet = context.Set<T1>();
 

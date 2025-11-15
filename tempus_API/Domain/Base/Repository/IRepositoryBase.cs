@@ -1,8 +1,6 @@
 ﻿namespace Domain.Base.Repository
 {
-    public interface IRepositoryBase<T1>
+    public interface IRepositoryBase
     {
-        T1 Get(Guid uuid);
-        void Update(T1 entity);
     }
 }

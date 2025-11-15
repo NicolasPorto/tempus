@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.42.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="7.42.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="MySql.EntityFrameworkCore" Version="9.0.9" />
   </ItemGroup>
 

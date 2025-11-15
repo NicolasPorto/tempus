@@ -9,7 +9,7 @@ namespace Application.Services
     {
         public void InformUnfocusedTime(Guid sessionUUID, int minutesDistracted)
         {
-            var sessionFocus = sessionFocusRepository.Get(sessionUUID);
+            var sessionFocus = (SessionFocus)sessionFocusRepository.Get(sessionUUID);
             sessionFocus.DistractedMinutes += minutesDistracted;
 
             sessionFocusRepository.Update(sessionFocus);
@@ -25,7 +25,7 @@ namespace Application.Services
 
         public void StopFocus(Guid sessionUUID)
         {
-            var sessionFocus = sessionFocusRepository.Get(sessionUUID);
+            var sessionFocus = (SessionFocus)sessionFocusRepository.Get(sessionUUID);
             sessionFocus.FinishDtTime = DateTime.UtcNow;
             sessionFocusRepository.Update(sessionFocus);
         }

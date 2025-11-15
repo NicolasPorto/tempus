@@ -3,17 +3,24 @@ using Domain.Base;
 using Domain.Base.Repositories;
 using Domain.Base.Repository;
 using Domain.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}/";
+    options.Audience = builder.Configuration["Auth0:Audience"];
+});
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<Context>();
+builder.Services.AddMemoryCache();
 
 InjectServices(builder.Services);
 InjectRepositories(builder.Services);
@@ -29,6 +36,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

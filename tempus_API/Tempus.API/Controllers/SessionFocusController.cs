@@ -68,7 +68,7 @@ namespace Tempus.API.Controllers
         {
             try
             {
-                _sessionFocusService.InformUnfocusedTime(sessionUUID, minutesOnfocused);
+                _sessionFocusService.StopFocus(sessionUUID);
                 return Ok();
             }
             catch (TempusException temEx)
