@@ -3,8 +3,7 @@
 ################################################################################
 
 /tempus_API/Domain/obj
-/tempus_API/Domain/bin/Debug/net8.0
-/tempus_API/Domain/Domain.csproj
+/tempus_API/Domain/bin/Debug/net8.0 
 /tempus_API/.vs
 /tempus_API/Infra/bin/Debug
 /tempus_API/Infra/bin/Debug/net8.0/Domain.dll
@@ -13,3 +12,40 @@
 /tempus_API/Tempus.API/bin/Debug/net8.0
 /tempus_API/Tempus.API/bin/Debug/net8.0/runtimes/win/lib/net8.0/System.Windows.Extensions.dll
 /tempus_API/Tempus.API/obj
+/tempus_API/Application/bin
+/tempus_API/Application/obj
+/tempus_API/Application/bin/Debug/net8.0
+/tempus_API/Application/obj/Debug/net8.0/ref/Application.dll
+
+
+# C# / .NET
+# ---------------
+
+## Ignore build output directories
+**/[Bb]in/
+**/[Oo]bj/
+
+## Ignore Visual Studio user-specific files
+.vs/
+*.suo
+*.user
+
+## Ignore build output files
+*.dll
+*.pdb
+*.exe
+*.deps.json
+*.runtimeconfig.json
+*.cache
+
+## Ignore publish directories
+**/[Pp]ublish/
+**/[Rr]elease/
+
+## Ignore NuGet package directories
+packages/
+*.nupkg
+
+## Ignore test results
+TestResults/
+*.trx
