@@ -40,5 +40,48 @@ namespace Tempus.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
         }
+
+
+        [HttpPost("inform-distraction/{sessionUUID}")]
+        public IActionResult InformUnfocusedTime(Guid sessionUUID, int minutesOnfocused)
+        {
+            try
+            {
+                _sessionFocusService.InformUnfocusedTime(sessionUUID, minutesOnfocused);
+                return Ok();
+            }
+            catch (TempusException temEx)
+            {
+                return BadRequest(new ResponseBase
+                {
+                    Message = temEx.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [HttpPut("stop/{sessionUUID}")]
+        public IActionResult StopSession(Guid sessionUUID)
+        {
+            try
+            {
+                _sessionFocusService.InformUnfocusedTime(sessionUUID, minutesOnfocused);
+                return Ok();
+            }
+            catch (TempusException temEx)
+            {
+                return BadRequest(new ResponseBase
+                {
+                    Message = temEx.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
     }
 }
