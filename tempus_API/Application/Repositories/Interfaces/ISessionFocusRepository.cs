@@ -3,7 +3,7 @@ using Domain.Base.Repository;
 
 namespace Domain.Repositories.Interfaces
 {
-    public interface ISessionFocusRepository : IRepositoryBase
+    public interface ISessionFocusRepository : IRepositoryBase<SessionFocus>
     {
         public void Insert(SessionFocus sessionFocus);
     }

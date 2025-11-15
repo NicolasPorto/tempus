@@ -22,5 +22,12 @@ namespace Application.Services
 
             sessionFocusRepository.Insert(sessionFocus);
         }
+
+        public void StopFocus(Guid sessionUUID)
+        {
+            var sessionFocus = sessionFocusRepository.Get(sessionUUID);
+            sessionFocus.FinishDtTime = DateTime.UtcNow;
+            sessionFocusRepository.Update(sessionFocus);
+        }
     }
 }
