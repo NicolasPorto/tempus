@@ -1,10 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import 'package:tempus_app/libraries/globals.dart';
+import 'package:tempus_app/libraries/screen_dimmer.dart';
+import 'package:tempus_app/models/session.dart';
 import '../widgets/timer_controls.dart';
 import '../widgets/subject_manager_modal.dart';
 import '../models/subject.dart';
 import '../services/storage_service.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:vibration/vibration.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:typed_data';
 
 final ValueNotifier<bool> isFocusModeNotifier = ValueNotifier(false);
 
@@ -34,15 +42,63 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
   static const int _initialDuration = 25 * 60;
   int _currentDuration = _initialDuration;
   Timer? _timer;
+  Timer? _autoDimmingTimer;
   bool _isRunning = false;
+
+  FlutterSoundPlayer _player = FlutterSoundPlayer();
+  bool _isPlayerReady = false;
+  Uint8List? _beepSound;
+
+  void _resetAutoDimmingTimer() {
+    _autoDimmingTimer?.cancel();
+    _autoDimmingTimer = Timer(const Duration(seconds: 5), () {
+      if (_isRunning) {
+        screenDimmer.startBlackout();
+      }
+    });
+  }
+
+  void _handleUserInteraction() {
+    if (_isRunning && screenDimmer.isActive) {
+      screenDimmer.stopBlackout();
+    }
+  }
+
+  Future<void> _playBeep() async {
+    if (!_isPlayerReady || _beepSound == null) return;
+    try {
+      await _player.startPlayer(fromDataBuffer: _beepSound);
+    } catch (e) {
+      print('Error playing beep: $e');
+    }
+  }
+
+  Future<void> _triggerFiveMinuteAlert() async {
+    _playBeep();
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 100);
+    }
+  }
+
+  Future<void> _triggerTenMinuteAlert() async {
+    await _playBeep();
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 500);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    await _playBeep();
+  }
+
   void _startTimer() {
     if (_selectedSubject == null || _isRunning) return;
 
     setState(() {
       _isRunning = true;
+      _isFocusMode = true;
     });
-
-    _enterFocusMode();
+    isFocusModeNotifier.value = true;
+    _resetAutoDimmingTimer();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_currentDuration <= 0) {
@@ -51,11 +107,30 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
         setState(() {
           _currentDuration--;
         });
+
+        final int elapsedSeconds = _initialDuration - _currentDuration;
+
+        if (elapsedSeconds > 0 && elapsedSeconds % (10 * 60) == 0) {
+          _triggerTenMinuteAlert();
+        } else if (elapsedSeconds > 0 && elapsedSeconds % (20) == 0) {
+          _triggerFiveMinuteAlert();
+        }
       }
     });
   }
 
   void _stopTimer() {
+    _autoDimmingTimer?.cancel();
+    screenDimmer.stopBlackout();
+
+    if (_selectedSubject != null) {
+      final session = SessionLog(
+        subjectId: _selectedSubject!.id,
+        durationMinutes: (_initialDuration - _currentDuration) ~/ 60,
+      );
+      StorageService.instance.addSessionLog(session);
+    }
+
     _timer?.cancel();
     setState(() {
       _isRunning = false;
@@ -63,11 +138,14 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     });
 
     if (_isFocusMode) {
-      _exitFocusMode();
+      setState(() => _isFocusMode = false);
+      isFocusModeNotifier.value = false;
     }
   }
 
   void _pauseTimer() {
+    _autoDimmingTimer?.cancel();
+    screenDimmer.stopBlackout();
     _timer?.cancel();
     setState(() {
       _isRunning = false;
@@ -86,29 +164,39 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
 
   void _resetTimer() {
     _stopTimer();
-    _exitFocusMode();
+    setState(() => _isFocusMode = false);
+    isFocusModeNotifier.value = false;
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _autoDimmingTimer?.cancel();
+    screenDimmer.onReveal = null;
+    _player.closePlayer();
     super.dispose();
+  }
+
+  Future<void> _loadBeepSound() async {
+    try {
+      final data = await rootBundle.load('lib/assets/sounds/beep.mp3');
+      _beepSound = data.buffer.asUint8List();
+    } catch (e) {
+      print('Error loading beep sound: $e');
+    }
   }
 
   @override
   void initState() {
     super.initState();
     _loadSubjects();
-  }
-
-  void _enterFocusMode() {
-    setState(() => _isFocusMode = true);
-    isFocusModeNotifier.value = true;
-  }
-
-  void _exitFocusMode() {
-    setState(() => _isFocusMode = false);
-    isFocusModeNotifier.value = false;
+    screenDimmer.onReveal = _resetAutoDimmingTimer;
+    _player.openPlayer().then((_) {
+      setState(() {
+        _isPlayerReady = true;
+      });
+      _loadBeepSound();
+    });
   }
 
   void _loadSubjects() async {
@@ -147,35 +235,34 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Conteúdo principal que será animado
-        SafeArea(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500), // Duração da animação
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              // Combina FadeTransition e ScaleTransition
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: animation.drive(
-                    Tween<double>(begin: 0.8, end: 1.0).chain(
-                      CurveTween(curve: Curves.easeOutCubic),
-                    ), // Curva de aceleração
+    return GestureDetector(
+      onTap: _handleUserInteraction,
+      onPanDown: (_) => _handleUserInteraction(),
+      child: Stack(
+        children: [
+          SafeArea(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: animation.drive(
+                      Tween<double>(begin: 0.8, end: 1.0).chain(
+                        CurveTween(curve: Curves.easeOutCubic),
+                      ),
+                    ),
+                    child: child,
                   ),
-                  child: child,
-                ),
-              );
-            },
-            switchInCurve: Curves.easeOutCubic, // Curva para o widget que entra
-            switchOutCurve: Curves.easeInCubic, // Curva para o widget que sai
-            child:
-                _isFocusMode // Usa o _isFocusMode para alternar as views
-                ? _buildFocusView()
-                : _buildMainView(),
+                );
+              },
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _isFocusMode ? _buildFocusView() : _buildMainView(),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -403,7 +490,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                                         const SizedBox(width: 8),
                                         GestureDetector(
                                           onTap:
-                                              _showSubjectManagerModal, // Chama a função que recarrega após o modal
+                                          _showSubjectManagerModal,
                                           child: const Text(
                                             'Gerenciar',
                                             style: TextStyle(
@@ -427,166 +514,165 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
 
                         _isLoading
                             ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                ),
-                              )
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                        )
                             : Container(
-                                width: double.infinity,
-                                height: 36,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                          width: double.infinity,
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                          ),
+                          decoration: ShapeDecoration(
+                            color: _subjects.isEmpty
+                                ? const Color(0x40171717)
+                                : const Color(0x7F171717),
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                width: 1,
+                                color: _subjects.isEmpty
+                                    ? const Color(0x19FFFEFE).withOpacity(
+                                  0.5,
+                                )
+                                    : const Color(0x19FFFEFE),
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Subject>(
+                              value: _selectedSubject,
+                              icon: Opacity(
+                                opacity: _subjects.isEmpty ? 0.2 : 0.50,
+                                child: const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Color(0xFFD4D4D4),
                                 ),
-                                decoration: ShapeDecoration(
-                                  color: _subjects.isEmpty
-                                      ? const Color(0x40171717)
-                                      : const Color(0x7F171717),
-                                  shape: RoundedRectangleBorder(
-                                    side: BorderSide(
-                                      width: 1,
-                                      color: _subjects.isEmpty
-                                          ? const Color(0x19FFFEFE).withOpacity(
-                                              0.5,
-                                            ) // Borda mais fraca
-                                          : const Color(0x19FFFEFE),
-                                    ),
-                                    borderRadius: BorderRadius.circular(14),
+                              ),
+                              dropdownColor: const Color.fromARGB(
+                                202,
+                                23,
+                                23,
+                                23,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              isExpanded: true,
+
+                              onChanged: _subjects.isEmpty
+                                  ? null
+                                  : (Subject? newValue) {
+                                setState(() {
+                                  _selectedSubject = newValue;
+                                });
+                              },
+
+                              hint: const Text(
+                                'Escolha uma matéria...',
+                                style: TextStyle(
+                                  color: Color(0xFF717182),
+                                  fontSize: 14,
+                                  fontFamily: 'Arimo',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.43,
+                                ),
+                              ),
+
+                              items: _subjects.map((Subject subject) {
+                                final isSelected =
+                                    subject == _selectedSubject;
+
+                                final textStyle = TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFFD4D4D4),
+                                  fontSize: 14,
+                                  fontFamily: 'Arimo',
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  height: 1.43,
+                                );
+
+                                return DropdownMenuItem<Subject>(
+                                  value: subject,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        margin: const EdgeInsets.only(
+                                          right: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Color(
+                                            subject.colorValue,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      Text(
+                                        subject.name,
+                                        style: textStyle,
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<Subject>(
-                                    value: _selectedSubject,
-                                    icon: Opacity(
-                                      opacity: _subjects.isEmpty ? 0.2 : 0.50,
-                                      child: const Icon(
-                                        Icons.keyboard_arrow_down,
-                                        color: Color(0xFFD4D4D4),
-                                      ),
-                                    ),
-                                    dropdownColor: const Color.fromARGB(
-                                      202,
-                                      23,
-                                      23,
-                                      23,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    isExpanded: true,
+                                );
+                              }).toList(),
 
-                                    onChanged: _subjects.isEmpty
-                                        ? null
-                                        : (Subject? newValue) {
-                                            setState(() {
-                                              _selectedSubject = newValue;
-                                            });
-                                          },
-
-                                    hint: const Text(
-                                      'Escolha uma matéria...',
-                                      style: TextStyle(
-                                        color: Color(0xFF717182),
-                                        fontSize: 14,
-                                        fontFamily: 'Arimo',
-                                        fontWeight: FontWeight.w400,
-                                        height: 1.43,
-                                      ),
-                                    ),
-
-                                    items: _subjects.map((Subject subject) {
-                                      final isSelected =
-                                          subject == _selectedSubject;
-
-                                      final textStyle = TextStyle(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : const Color(0xFFD4D4D4),
-                                        fontSize: 14,
-                                        fontFamily: 'Arimo',
-                                        fontWeight: isSelected
-                                            ? FontWeight
-                                                  .w600 // Negrito para o selecionado
-                                            : FontWeight.w400,
-                                        height: 1.43,
-                                      );
-
-                                      return DropdownMenuItem<Subject>(
-                                        value: subject,
-                                        child: Row(
+                              selectedItemBuilder: (BuildContext context) {
+                                return _subjects.map<Widget>((
+                                    Subject item,
+                                    ) {
+                                  return Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      if (_selectedSubject != null)
+                                        Row(
                                           children: [
                                             Container(
                                               width: 10,
                                               height: 10,
-                                              margin: const EdgeInsets.only(
+                                              margin:
+                                              const EdgeInsets.only(
                                                 right: 8,
                                               ),
                                               decoration: BoxDecoration(
                                                 color: Color(
-                                                  subject.colorValue,
+                                                  _selectedSubject!
+                                                      .colorValue,
                                                 ),
                                                 shape: BoxShape.circle,
                                               ),
                                             ),
                                             Text(
-                                              subject.name,
-                                              style: textStyle,
+                                              _selectedSubject!.name,
+                                              style: const TextStyle(
+                                                color: Color(0xFFF4F4F4),
+                                                fontSize: 14,
+                                                fontFamily: 'Arimo',
+                                                fontWeight:
+                                                FontWeight.w400,
+                                                height: 1.43,
+                                              ),
                                             ),
                                           ],
                                         ),
-                                      );
-                                    }).toList(),
-
-                                    selectedItemBuilder: (BuildContext context) {
-                                      return _subjects.map<Widget>((
-                                        Subject item,
-                                      ) {
-                                        return Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            if (_selectedSubject != null)
-                                              Row(
-                                                children: [
-                                                  Container(
-                                                    width: 10,
-                                                    height: 10,
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                          right: 8,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: Color(
-                                                        _selectedSubject!
-                                                            .colorValue,
-                                                      ),
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    _selectedSubject!.name,
-                                                    style: const TextStyle(
-                                                      color: Color(0xFFF4F4F4),
-                                                      fontSize: 14,
-                                                      fontFamily: 'Arimo',
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      height: 1.43,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                          ],
-                                        );
-                                      }).toList();
-                                    },
-                                  ),
-                                ),
-                              ),
+                                    ],
+                                  );
+                                }).toList();
+                              },
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -594,11 +680,11 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                   TimerControls(
                     key: const ValueKey('timer_controls'),
                     selectedSubject: _selectedSubject,
-                    onToggleTimer: _toggleTimer, // LIGADO
-                    onResetTimer: _resetTimer, // LIGADO
-                    currentDuration: _currentDuration, // LIGADO
-                    initialDuration: _initialDuration, // LIGADO
-                    isRunning: _isRunning, // LIGADO
+                    onToggleTimer: _toggleTimer,
+                    onResetTimer: _resetTimer,
+                    currentDuration: _currentDuration,
+                    initialDuration: _initialDuration,
+                    isRunning: _isRunning,
                   ),
                   const SizedBox(height: 40),
 
@@ -652,7 +738,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                               ),
                             ),
                           ),
-                          // Botão Criar Matéria
                           Positioned(
                             left: 0,
                             right: 0,
@@ -715,23 +800,13 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
   }
 
   Widget _buildFocusView() {
-    // 362 (altura total do conteúdo no _buildMainView)
-    // Subtraímos a altura do _buildMainView para alinhar o TimerControls.
-    // Usamos o SizedBox.shrink() no topo, mas precisamos manter o alinhamento
-    // vertical do TimerControls, o que é desafiador em Column.
-    // A melhor abordagem é calcular a altura exata.
-
-    // No _buildFocusView, o único elemento acima do TimerControls é um SizedBox.
-    // Altura calculada para manter a posição: 362px (do main)
     const double requiredTopSpacing = 200.0;
 
     return Center(
       key: const ValueKey('focus'),
       child: Column(
         children: [
-          // Ajustado para 362px para alinhar o TimerControls verticalmente
-          // na mesma posição do _buildMainView, compensando o espaço removido.
-          const SizedBox(height: requiredTopSpacing), 
+          const SizedBox(height: requiredTopSpacing),
           TimerControls(
             key: const ValueKey('timer_controls'),
             selectedSubject: _selectedSubject,

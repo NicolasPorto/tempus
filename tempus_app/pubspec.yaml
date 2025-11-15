@@ -20,6 +20,8 @@ dependencies:
   sensors_plus: ^3.1.0
   vibration: any
   flutter_svg: ^2.0.0
+  flutter_sound: ^9.3.0
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
@@ -32,3 +34,4 @@ flutter:
 
   assets:
     - lib/assets/icons/
+    - lib/assets/sounds/beep.mp3

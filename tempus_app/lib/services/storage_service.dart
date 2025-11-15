@@ -89,6 +89,11 @@ class StorageService {
   }
 
   // ---------- SESSÕES ----------
+  Future<void> addSessionLog(SessionLog session) async {
+    sessions.add(session);
+    await saveSessions();
+  }
+
   Future<void> addSessionFromSubject(String subjectId, int minutes) async {
     sessions.add(SessionLog(subjectId: subjectId, durationMinutes: minutes));
     await saveSessions();
