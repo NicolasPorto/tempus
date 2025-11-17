@@ -1,22 +1,22 @@
-# fly.toml app configuration file generated for tempusapi on 2025-11-17T10:26:34-03:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+app = "tempusapi"
+primary_region = "gru"
 
-app = 'tempusapi'
-primary_region = 'gru'
-
-[build]
+[env]
+  AUTH0_CLIENT_AUDIENCE = "https://tempusapi.fly.dev/"
+  AUTH0_CLIENT_DOMAIN = "dev-tempus.us.auth0.com"
+  AUTH0_CLIENT_ID = "H6jITfyPgE1IyIR5rbyRCJtGjJ99alhK"
+  AUTH0_CLIENT_SECRET = "mmS4QEzLPDqh_u6ri3fqji9nEeau2CPLYVUjS2oIlAEULsmjnV9xtssd0s0H1cuD"
+  ApiKey = "p@K7!uR$fT8wZq#nE*GvA%Cj&mS9bV_hY4gD2sF-L6cI1eO3x"
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
-  processes = ['app']
+  processes = ["app"]
 
 [[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
+  memory = "1gb"
+  cpu_kind = "shared"
   cpus = 1
