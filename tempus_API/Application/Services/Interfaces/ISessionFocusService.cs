@@ -5,7 +5,7 @@ namespace Application.Services.Interfaces
 {
     public interface ISessionFocusService : IServiceBase
     {
-        void InitiateFocus(InitiateFocusRequest focusRequest);
+        Guid InitiateFocus(InitiateFocusRequest focusRequest);
         void InformUnfocusedTime(Guid sessionUUID, int minutesOnfocused);
         void StopFocus(Guid sessionUUID);
     }

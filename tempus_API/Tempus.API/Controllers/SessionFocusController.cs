@@ -4,11 +4,13 @@ using Domain.Messaging;
 using Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Tempus.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class SessionFocusController : ControllerBase
     {
         private readonly ISessionFocusService _sessionFocusService;
@@ -25,8 +27,8 @@ namespace Tempus.API.Controllers
         {
             try
             {
-                _sessionFocusService.InitiateFocus(initiateFocusRequest);
-                return Ok();
+                var sessionUuid = _sessionFocusService.InitiateFocus(initiateFocusRequest);
+                return Ok(sessionUuid );
             }
             catch (TempusException temEx)
             {

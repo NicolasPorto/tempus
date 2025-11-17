@@ -8,9 +8,14 @@ import 'screens/home_screen.dart';
 import 'services/storage_service.dart';
 import 'services/authentication_service.dart';
 import 'screens/auth_wrapper.dart';
+import 'services/api_service.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // REMOVED HttpOverrides.global = MyHttpOverrides();
+
   final prefs = await SharedPreferences.getInstance();
   await StorageService.initialize(prefs);
   runApp(
@@ -19,6 +24,10 @@ void main() async {
         Provider(create: (context) => AuthenticationService()),
         ChangeNotifierProvider(create: (context) => TempusGlobals()),
         ChangeNotifierProvider<ScreenDimmer>(create: (context) => screenDimmer),
+        ProxyProvider<AuthenticationService, ApiService>(
+          update: (context, authService, previousApiService) =>
+              ApiService(authService),
+        ),
       ],
       child: const TempusApp(),
     ),

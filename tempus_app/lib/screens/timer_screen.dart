@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:tempus_app/libraries/globals.dart';
 import 'package:tempus_app/libraries/screen_dimmer.dart';
 import 'package:tempus_app/models/session.dart';
+import 'package:tempus_app/services/api_service.dart';
 import '../widgets/timer_controls.dart';
 import '../widgets/subject_manager_modal.dart';
 import '../models/subject.dart';
@@ -44,6 +44,9 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
   Timer? _timer;
   Timer? _autoDimmingTimer;
   bool _isRunning = false;
+  String? _sessionUuid;
+
+  late ApiService _apiService;
 
   FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isPlayerReady = false;
@@ -90,7 +93,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     await _playBeep();
   }
 
-  void _startTimer() {
+  void _startTimer() async {
     if (_selectedSubject == null || _isRunning) return;
 
     setState(() {
@@ -99,6 +102,20 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     });
     isFocusModeNotifier.value = true;
     _resetAutoDimmingTimer();
+
+    try {
+      print('Attempting to initiate focus session...');
+      final int studyMinutes = _initialDuration ~/ 60;
+
+      _sessionUuid = await _apiService.initiateFocus(
+        DateTime.now(),
+        studyMinutes,
+      );
+
+      print('Focus session initiated with UUID: $_sessionUuid');
+    } catch (e) {
+      print('Error initiating focus session: $e');
+    }
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_currentDuration <= 0) {
@@ -119,9 +136,21 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     });
   }
 
-  void _stopTimer() {
+  void _stopTimer() async {
     _autoDimmingTimer?.cancel();
     screenDimmer.stopBlackout();
+
+    if (_sessionUuid != null) {
+      try {
+        print('Attempting to stop focus session: $_sessionUuid');
+        await _apiService.stopFocus(_sessionUuid!);
+        print('Focus session stopped successfully.');
+      } catch (e) {
+        print('Error stopping focus session: $e');
+      } finally {
+        _sessionUuid = null;
+      }
+    }
 
     if (_selectedSubject != null) {
       final session = SessionLog(
@@ -189,6 +218,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
   @override
   void initState() {
     super.initState();
+    _apiService = Provider.of<ApiService>(context, listen: false);
     _loadSubjects();
     screenDimmer.onReveal = _resetAutoDimmingTimer;
     _player.openPlayer().then((_) {
@@ -489,8 +519,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                                         ),
                                         const SizedBox(width: 8),
                                         GestureDetector(
-                                          onTap:
-                                          _showSubjectManagerModal,
+                                          onTap: _showSubjectManagerModal,
                                           child: const Text(
                                             'Gerenciar',
                                             style: TextStyle(
@@ -511,7 +540,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
                         _isLoading
                             ? const Center(
                           child: Padding(
@@ -565,7 +593,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                               ),
                               borderRadius: BorderRadius.circular(12),
                               isExpanded: true,
-
                               onChanged: _subjects.isEmpty
                                   ? null
                                   : (Subject? newValue) {
@@ -573,7 +600,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                                   _selectedSubject = newValue;
                                 });
                               },
-
                               hint: const Text(
                                 'Escolha uma matéria...',
                                 style: TextStyle(
@@ -584,7 +610,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                                   height: 1.43,
                                 ),
                               ),
-
                               items: _subjects.map((Subject subject) {
                                 final isSelected =
                                     subject == _selectedSubject;
@@ -626,49 +651,52 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                                   ),
                                 );
                               }).toList(),
-
-                              selectedItemBuilder: (BuildContext context) {
-                                return _subjects.map<Widget>((
-                                    Subject item,
-                                    ) {
-                                  return Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      if (_selectedSubject != null)
-                                        Row(
-                                          children: [
-                                            Container(
-                                              width: 10,
-                                              height: 10,
-                                              margin:
-                                              const EdgeInsets.only(
-                                                right: 8,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Color(
-                                                  _selectedSubject!
-                                                      .colorValue,
+                              selectedItemBuilder:
+                                  (BuildContext context) {
+                                return _subjects.map<Widget>(
+                                      (
+                                      Subject item,
+                                      ) {
+                                    return Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        if (_selectedSubject != null)
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 10,
+                                                height: 10,
+                                                margin:
+                                                const EdgeInsets.only(
+                                                  right: 8,
                                                 ),
-                                                shape: BoxShape.circle,
+                                                decoration: BoxDecoration(
+                                                  color: Color(
+                                                    _selectedSubject!
+                                                        .colorValue,
+                                                  ),
+                                                  shape: BoxShape.circle,
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              _selectedSubject!.name,
-                                              style: const TextStyle(
-                                                color: Color(0xFFF4F4F4),
-                                                fontSize: 14,
-                                                fontFamily: 'Arimo',
-                                                fontWeight:
-                                                FontWeight.w400,
-                                                height: 1.43,
+                                              Text(
+                                                _selectedSubject!.name,
+                                                style: const TextStyle(
+                                                  color:
+                                                  Color(0xFFF4F4F4),
+                                                  fontSize: 14,
+                                                  fontFamily: 'Arimo',
+                                                  fontWeight:
+                                                  FontWeight.w400,
+                                                  height: 1.43,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                    ],
-                                  );
-                                }).toList();
+                                            ],
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ).toList();
                               },
                             ),
                           ),
@@ -687,7 +715,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                     isRunning: _isRunning,
                   ),
                   const SizedBox(height: 40),
-
                   if (_subjects.isEmpty && !_isLoading)
                     Container(
                       width: double.infinity,

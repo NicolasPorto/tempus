@@ -15,12 +15,14 @@ namespace Application.Services
             sessionFocusRepository.Update(sessionFocus);
         }
 
-        public void InitiateFocus(InitiateFocusRequest focusRequest)
+        public Guid InitiateFocus(InitiateFocusRequest focusRequest)
         {
             var sessionFocus = 
-                new SessionFocus(focusRequest.StartTime, focusRequest.StudyingMinutes, focusRequest.BreakMinutes);
+                new SessionFocus(focusRequest.StartTime, focusRequest.StudyingMinutes, focusRequest.BreakMinutes, focusRequest.Auth0UserId);
 
             sessionFocusRepository.Insert(sessionFocus);
+
+            return sessionFocus.UUID;
         }
 
         public void StopFocus(Guid sessionUUID)

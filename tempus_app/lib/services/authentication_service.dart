@@ -28,12 +28,15 @@ class AuthenticationService {
     try {
       final Credentials credentials = await auth0
           .webAuthentication(scheme: 'com.dev.tempusapp')
-          .login(scopes: {
-        'openid',
-        'profile',
-        'email',
-        'offline_access'
-      });
+          .login(
+          audience: 'https://tempusapi.fly.dev/',
+          scopes: {
+            'openid',
+            'profile',
+            'email',
+            'offline_access'
+          }
+      );
 
       this.credentials = credentials;
       print('Access Token: ${credentials.accessToken}');

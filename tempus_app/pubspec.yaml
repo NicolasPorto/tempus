@@ -23,6 +23,7 @@ dependencies:
   flutter_sound: ^9.3.0
   permission_handler: ^11.3.1
   auth0_flutter: ^1.4.1
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:

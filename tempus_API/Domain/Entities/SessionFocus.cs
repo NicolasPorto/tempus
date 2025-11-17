@@ -12,10 +12,11 @@ namespace Domain.Entities
         public int? BreakMinutes { get; set; }
         public int? DistractedMinutes { get; set; }
         public override Guid UUID { get; set; }
+        public string Auth0Identifier { get; set; }
 
         public SessionFocus() {}
 
-        public SessionFocus(DateTime startTime, int studyingMinutes, int? breakMinutes)
+        public SessionFocus(DateTime startTime, int studyingMinutes, int? breakMinutes, string auth0Identifier)
         {
             UUID = Guid.NewGuid();
             StartDtTime = startTime;
@@ -29,6 +30,7 @@ namespace Domain.Entities
 
             BreakMinutes = breakMinutes;
             SupposedFinish = StartDtTime.AddMinutes(studyingMinutes);
+            Auth0Identifier = auth0Identifier;
         }
     }
 }
