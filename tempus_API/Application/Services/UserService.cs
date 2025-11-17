@@ -74,57 +74,8 @@ namespace Application.Services
 
         public void CreateUser(CreateUserRequest createUserRequest)
         {
-            var managementClient = GetManagementClient();
-
-            var newUserRequest = new UserCreateRequest
-            {
-                Email = createUserRequest.Email,
-                Password = createUserRequest.Password,
-                FullName = createUserRequest.Name,
-                Connection = "Username-Password-Authentication", 
-                EmailVerified = true
-            };
-
-            User userCreatedAuth = null;
-            try
-            {
-                userCreatedAuth =
-                    managementClient.Users.CreateAsync(newUserRequest).GetAwaiter().GetResult();
-            }
-            catch (ErrorApiException ex)
-            {
-                throw new TempusException(ex.Message);
-            }
-
-
-            var userTempus = new Domain.Entities.User(userCreatedAuth);
+            var userTempus = new Domain.Entities.User(createUserRequest);
             _userRepository.Insert(userTempus);
-        }
-
-        public string Authenticate(LoginRequest loginRequest)
-        {
-            try
-            {
-                var authClient = new AuthenticationApiClient(_auth0Domain);
-
-                var tokenRequest = new ResourceOwnerTokenRequest
-                {
-                        ClientId = _m2mClientId,
-                    ClientSecret = _m2mClientSecret,
-                    Username = loginRequest.Email,
-                    Password = loginRequest.Password,
-                    Audience = _managementApiAudience,
-                    Scope = "openid profile email"
-                };
-
-                var tokenResponse = authClient.GetTokenAsync(tokenRequest).GetAwaiter().GetResult();
-
-                return tokenResponse.AccessToken;
-            }
-            catch (ErrorApiException ex)
-            {
-                throw new TempusException(ex.Message);
-            }
         }
     }
 }
