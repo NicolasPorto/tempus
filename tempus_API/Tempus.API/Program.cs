@@ -4,8 +4,18 @@ using Domain.Base.Repositories;
 using Domain.Base.Repository;
 using Domain.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -27,10 +37,10 @@ InjectRepositories(builder.Services);
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
 
 app.UseHttpsRedirection();
 
