@@ -7,7 +7,6 @@ namespace Domain.Entities
     public class User : EntityBase
     {
         public override Guid UUID { get; set; }
-        public string Name { get; set; }
         public string Email { get; set; }
         public string Auth0Identifier { get; set; }
         public SubscriptionType SubscriptionType { get; set; }
@@ -16,7 +15,6 @@ namespace Domain.Entities
         public User(CreateUserRequest userAuth0)
         {
             UUID = Guid.NewGuid();
-            Name = userAuth0.name;
             Email = userAuth0.email;
             Auth0Identifier = userAuth0.auth0_id;
             SubscriptionType = SubscriptionType.Free;
