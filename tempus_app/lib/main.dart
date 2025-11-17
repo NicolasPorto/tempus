@@ -6,6 +6,8 @@ import '/libraries/globals.dart';
 import '/libraries/screen_dimmer.dart';
 import 'screens/home_screen.dart';
 import 'services/storage_service.dart';
+import 'services/authentication_service.dart';
+import 'screens/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +16,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider(create: (context) => AuthenticationService()),
         ChangeNotifierProvider(create: (context) => TempusGlobals()),
         ChangeNotifierProvider<ScreenDimmer>(create: (context) => screenDimmer),
       ],
@@ -33,7 +36,7 @@ class TempusApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
       ),
       debugShowCheckedModeBanner: false,
-      home: const BlackoutWrapper(),
+      home: const AuthWrapper(),
     );
   }
 }

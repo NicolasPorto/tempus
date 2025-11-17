@@ -16,7 +16,7 @@ namespace Tempus.API.Controllers
             _logger = logger;
         }
 
-        [HttpPost]
+        [HttpPost("sync")]
         public IActionResult CreateUser(Domain.Messaging.CreateUserRequest createUserRequest)
         {
             try

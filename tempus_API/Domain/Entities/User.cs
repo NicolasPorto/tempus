@@ -13,12 +13,12 @@ namespace Domain.Entities
         public SubscriptionType SubscriptionType { get; set; }
         public User() {}
 
-        public User(Auth0.ManagementApi.Models.User userAuth0)
+        public User(CreateUserRequest userAuth0)
         {
             UUID = Guid.NewGuid();
-            Name = userAuth0.FullName;
-            Email = userAuth0.Email;
-            Auth0Identifier = userAuth0.UserId;
+            Name = userAuth0.name;
+            Email = userAuth0.email;
+            Auth0Identifier = userAuth0.auth0_id;
             SubscriptionType = SubscriptionType.Free;
         }
     }

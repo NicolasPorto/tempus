@@ -1,4 +1,4 @@
-package com.example.tempus_app
+package com.dev.tempusapp
 
 import io.flutter.embedding.android.FlutterActivity
 

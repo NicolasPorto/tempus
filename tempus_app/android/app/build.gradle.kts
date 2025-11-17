@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.tempus_app"
+    namespace = "com.dev.tempusapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,13 +21,18 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.tempus_app"
+        applicationId = "com.dev.tempusapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders.putAll(mapOf(
+            "auth0Domain" to "dev-tempus.us.auth0.com",
+            "auth0Scheme" to "com.dev.tempusapp",
+            "auth0ClientId" to "H6jITfyPgE1IyIR5rbyRCJtGjJ99alhK"
+        ))
     }
 
     buildTypes {

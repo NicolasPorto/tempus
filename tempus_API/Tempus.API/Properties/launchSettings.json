@@ -1,33 +1,24 @@
-﻿{
-  "$schema": "http://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:12096",
-      "sslPort": 44349
-    }
-  },
+{
   "profiles": {
     "http": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:5281",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5281"
     },
     "https": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7295;http://localhost:5281",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7295;http://localhost:5281"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -38,8 +29,28 @@
         "AUTH0_CLIENT_ID": "tgQNlIz0q8LFKCl555dudqwZcrluoET4",
         "AUTH0_CLIENT_SECRET": "XHOXOXt6Zc3NAEC77Sj0MK2NFgby8uyqcq0QhJvwGMgbOwCR5fOAQ6jZMB-uOEpy",
         "AUTH0_CLIENT_AUDIENCE": "https://dev-tempus.us.auth0.com/api/v2/",
-        "AUTH0_CLIENT_DOMAIN": "dev-tempus.us.auth0.com"
+        " ": "dev-tempus.us.auth0.com"
       }
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "environmentVariables": {
+        "ASPNETCORE_HTTPS_PORTS": "8081",
+        "ASPNETCORE_HTTP_PORTS": "8080"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:12096",
+      "sslPort": 44349
     }
   }
 }
