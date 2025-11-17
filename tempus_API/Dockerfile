@@ -16,8 +16,7 @@ RUN dotnet restore "Tempus.API.sln"
 
 # Copia todo o resto do código-fonte e compila
 COPY . .
-WORKDIR "/src/Tempus.API"
-RUN dotnet publish "Tempus.API.csproj" -c Release -o /app/publish
+RUN dotnet publish "Tempus.API/Tempus.API.csproj" -c Release -o /app/publish
 
 # ----- Estágio 2: Imagem Final -----
 # Usamos a imagem ASP.NET (menor) para rodar a aplicação
