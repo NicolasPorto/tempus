@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
-import 'login_screen.dart';
 import '../services/authentication_service.dart';
+import 'login_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -12,39 +12,40 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  bool _isLoading = true;
+  bool _isAuthenticated = false;
+
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
+    _checkAuthStatus();
   }
 
-  Future<void> _checkLoginStatus() async {
+  void _checkAuthStatus() async {
     final authService = Provider.of<AuthenticationService>(context, listen: false);
+    final isAuthenticated = await authService.checkCredentials();
 
-    final bool loggedIn = await authService.isLoggedIn();
-
-    if (!mounted) return;
-
-    if (loggedIn) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const BlackoutWrapper()),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
+    setState(() {
+      _isAuthenticated = isAuthenticated;
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color.fromARGB(255, 18, 32, 47),
-      body: Center(
-        child: CircularProgressIndicator(
-          color: Colors.white,
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color.fromARGB(255, 18, 32, 47),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.white),
         ),
-      ),
-    );
+      );
+    }
+
+    if (_isAuthenticated) {
+      return const BlackoutWrapper();
+    } else {
+      return const LoginScreen();
+    }
   }
 }

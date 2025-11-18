@@ -2,86 +2,67 @@ import 'package:flutter/material.dart';
 import 'package:auth0_flutter/auth0_flutter.dart';
 
 class AuthenticationService {
-  final Auth0 auth0 = Auth0(
-      'dev-tempus.us.auth0.com',
-      'H6jITfyPgE1IyIR5rbyRCJtGjJ99alhK'
+  final Auth0 _auth0 = Auth0(
+    'dev-tempus.us.auth0.com',
+    'H6jITfyPgE1IyIR5rbyRCJtGjJ99alhK',
   );
 
-  Credentials? credentials;
+  Credentials? _credentials;
+  Credentials? get credentials => _credentials;
 
-  Future<bool> isLoggedIn() async {
+  bool get isAuthenticated => _credentials != null;
+
+  Future<bool> checkCredentials() async {
     try {
-      final bool hasCredentials = await auth0.credentialsManager.hasValidCredentials();
-
+      final bool hasCredentials = await _auth0.credentialsManager.hasValidCredentials();
       if (hasCredentials) {
-        this.credentials = await auth0.credentialsManager.credentials();
+        _credentials = await _auth0.credentialsManager.credentials();
+        print('--- AUTH RESTORED ---');
+        print('Access Token: ${_credentials?.accessToken}');
+        print('-----------------------');
         return true;
       }
       return false;
     } catch (e) {
-      print("Error checking credentials: $e");
+      print('Error checking credentials: $e');
       return false;
     }
   }
 
-  Future<bool> login(BuildContext context) async {
+  Future<bool> login() async {
     try {
-      final Credentials credentials = await auth0
+      final creds = await _auth0
           .webAuthentication(scheme: 'com.dev.tempusapp')
-          .login(
-          audience: 'https://tempusapi.fly.dev/',
-          scopes: {
-            'openid',
-            'profile',
-            'email',
-            'offline_access'
-          }
-      );
+          .login(audience: 'https://tempusapi.fly.dev/');
+      _credentials = creds;
 
-      this.credentials = credentials;
-      print('Access Token: ${credentials.accessToken}');
-      print('User ID: ${credentials.user.sub}');
-      print('User Email: ${credentials.user.email}');
+      print('--- AUTH SUCCESS ---');
+      print('Access Token: ${_credentials?.accessToken}');
+      print('User ID: ${_credentials?.user.sub}');
+      print('--------------------');
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login successful! Welcome ${credentials.user.name}'))
-        );
-      }
+      await _auth0.credentialsManager.storeCredentials(_credentials!);
+
       return true;
-
-    } on WebAuthenticationException catch (e) {
-      print(e);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed: ${e.message}'))
-        );
-      }
-      return false;
+    } catch (e) {
+      print('Error logging in: $e');
+      throw e;
     }
   }
 
-  Future<void> logout(BuildContext context) async {
+  Future<bool> logout() async {
     try {
-      await auth0
+      await _auth0
           .webAuthentication(scheme: 'com.dev.tempusapp')
           .logout();
+      _credentials = null;
 
-      this.credentials = null;
+      await _auth0.credentialsManager.clearCredentials();
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout successful'))
-        );
-      }
-
-    } on WebAuthenticationException catch (e) {
-      print(e);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout failed: ${e.message}'))
-        );
-      }
+      return true;
+    } catch (e) {
+      print('Error logging out: $e');
+      throw e;
     }
   }
 }

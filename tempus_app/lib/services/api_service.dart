@@ -30,10 +30,6 @@ class ApiService {
     };
   }
 
-  Future<void> syncUser() async {
-    // ... (This logic should be updated with logging too)
-  }
-
   Future<String?> initiateFocus(DateTime startTime, int studyingMinutes,
       [int? breakMinutes]) async {
 
@@ -47,6 +43,7 @@ class ApiService {
         'startTime': startTime.toIso8601String(),
         'studyingMinutes': studyingMinutes,
         'breakMinutes': breakMinutes,
+        'auth0UserId': _authService.credentials!.user.sub
       });
     } catch (e) {
       print('Error preparing request: $e');
@@ -87,6 +84,5 @@ class ApiService {
   }
 
   Future<void> stopFocus(String sessionUuid) async {
-    // ... (This logic should be updated with logging too)
   }
 }

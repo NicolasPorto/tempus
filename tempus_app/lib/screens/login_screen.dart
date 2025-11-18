@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
 import '../services/authentication_service.dart';
+import '../services/api_service.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,28 +57,70 @@ class LoginScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Login / Sign Up'),
-                onPressed: () async {
-                  final authService = Provider.of<AuthenticationService>(
-                    context,
-                    listen: false,
-                  );
-
-                  final bool didLogin = await authService.login(context);
-
-                  if (didLogin && context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const BlackoutWrapper(),
-                      ),
-                    );
-                  }
-                },
+                onPressed: _isLoading ? null : _handleLogin,
+                child: _isLoading
+                    ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 3,
+                  ),
+                )
+                    : const Text('Login / Sign Up'),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authService = Provider.of<AuthenticationService>(
+      context,
+      listen: false,
+    );
+    final apiService = Provider.of<ApiService>(
+      context,
+      listen: false,
+    );
+
+    bool didLogin = false;
+    try {
+      didLogin = await authService.login();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: $e')),
+        );
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (didLogin && context.mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+
+        if (context.mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const BlackoutWrapper(),
+            ),
+          );
+        }
+      });
+    } else if (!didLogin) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }

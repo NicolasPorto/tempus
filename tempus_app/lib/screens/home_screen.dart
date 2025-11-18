@@ -35,15 +35,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   listen: false,
                 );
 
-                await authService.logout(context);
+                bool didLogout = false;
+                try {
+                  didLogout = await authService.logout();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Logout failed: $e')),
+                    );
+                  }
+                  return;
+                }
 
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
-                    ),
-                        (Route<dynamic> route) => false,
-                  );
+                if (didLogout && context.mounted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                            (Route<dynamic> route) => false,
+                      );
+                    }
+                  });
                 }
               },
             ),
