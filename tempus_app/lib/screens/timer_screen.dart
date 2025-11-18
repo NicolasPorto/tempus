@@ -278,9 +278,10 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                   opacity: animation,
                   child: ScaleTransition(
                     scale: animation.drive(
-                      Tween<double>(begin: 0.8, end: 1.0).chain(
-                        CurveTween(curve: Curves.easeOutCubic),
-                      ),
+                      Tween<double>(
+                        begin: 0.8,
+                        end: 1.0,
+                      ).chain(CurveTween(curve: Curves.easeOutCubic)),
                     ),
                     child: child,
                   ),
@@ -300,6 +301,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     return Center(
       key: const ValueKey('main_view'),
       child: Container(
+        color: Colors.transparent,
         constraints: const BoxConstraints(maxWidth: 378),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -542,165 +544,161 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
                         const SizedBox(height: 12),
                         _isLoading
                             ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          ),
-                        )
-                            : Container(
-                          width: double.infinity,
-                          height: 36,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                          ),
-                          decoration: ShapeDecoration(
-                            color: _subjects.isEmpty
-                                ? const Color(0x40171717)
-                                : const Color(0x7F171717),
-                            shape: RoundedRectangleBorder(
-                              side: BorderSide(
-                                width: 1,
-                                color: _subjects.isEmpty
-                                    ? const Color(0x19FFFEFE).withOpacity(
-                                  0.5,
-                                )
-                                    : const Color(0x19FFFEFE),
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<Subject>(
-                              value: _selectedSubject,
-                              icon: Opacity(
-                                opacity: _subjects.isEmpty ? 0.2 : 0.50,
-                                child: const Icon(
-                                  Icons.keyboard_arrow_down,
-                                  color: Color(0xFFD4D4D4),
-                                ),
-                              ),
-                              dropdownColor: const Color.fromARGB(
-                                202,
-                                23,
-                                23,
-                                23,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              isExpanded: true,
-                              onChanged: _subjects.isEmpty
-                                  ? null
-                                  : (Subject? newValue) {
-                                setState(() {
-                                  _selectedSubject = newValue;
-                                });
-                              },
-                              hint: const Text(
-                                'Escolha uma matéria...',
-                                style: TextStyle(
-                                  color: Color(0xFF717182),
-                                  fontSize: 14,
-                                  fontFamily: 'Arimo',
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.43,
-                                ),
-                              ),
-                              items: _subjects.map((Subject subject) {
-                                final isSelected =
-                                    subject == _selectedSubject;
-
-                                final textStyle = TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFFD4D4D4),
-                                  fontSize: 14,
-                                  fontFamily: 'Arimo',
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  height: 1.43,
-                                );
-
-                                return DropdownMenuItem<Subject>(
-                                  value: subject,
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 10,
-                                        height: 10,
-                                        margin: const EdgeInsets.only(
-                                          right: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Color(
-                                            subject.colorValue,
-                                          ),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      Text(
-                                        subject.name,
-                                        style: textStyle,
-                                      ),
-                                    ],
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
-                                );
-                              }).toList(),
-                              selectedItemBuilder:
-                                  (BuildContext context) {
-                                return _subjects.map<Widget>(
-                                      (
-                                      Subject item,
+                                ),
+                              )
+                            : Container(
+                                width: double.infinity,
+                                height: 36,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: ShapeDecoration(
+                                  color: _subjects.isEmpty
+                                      ? const Color(0x40171717)
+                                      : const Color(0x7F171717),
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                      width: 1,
+                                      color: _subjects.isEmpty
+                                          ? const Color(
+                                              0x19FFFEFE,
+                                            ).withOpacity(0.5)
+                                          : const Color(0x19FFFEFE),
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<Subject>(
+                                    value: _selectedSubject,
+                                    icon: Opacity(
+                                      opacity: _subjects.isEmpty ? 0.2 : 0.50,
+                                      child: const Icon(
+                                        Icons.keyboard_arrow_down,
+                                        color: Color(0xFFD4D4D4),
+                                      ),
+                                    ),
+                                    dropdownColor: const Color.fromARGB(
+                                      202,
+                                      23,
+                                      23,
+                                      23,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    isExpanded: true,
+                                    onChanged: _subjects.isEmpty
+                                        ? null
+                                        : (Subject? newValue) {
+                                            setState(() {
+                                              _selectedSubject = newValue;
+                                            });
+                                          },
+                                    hint: const Text(
+                                      'Escolha uma matéria...',
+                                      style: TextStyle(
+                                        color: Color(0xFF717182),
+                                        fontSize: 14,
+                                        fontFamily: 'Arimo',
+                                        fontWeight: FontWeight.w400,
+                                        height: 1.43,
+                                      ),
+                                    ),
+                                    items: _subjects.map((Subject subject) {
+                                      final isSelected =
+                                          subject == _selectedSubject;
+
+                                      final textStyle = TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFFD4D4D4),
+                                        fontSize: 14,
+                                        fontFamily: 'Arimo',
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                        height: 1.43,
+                                      );
+
+                                      return DropdownMenuItem<Subject>(
+                                        value: subject,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 10,
+                                              height: 10,
+                                              margin: const EdgeInsets.only(
+                                                right: 8,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Color(
+                                                  subject.colorValue,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            Text(
+                                              subject.name,
+                                              style: textStyle,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    selectedItemBuilder: (BuildContext context) {
+                                      return _subjects.map<Widget>((
+                                        Subject item,
                                       ) {
-                                    return Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        if (_selectedSubject != null)
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 10,
-                                                height: 10,
-                                                margin:
-                                                const EdgeInsets.only(
-                                                  right: 8,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Color(
-                                                    _selectedSubject!
-                                                        .colorValue,
+                                        return Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            if (_selectedSubject != null)
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    width: 10,
+                                                    height: 10,
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          right: 8,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Color(
+                                                        _selectedSubject!
+                                                            .colorValue,
+                                                      ),
+                                                      shape: BoxShape.circle,
+                                                    ),
                                                   ),
-                                                  shape: BoxShape.circle,
-                                                ),
+                                                  Text(
+                                                    _selectedSubject!.name,
+                                                    style: const TextStyle(
+                                                      color: Color(0xFFF4F4F4),
+                                                      fontSize: 14,
+                                                      fontFamily: 'Arimo',
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      height: 1.43,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              Text(
-                                                _selectedSubject!.name,
-                                                style: const TextStyle(
-                                                  color:
-                                                  Color(0xFFF4F4F4),
-                                                  fontSize: 14,
-                                                  fontFamily: 'Arimo',
-                                                  fontWeight:
-                                                  FontWeight.w400,
-                                                  height: 1.43,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                      ],
-                                    );
-                                  },
-                                ).toList();
-                              },
-                            ),
-                          ),
-                        ),
+                                          ],
+                                        );
+                                      }).toList();
+                                    },
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/timer_screen.dart';
 import '../screens/tasks_screen.dart';
-// import '../screens/stats_screen.dart'; // Mantenha importado se o arquivo existir
 
 class NavigationContainer extends StatefulWidget {
   const NavigationContainer({super.key});

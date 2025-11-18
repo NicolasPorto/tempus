@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
-import '../widgets/animated_background.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({Key? key}) : super(key: key);
@@ -18,63 +17,58 @@ class StatsScreen extends StatelessWidget {
       bySubject[sess.subjectId] =
           (bySubject[sess.subjectId] ?? 0) + sess.durationMinutes;
 
-    return OrbDynamicBackground(
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text('Estatísticas'),
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text('Estatísticas'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Total tempo de foco',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '$totalMinutes minutos',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Total tempo de foco',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$totalMinutes minutos',
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Por assunto',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ...store.subjects.map((s) {
+              final minutes = bySubject[s.id] ?? 0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 8,
+                      backgroundColor: Color(s.colorValue),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(s.name)),
+                    Text('$minutes min'),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Por assunto',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              ...store.subjects.map((s) {
-                final minutes = bySubject[s.id] ?? 0;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 8,
-                        backgroundColor: Color(s.colorValue),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(s.name)),
-                      Text('$minutes min'),
-                    ],
-                  ),
-                );
-              }).toList(),
-              const SizedBox(height: 16),
-              const Text(
-                'Sessões recentes',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Expanded(child: _recentSessions(store)),
-            ],
-          ),
+              );
+            }).toList(),
+            const SizedBox(height: 16),
+            const Text(
+              'Sessões recentes',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Expanded(child: _recentSessions(store)),
+          ],
         ),
       ),
     );
