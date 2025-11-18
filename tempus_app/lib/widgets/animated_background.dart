@@ -1,16 +1,15 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class OrbDynamicBackground extends StatefulWidget {
+class AnimatedBackground extends StatefulWidget {
   final Widget child;
-  const OrbDynamicBackground({Key? key, required this.child}) : super(key: key);
+  const AnimatedBackground({Key? key, required this.child}) : super(key: key);
 
   @override
-  State<OrbDynamicBackground> createState() => _OrbDynamicBackgroundState();
+  State<AnimatedBackground> createState() => _AnimatedBackgroundState();
 }
 
-class _OrbDynamicBackgroundState extends State<OrbDynamicBackground>
+class _AnimatedBackgroundState extends State<AnimatedBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final Random _random = Random();

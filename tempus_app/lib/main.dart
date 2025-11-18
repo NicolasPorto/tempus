@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tempus_app/widgets/animated_background.dart';
 import '/libraries/globals.dart';
 import '/libraries/screen_dimmer.dart';
 import 'screens/home_screen.dart';
@@ -9,13 +10,9 @@ import 'services/storage_service.dart';
 import 'services/authentication_service.dart';
 import 'screens/auth_wrapper.dart';
 import 'services/api_service.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // REMOVED HttpOverrides.global = MyHttpOverrides();
-
   final prefs = await SharedPreferences.getInstance();
   await StorageService.initialize(prefs);
   runApp(
@@ -42,10 +39,13 @@ class TempusApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tempus',
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
+        scaffoldBackgroundColor: Colors.transparent,
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.indigo,
+        ).copyWith(background: Colors.transparent),
       ),
       debugShowCheckedModeBanner: false,
-      home: const AuthWrapper(),
+      home: const AnimatedBackground(child: AuthWrapper()),
     );
   }
 }
@@ -53,10 +53,7 @@ class TempusApp extends StatelessWidget {
 class BlackoutWrapper extends StatelessWidget {
   const BlackoutWrapper({super.key});
 
-  Widget _blackoutOverlay(
-      BuildContext context,
-      ScreenDimmer dimmer,
-      ) {
+  Widget _blackoutOverlay(BuildContext context, ScreenDimmer dimmer) {
     final blackoutOpacity = dimmer.blackoutOpacity;
     final isBlackedOut = dimmer.blackoutOpacity > 0.8;
     final currentOffset = dimmer.dragOffset;
@@ -78,7 +75,7 @@ class BlackoutWrapper extends StatelessWidget {
             dimmer.resetDragOffset();
           },
           child: Container(
-            color: Colors.black,
+            color: Colors.transparent,
             constraints: const BoxConstraints.expand(),
             child: Stack(
               alignment: Alignment.bottomCenter,
@@ -126,7 +123,7 @@ class BlackoutWrapper extends StatelessWidget {
         return Stack(
           children: [
             const HomeScreen(),
-            if (dimmer.blackoutOpacity > 0.0) _blackoutOverlay(context, dimmer)
+            if (dimmer.blackoutOpacity > 0.0) _blackoutOverlay(context, dimmer),
           ],
         );
       },

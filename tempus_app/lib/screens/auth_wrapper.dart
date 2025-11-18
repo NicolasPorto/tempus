@@ -22,7 +22,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   void _checkAuthStatus() async {
-    final authService = Provider.of<AuthenticationService>(context, listen: false);
+    final authService = Provider.of<AuthenticationService>(
+      context,
+      listen: false,
+    );
     final isAuthenticated = await authService.checkCredentials();
 
     setState(() {
@@ -36,9 +39,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color.fromARGB(255, 18, 32, 47),
-        body: Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 

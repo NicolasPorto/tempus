@@ -122,10 +122,10 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           orElse: () => store.subjects.first,
         );
         return Card(
-          color: const Color(0x7F171717), // Cor de fundo escuro e transparente
+          color: const Color(0x7F171717), 
           margin: const EdgeInsets.only(
             bottom: 8,
-          ), // Adiciona espaçamento entre os itens
+          ), 
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
