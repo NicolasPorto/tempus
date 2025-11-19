@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../screens/timer_screen.dart';
 import '../screens/tasks_screen.dart';
+import '../screens/stats_screen.dart';
+import '../controller/timer_controller.dart';
 
 class NavigationContainer extends StatefulWidget {
   const NavigationContainer({super.key});
@@ -21,16 +23,7 @@ class _NavigationContainerState extends State<NavigationContainer> {
   static const double _stepSize = _containerWidth / 3.0;
   static const double _initialOffset = (_stepSize - _buttonWidth) / 2.0;
 
-  final pages = const [
-    TimerScreen(),
-    TasksScreen(),
-    Center(
-      child: Text(
-        'Estatísticas (Em breve)',
-        style: TextStyle(color: Color(0xFFA0A0A0), fontSize: 20),
-      ),
-    ),
-  ];
+  final pages = const [TimerScreen(), TasksScreen(), StatsScreen()];
 
   final items = const [
     {'label': 'Timer', 'icon': Icons.timer, 'index': 0},
@@ -49,7 +42,7 @@ class _NavigationContainerState extends State<NavigationContainer> {
     return Column(
       children: [
         ValueListenableBuilder<bool>(
-          valueListenable: isFocusModeNotifier,
+          valueListenable: isFocusModeGlobalNotifier,
           builder: (context, isFocusMode, child) {
             if (isFocusMode) {
               return const SizedBox.shrink();
@@ -76,7 +69,7 @@ class _NavigationContainerState extends State<NavigationContainer> {
                   curve: Curves.easeInOut,
 
                   left: _initialOffset + (_current * _stepSize),
-                  top: (_containerHeight - _indicatorHeight) / 2.0,
+                  top: (_containerHeight - _indicatorHeight) / 3.0,
 
                   child: Container(
                     width: _buttonWidth,
@@ -130,7 +123,7 @@ class _NavigationContainerState extends State<NavigationContainer> {
                           _current = index;
                         });
                       },
-                      child: Container(
+                      child: SizedBox(
                         width: _buttonWidth,
                         height: _indicatorHeight,
                         child: Center(

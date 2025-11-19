@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'dart:math';
 import 'subject.dart';
 
 class Category {
@@ -19,7 +17,7 @@ class Category {
     );
   }
 
-  Subject toSubject() => Subject(id: this.UUID, name: this.Name, colorValue: convertToColorValue(this.HexColor));
+  Subject toSubject() => Subject(id: this.UUID, name: this.Name, colorValue: convertToColorValue(this.HexColor), categoryId: UUID );
 
   static int convertToColorValue(String hexColor) => int.parse(hexColor.substring(1, 7), radix: 16) + 0xFF000000;
 }
