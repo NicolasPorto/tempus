@@ -29,10 +29,16 @@ namespace Application.Services
         public AverageStudyTimeStatsRawQuery ObtainAverageStudiedMinutes(string auth0Identifier) 
             => sessionFocusRepository.ObtainAverageStudiedMinutes(auth0Identifier);
 
-        public void StopFocus(Guid sessionUUID)
+        public ObtainFinishedSessions ObtainFinishedSessions(string auth0Identifier)
+            => sessionFocusRepository.ObtainFinishedSessions(auth0Identifier);
+
+        public ObtainSessionStreak ObtainSessionStreak(string auth0Identifier)
+            => sessionFocusRepository.ObtainSessionStreak(auth0Identifier);
+
+        public void StopFocus(Guid sessionUUID, DateTime dtFinishTime)
         {
             var sessionFocus = (SessionFocus)sessionFocusRepository.Get(sessionUUID);
-            sessionFocus.FinishDtTime = DateTime.UtcNow;
+            sessionFocus.FinishDtTime = dtFinishTime;
             sessionFocusRepository.Update(sessionFocus);
         }
     }

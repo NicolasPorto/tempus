@@ -8,7 +8,9 @@ namespace Application.Services.Interfaces
     {
         Guid InitiateFocus(InitiateFocusRequest focusRequest);
         void InformUnfocusedTime(Guid sessionUUID, int minutesOnfocused);
-        void StopFocus(Guid sessionUUID);
-        public AverageStudyTimeStatsRawQuery ObtainAverageStudiedMinutes(string auth0Identifier);
+        void StopFocus(Guid sessionUUID, DateTime dtFinishTime);
+        AverageStudyTimeStatsRawQuery ObtainAverageStudiedMinutes(string auth0Identifier);
+        ObtainFinishedSessions ObtainFinishedSessions(string auth0Identifier);
+        ObtainSessionStreak ObtainSessionStreak(string auth0Identifier);
     }
 }

@@ -14,7 +14,10 @@ class AuthenticationService {
 
   Future<bool> checkCredentials() async {
     try {
+      // If a Refresh Token is present, this method automatically refreshes 
+      // the Access Token if it has expired.
       final bool hasCredentials = await _auth0.credentialsManager.hasValidCredentials();
+      
       if (hasCredentials) {
         _credentials = await _auth0.credentialsManager.credentials();
         print('--- AUTH RESTORED ---');
@@ -33,15 +36,26 @@ class AuthenticationService {
     try {
       final creds = await _auth0
           .webAuthentication(scheme: 'com.dev.tempusapp')
-          .login(audience: 'https://tempusapi.fly.dev/');
+          .login(
+            audience: 'https://tempusapi.fly.dev/',
+            // --- ADD THIS SECTION ---
+            scopes: {
+              'openid',
+              'profile',
+              'email',
+              'offline_access' // <--- This requests the Refresh Token
+            },
+          );
+      
       _credentials = creds;
 
       print('--- AUTH SUCCESS ---');
       print('Access Token: ${_credentials?.accessToken}');
-      print('User ID: ${_credentials?.user.sub}');
+      print('Refresh Token: ${_credentials?.refreshToken}'); // You should see this now
       print('--------------------');
 
-      await _auth0.credentialsManager.storeCredentials(_credentials!);
+      // REMOVED: await _auth0.credentialsManager.storeCredentials(_credentials!);
+      // Reason: The SDK stores it automatically on login.
 
       return true;
     } catch (e) {
@@ -56,9 +70,9 @@ class AuthenticationService {
           .webAuthentication(scheme: 'com.dev.tempusapp')
           .logout();
       _credentials = null;
-
+      
+      // This ensures the Refresh Token is removed from the device
       await _auth0.credentialsManager.clearCredentials();
-
       return true;
     } catch (e) {
       print('Error logging out: $e');

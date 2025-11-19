@@ -218,7 +218,7 @@ class TimerController extends ChangeNotifier {
   void _checkAlerts() {
     final int elapsedSeconds = _initialDuration - _currentDuration;
     if (elapsedSeconds > 0) {
-      if (elapsedSeconds % (10 * 60) == 0) {
+      if (elapsedSeconds % 60 == 0) {
         _triggerTenMinuteAlert();
       } else if (elapsedSeconds % 20 == 0) {
         _triggerFiveMinuteAlert();

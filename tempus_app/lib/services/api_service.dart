@@ -66,17 +66,17 @@ class ApiService {
         body: body,
       );
 
-      print('--- API RESPONSE: initiateFocus ---');
-      print('STATUS CODE: ${response.statusCode}');
-      print('BODY: ${response.body}');
-      print('-----------------------------------');
+    print('--- API RESPONSE: initiateFocus ---');
+    print('STATUS CODE: ${response.statusCode}');
+    print('BODY: ${response.body}');
+    print('-----------------------------------');
 
-      if (response.statusCode == 200) {
-        return response.body.replaceAll('"', '');
-      } else {
-        print('Failed to initiate focus. Status was not 200.');
-        return null;
-      }
+    if (response.statusCode == 200) {
+      return response.body.replaceAll('"', '');
+    } else {
+      print('Failed to initiate focus. Status was not 200.');
+      return null;
+    }
     } catch (e) {
       print('--- API ERROR: initiateFocus ---');
       print('Exception during HTTP call: $e');
@@ -224,9 +224,149 @@ class ApiService {
     }
   }
 
-  Future<void> stopFocus(String sessionUuid) async {
+  Future<dynamic> obtainAverageSessionStats() async {
+    final identifier = _authService.credentials!.user.sub;
+    final url = Uri.parse('$_baseUrl/SessionFocus/stats/average/$identifier');
+    Map<String, String> headers;
+    String body;
 
-    final url = Uri.parse('$_baseUrl/SessionFocus/stop/$sessionUuid');
+    try {
+      headers = await _getAuthHeaders();
+    } catch (e) {
+      print('Error preparing request: $e');
+      return [];
+    }
+
+    print('--- API REQUEST: initiateFocus ---');
+    print('URL: $url');
+    print('METHOD: POST');
+    print('HEADERS: $headers');
+    print('----------------------------------');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: headers
+      );
+
+      print('--- API RESPONSE: initiateFocus ---');
+      print('STATUS CODE: ${response.statusCode}');
+      print('BODY: ${response.body}');
+      print('-----------------------------------');
+
+      if (response.statusCode == 200) {
+        final parsedJson = jsonDecode(response.body);
+        return parsedJson;
+      } else {
+        print('Failed to initiate focus. Status was not 200.');
+        return [];
+      }
+    } catch (e) {
+      print('--- API ERROR: initiateFocus ---');
+      print('Exception during HTTP call: $e');
+      print('--------------------------------');
+      return [];
+    }
+  }
+
+  Future<dynamic> obtainFinishedSessions() async {
+    final identifier = _authService.credentials!.user.sub;
+    final url = Uri.parse('$_baseUrl/SessionFocus/stats/finished-sessions/$identifier');
+    Map<String, String> headers;
+    String body;
+
+    try {
+      headers = await _getAuthHeaders();
+    } catch (e) {
+      print('Error preparing request: $e');
+      return [];
+    }
+
+    print('--- API REQUEST: initiateFocus ---');
+    print('URL: $url');
+    print('METHOD: POST');
+    print('HEADERS: $headers');
+    print('----------------------------------');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: headers
+      );
+
+      print('--- API RESPONSE: initiateFocus ---');
+      print('STATUS CODE: ${response.statusCode}');
+      print('BODY: ${response.body}');
+      print('-----------------------------------');
+
+      if (response.statusCode == 200) {
+        final parsedJson = jsonDecode(response.body);
+        return parsedJson['finishedSessions'];
+      } else {
+        print('Failed to initiate focus. Status was not 200.');
+        return [];
+      }
+    } catch (e) {
+      print('--- API ERROR: initiateFocus ---');
+      print('Exception during HTTP call: $e');
+      print('--------------------------------');
+      return [];
+    }
+  }
+
+  Future<dynamic> obtainSessionStreak() async {
+    final identifier = _authService.credentials!.user.sub;
+    final url = Uri.parse('$_baseUrl/SessionFocus/stats/session-streak/$identifier');
+    Map<String, String> headers;
+    String body;
+
+    try {
+      headers = await _getAuthHeaders();
+    } catch (e) {
+      print('Error preparing request: $e');
+      return [];
+    }
+
+    print('--- API REQUEST: initiateFocus ---');
+    print('URL: $url');
+    print('METHOD: POST');
+    print('HEADERS: $headers');
+    print('----------------------------------');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: headers
+      );
+
+      print('--- API RESPONSE: initiateFocus ---');
+      print('STATUS CODE: ${response.statusCode}');
+      print('BODY: ${response.body}');
+      print('-----------------------------------');
+
+      if (response.statusCode == 200) {
+        final parsedJson = jsonDecode(response.body);
+        return parsedJson['currentStreak'];
+      } else {
+        print('Failed to initiate focus. Status was not 200.');
+        return [];
+      }
+    } catch (e) {
+      print('--- API ERROR: initiateFocus ---');
+      print('Exception during HTTP call: $e');
+      print('--------------------------------');
+      return [];
+    }
+  }
+
+ Future<void> stopFocus(String sessionUuid, [DateTime? dtFinishTime]) async {
+    final dtFinishTime = DateTime.now();
+
+    final uri = Uri.parse('$_baseUrl/SessionFocus/stop/$sessionUuid');
+    final url = uri.replace(queryParameters: {
+      'dtFinishTime': dtFinishTime.toIso8601String(),
+    });
+
     Map<String, String> headers;
     String body;
 

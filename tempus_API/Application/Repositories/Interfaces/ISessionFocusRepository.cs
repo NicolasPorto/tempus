@@ -10,5 +10,7 @@ namespace Domain.Repositories.Interfaces
         public void Update(SessionFocus sessionFocus);
         public SessionFocus Get(Guid uuid);
         public AverageStudyTimeStatsRawQuery ObtainAverageStudiedMinutes(string auth0Identifier);
+        public ObtainFinishedSessions ObtainFinishedSessions(string auth0Identifier);
+        public ObtainSessionStreak ObtainSessionStreak(string auth0Identifier);
     }
 }
