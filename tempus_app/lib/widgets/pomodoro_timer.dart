@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../libraries/globals.dart';
@@ -11,8 +10,7 @@ class PomodoroTimer extends StatefulWidget {
   final int minutes;
   final FutureOr<void> Function() onComplete;
 
-  const PomodoroTimer({Key? key, this.minutes = 25, required this.onComplete})
-    : super(key: key);
+  const PomodoroTimer({super.key, this.minutes = 25, required this.onComplete});
 
   @override
   State<PomodoroTimer> createState() => _PomodoroTimerState();
@@ -82,7 +80,7 @@ class _PomodoroTimerState extends State<PomodoroTimer>
     _timer?.cancel();
     _anim.stop();
     setState(() => running = false);
-    
+
     globals.onFocus = false;
     screenDimmer.stopBlackout();
   }
@@ -111,76 +109,76 @@ class _PomodoroTimerState extends State<PomodoroTimer>
     final boxSize = screenWidth * 0.7;
 
     return GestureDetector(
-        onTap: running ? () => _pause(context) : () => _start(context),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: boxSize,
-                  height: boxSize,
-                  child: CustomPaint(painter: _RadialPainter(progress: progress)),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${_pad(displayMin)}:${_pad(displaySec)}',
-                      style: const TextStyle(
-                        fontSize: 42,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 5,
-                            color: Colors.deepPurpleAccent,
-                            offset: Offset(0, 0),
-                          ),
-                        ],
-                      ),
+      onTap: running ? () => _pause(context) : () => _start(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: boxSize,
+                height: boxSize,
+                child: CustomPaint(painter: _RadialPainter(progress: progress)),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${_pad(displayMin)}:${_pad(displaySec)}',
+                    style: const TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 5,
+                          color: Colors.deepPurpleAccent,
+                          offset: Offset(0, 0),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      running ? 'Em foco...' : 'Pressione para iniciar',
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    running ? 'Em foco...' : 'Pressione para iniciar',
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
                     ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _ActionButton(
-                  text: 'Recomeçar',
-                  icon: Icons.refresh,
-                  onPressed: () => _reset(context),
-                ),
-                const SizedBox(width: 16),
-                _ActionButton(
-                  text: running ? 'Pausar' : 'Iniciar',
-                  icon: running ? Icons.pause : Icons.play_arrow,
-                  onPressed: running ? () => _pause(context) : () => _start(context),
-                  primary: true,
                   ),
                 ],
-              )
+              ),
             ],
           ),
-        );
+          const SizedBox(height: 24),
 
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ActionButton(
+                text: 'Recomeçar',
+                icon: Icons.refresh,
+                onPressed: () => _reset(context),
+              ),
+              const SizedBox(width: 16),
+              _ActionButton(
+                text: running ? 'Pausar' : 'Iniciar',
+                icon: running ? Icons.pause : Icons.play_arrow,
+                onPressed: running
+                    ? () => _pause(context)
+                    : () => _start(context),
+                primary: true,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
-// Botão
 class _ActionButton extends StatelessWidget {
   final String text;
   final IconData icon;
@@ -217,7 +215,6 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-// Pintor radial
 class _RadialPainter extends CustomPainter {
   final double progress;
   final double rotation;

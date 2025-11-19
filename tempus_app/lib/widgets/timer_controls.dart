@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import 'timer_painter.dart';
@@ -6,20 +5,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class TimerControls extends StatefulWidget {
   final Subject? selectedSubject;
-  final VoidCallback onToggleTimer; // Novo: Lidar com clique no botão
-  final VoidCallback? onResetTimer; // Novo: Lidar com clique no botão Reset
-  final int currentDuration; // Novo: Tempo restante atual
-  final int initialDuration; // Novo: Duração total (25 min)
-  final bool isRunning; // Novo: Estado de execução
+  final VoidCallback onToggleTimer;
+  final VoidCallback? onResetTimer;
+  final int currentDuration;
+  final int initialDuration;
+  final bool isRunning;
 
   const TimerControls({
     super.key,
     required this.selectedSubject,
-    required this.onToggleTimer, // Deve ser required
+    required this.onToggleTimer,
     this.onResetTimer,
-    required this.currentDuration, // Deve ser required
-    required this.initialDuration, // Deve ser required
-    required this.isRunning, // Deve ser required
+    required this.currentDuration,
+    required this.initialDuration,
+    required this.isRunning,
   });
 
   @override
