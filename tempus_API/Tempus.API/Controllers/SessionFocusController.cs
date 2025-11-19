@@ -1,6 +1,7 @@
 using Application.Services.Interfaces;
 using Domain.Exceptions;
 using Domain.Messaging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
