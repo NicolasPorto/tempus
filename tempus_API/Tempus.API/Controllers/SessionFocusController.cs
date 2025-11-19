@@ -1,10 +1,8 @@
-using Application.Services;
 using Application.Services.Interfaces;
-using Domain.Messaging;
 using Domain.Exceptions;
+using Domain.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Tempus.API.Controllers
 {
@@ -28,7 +26,7 @@ namespace Tempus.API.Controllers
             try
             {
                 var sessionUuid = _sessionFocusService.InitiateFocus(initiateFocusRequest);
-                return Ok(sessionUuid );
+                return Ok(sessionUuid);
             }
             catch (TempusException temEx)
             {
@@ -84,6 +82,26 @@ namespace Tempus.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError);
             }
         }
+
+        [HttpGet("stats/average/{auth0Identifier}")]
+        public IActionResult StopSession(string auth0Identifier)
+        {
+            try
+            {
+                var avgRawQuery = _sessionFocusService.ObtainAverageStudiedMinutes(auth0Identifier);
+                return Ok(avgRawQuery);
+            }
+            catch (TempusException temEx)
+            {
+                return BadRequest(new ResponseBase
+                {
+                    Message = temEx.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
     }
 }
- 

@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Domain.Entities;
 using Domain.Messaging;
+using Domain.RawQueries;
 using Domain.Repositories.Interfaces;
 
 namespace Application.Services
@@ -24,6 +25,9 @@ namespace Application.Services
 
             return sessionFocus.UUID;
         }
+
+        public AverageStudyTimeStatsRawQuery ObtainAverageStudiedMinutes(string auth0Identifier) 
+            => sessionFocusRepository.ObtainAverageStudiedMinutes(auth0Identifier);
 
         public void StopFocus(Guid sessionUUID)
         {
