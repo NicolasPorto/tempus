@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../services/storage_service.dart';
+import '../services/api_service.dart';
+import 'package:provider/provider.dart';
 
 class SubjectManagerModal extends StatefulWidget {
   const SubjectManagerModal({super.key});
@@ -11,6 +13,7 @@ class SubjectManagerModal extends StatefulWidget {
 
 class _SubjectManagerModalState extends State<SubjectManagerModal> {
   final TextEditingController _nameController = TextEditingController();
+  late ApiService _apiService;
 
   final List<int> _availableColors = const [
     0xFFEF4444,
@@ -32,6 +35,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
     _selectedColorValue = _availableColors.first;
     _nameController.addListener(_updateButtonState);
     _updateButtonState();
+    _apiService = Provider.of<ApiService>(context, listen: false);
   }
 
   @override
@@ -55,10 +59,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedColorValue == null) return;
 
-    final newSubject = Subject(name: name, colorValue: _selectedColorValue!);
-
-    await StorageService.instance.addSubject(newSubject);
-
+    await _apiService.createCategory(name, _selectedColorValue!.toRadixString(16));
     if (mounted) {
       Navigator.of(context).pop();
     }

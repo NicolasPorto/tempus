@@ -25,6 +25,11 @@ public abstract class RepositoryBase<T1>(DbContext context) : IRepositoryBase wh
         context.SaveChanges();
     }
 
+    public List<T1> GetAll(Func<T1, bool> func)
+    {
+        return contextSet.Where(func).ToList();
+    }
+
     public List<T2> RawQuery<T2>(string sql, params object[] parameters) where T2 : class
     {
         return context.Database.SqlQueryRaw<T2>(sql, parameters).AsNoTracking()?.ToList();

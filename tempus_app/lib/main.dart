@@ -75,7 +75,7 @@ class BlackoutWrapper extends StatelessWidget {
             dimmer.resetDragOffset();
           },
           child: Container(
-            color: Colors.transparent,
+            color: Colors.black,
             constraints: const BoxConstraints.expand(),
             child: Stack(
               alignment: Alignment.bottomCenter,

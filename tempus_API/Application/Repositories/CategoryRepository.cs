@@ -15,5 +15,8 @@ namespace Application.Repositories
 
         public new void Delete(Category category)
             => base.Delete(category);
+
+        public List<Category> GetAll(string auth0Identifier)
+            => base.GetAll((x) => x.Auth0Identifier == auth0Identifier);
     }
 }

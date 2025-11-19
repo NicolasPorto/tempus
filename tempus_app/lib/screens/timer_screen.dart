@@ -8,11 +8,13 @@ import 'package:tempus_app/services/api_service.dart';
 import '../widgets/timer_controls.dart';
 import '../widgets/subject_manager_modal.dart';
 import '../models/subject.dart';
+import '../models/category.dart';
 import '../services/storage_service.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:vibration/vibration.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:typed_data';
+import 'dart:isolate';
 
 final ValueNotifier<bool> isFocusModeNotifier = ValueNotifier(false);
 
@@ -93,7 +95,40 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     await _playBeep();
   }
 
-  void _startTimer() async {
+  void _startTimer() {
+    try {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_currentDuration <= 0) {
+          _stopTimer();
+        } else {
+          setState(() {
+            _currentDuration--;
+          });
+
+          final int elapsedSeconds = _initialDuration - _currentDuration;
+
+          if (elapsedSeconds > 0 && elapsedSeconds % (10 * 60) == 0) {
+            _triggerTenMinuteAlert();
+          } else if (elapsedSeconds > 0 && elapsedSeconds % (20) == 0) {
+            _triggerFiveMinuteAlert();
+          }
+        }
+      });
+
+      print('Attempting to initiate focus session...');
+      final int studyMinutes = _initialDuration ~/ 60;
+      
+      Future.wait([_apiService.initiateFocus(
+        DateTime.now(),
+        studyMinutes)]).then((sessionUuid) => {
+          _sessionUuid = sessionUuid[0]
+      });
+
+      print('Focus session initiated with UUID: $_sessionUuid');
+    } catch (e) {
+      print('Error initiating focus session: $e');
+    }
+
     if (_selectedSubject == null || _isRunning) return;
 
     setState(() {
@@ -103,54 +138,14 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     isFocusModeNotifier.value = true;
     _resetAutoDimmingTimer();
 
-    try {
-      print('Attempting to initiate focus session...');
-      final int studyMinutes = _initialDuration ~/ 60;
+    
 
-      _sessionUuid = await _apiService.initiateFocus(
-        DateTime.now(),
-        studyMinutes,
-      );
 
-      print('Focus session initiated with UUID: $_sessionUuid');
-    } catch (e) {
-      print('Error initiating focus session: $e');
-    }
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_currentDuration <= 0) {
-        _stopTimer();
-      } else {
-        setState(() {
-          _currentDuration--;
-        });
-
-        final int elapsedSeconds = _initialDuration - _currentDuration;
-
-        if (elapsedSeconds > 0 && elapsedSeconds % (10 * 60) == 0) {
-          _triggerTenMinuteAlert();
-        } else if (elapsedSeconds > 0 && elapsedSeconds % (20) == 0) {
-          _triggerFiveMinuteAlert();
-        }
-      }
-    });
   }
 
   void _stopTimer() async {
     _autoDimmingTimer?.cancel();
     screenDimmer.stopBlackout();
-
-    if (_sessionUuid != null) {
-      try {
-        print('Attempting to stop focus session: $_sessionUuid');
-        await _apiService.stopFocus(_sessionUuid!);
-        print('Focus session stopped successfully.');
-      } catch (e) {
-        print('Error stopping focus session: $e');
-      } finally {
-        _sessionUuid = null;
-      }
-    }
 
     if (_selectedSubject != null) {
       final session = SessionLog(
@@ -169,6 +164,18 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     if (_isFocusMode) {
       setState(() => _isFocusMode = false);
       isFocusModeNotifier.value = false;
+    }
+
+        if (_sessionUuid != null) {
+      try {
+        print('Attempting to stop focus session: $_sessionUuid');
+        Future.wait([_apiService.stopFocus(_sessionUuid!)]);
+        print('Focus session stopped successfully.');
+      } catch (e) {
+        print('Error stopping focus session: $e');
+      } finally {
+        _sessionUuid = null;
+      }
     }
   }
 
@@ -235,7 +242,9 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
     });
 
     try {
-      final subjects = StorageService.instance.subjects;
+      var categories = await _apiService.listAllCategories();
+
+      final subjects = categoriesToSubject(categories);
 
       setState(() {
         _subjects = subjects;
@@ -249,6 +258,10 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
         _isLoading = false;
       });
     }
+  }
+
+  List<Subject> categoriesToSubject(List<Category> categories) {
+    return categories.map((e) => e.toSubject()).toList();
   }
 
   void _showSubjectManagerModal() async {

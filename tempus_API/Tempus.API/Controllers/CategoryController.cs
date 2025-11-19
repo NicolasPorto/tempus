@@ -1,34 +1,34 @@
-using Application.Services;
-using Application.Services.Interfaces;
-using Domain.Messaging;
+﻿using Application.Services.Interfaces;
 using Domain.Exceptions;
+using Domain.Messaging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Tempus.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
-    public class SessionFocusController : ControllerBase
+    //[Authorize]
+    public class CategoryController : ControllerBase
     {
-        private readonly ISessionFocusService _sessionFocusService;
-        private readonly ILogger<SessionFocusController> _logger;
+        private readonly ICategoryService _categoryService;
 
-        public SessionFocusController(ISessionFocusService sessionFocusService, ILogger<SessionFocusController> logger)
+        public CategoryController(ICategoryService categoryService)
         {
-            _sessionFocusService = sessionFocusService;
-            _logger = logger;
+            _categoryService = categoryService;
         }
 
         [HttpPost]
-        public IActionResult InitiateFocus(InitiateFocusRequest initiateFocusRequest)
+        public IActionResult CreateCategory(CreateCategoryRequest createCategoryRequest)
         {
             try
             {
-                var sessionUuid = _sessionFocusService.InitiateFocus(initiateFocusRequest);
-                return Ok(sessionUuid );
+                var categoryId = _categoryService.CreateCategory(createCategoryRequest);
+                return Ok(new ResponseBase
+                {
+                    Message = categoryId.ToString()
+                });
             }
             catch (TempusException temEx)
             {
@@ -43,12 +43,12 @@ namespace Tempus.API.Controllers
             }
         }
 
-        [HttpPost("inform-distraction/{sessionUUID}")]
-        public IActionResult InformUnfocusedTime(Guid sessionUUID, int minutesOnfocused)
+        [HttpDelete("{categoryUuid}")]
+        public IActionResult CreateCategory(Guid categoryUuid)
         {
             try
             {
-                _sessionFocusService.InformUnfocusedTime(sessionUUID, minutesOnfocused);
+                _categoryService.RemoveCategory(categoryUuid);
                 return Ok();
             }
             catch (TempusException temEx)
@@ -64,13 +64,13 @@ namespace Tempus.API.Controllers
             }
         }
 
-        [HttpPut("stop/{sessionUUID}")]
-        public IActionResult StopSession(Guid sessionUUID)
+        [HttpGet("{auth0Identifier}")]
+        public IActionResult CreateCategory(string auth0Identifier)
         {
             try
             {
-                _sessionFocusService.StopFocus(sessionUUID);
-                return Ok();
+                var categoryList = _categoryService.ListAll(auth0Identifier);
+                return Ok(categoryList);
             }
             catch (TempusException temEx)
             {
@@ -86,4 +86,3 @@ namespace Tempus.API.Controllers
         }
     }
 }
- 
