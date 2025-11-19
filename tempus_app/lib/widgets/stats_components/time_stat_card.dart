@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
-class SummaryStatCard extends StatelessWidget {
-  final String title;
-  final String value;
+class TimeStatCard extends StatelessWidget {
+  final String realTime;
+  final String plannedTime;
+  final String avgTime;
+
   final List<Color> iconColors;
   final List<Color> barColors;
   final IconData icon;
 
-  const SummaryStatCard({
+  const TimeStatCard({
     super.key,
-    required this.title,
-    required this.value,
+    required this.realTime,
+    required this.plannedTime,
+    required this.avgTime,
     required this.iconColors,
     required this.barColors,
-    this.icon = Icons.star,
+    this.icon = Icons.access_time,
   });
 
   @override
@@ -44,6 +47,7 @@ class SummaryStatCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. A BARRA COLORIDA
           Container(
             width: double.infinity,
             height: 4,
@@ -55,6 +59,8 @@ class SummaryStatCard extends StatelessWidget {
               ),
             ),
           ),
+
+          // 2. O CONTEÚDO
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -84,36 +90,56 @@ class SummaryStatCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 20,
-                      color: Color(0xFFA0A0A0),
+                    const Text(
+                      "Visão Geral de Tempo",
+                      style: TextStyle(color: Color(0xFFA0A0A0), fontSize: 14),
                     ),
                   ],
                 ),
                 const SizedBox(height: 32),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFFA0A0A0),
-                    fontSize: 16,
-                    fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w400,
-                    height: 1.50,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Color(0xFFF4F4F4),
-                    fontSize: 26,
-                    fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w600,
-                    height: 1.50,
-                  ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildStatColumn("Tempo Real", realTime),
+                    _buildStatColumn("Planejado", plannedTime),
+                    _buildStatColumn("Média/Sessão", avgTime),
+                  ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFFA0A0A0),
+              fontSize: 12,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w400,
+              height: 1.50,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFFF4F4F4),
+              fontSize: 18,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w600,
+              height: 1.50,
             ),
           ),
         ],
