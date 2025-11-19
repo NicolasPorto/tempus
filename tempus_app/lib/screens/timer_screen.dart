@@ -97,6 +97,8 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
 
   void _startTimer() {
     try {
+      if (_selectedSubject == null || _isRunning) return;
+
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_currentDuration <= 0) {
           _stopTimer();
@@ -120,7 +122,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
       
       Future.wait([_apiService.initiateFocus(
         DateTime.now(),
-        studyMinutes)]).then((sessionUuid) => {
+        studyMinutes, _selectedSubject!.id)]).then((sessionUuid) => {
           _sessionUuid = sessionUuid[0]
       });
 
@@ -129,7 +131,6 @@ class _TimerScreenContentState extends State<_TimerScreenContent> {
       print('Error initiating focus session: $e');
     }
 
-    if (_selectedSubject == null || _isRunning) return;
 
     setState(() {
       _isRunning = true;

@@ -31,7 +31,7 @@ class ApiService {
     };
   }
 
-  Future<String?> initiateFocus(DateTime startTime, int studyingMinutes,
+  Future<String?> initiateFocus(DateTime startTime, int studyingMinutes, String categoryUuid,
       [int? breakMinutes]) async {
 
     final url = Uri.parse('$_baseUrl/SessionFocus');
@@ -44,7 +44,8 @@ class ApiService {
         'startTime': startTime.toIso8601String(),
         'studyingMinutes': studyingMinutes,
         'breakMinutes': breakMinutes,
-        'auth0UserId': _authService.credentials!.user.sub
+        'auth0UserId': _authService.credentials!.user.sub,
+        'categoryUuid': categoryUuid
       });
     } catch (e) {
       print('Error preparing request: $e');

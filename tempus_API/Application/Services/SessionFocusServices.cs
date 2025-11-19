@@ -18,7 +18,7 @@ namespace Application.Services
         public Guid InitiateFocus(InitiateFocusRequest focusRequest)
         {
             var sessionFocus = 
-                new SessionFocus(focusRequest.StartTime, focusRequest.StudyingMinutes, focusRequest.BreakMinutes, focusRequest.Auth0UserId);
+                new SessionFocus(focusRequest);
 
             sessionFocusRepository.Insert(sessionFocus);
 

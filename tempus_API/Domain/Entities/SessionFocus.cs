@@ -1,5 +1,6 @@
 ﻿using Domain.Base;
 using Domain.Exceptions;
+using Domain.Messaging;
 
 namespace Domain.Entities
 {
@@ -13,24 +14,27 @@ namespace Domain.Entities
         public int? DistractedMinutes { get; set; }
         public override Guid UUID { get; set; }
         public string Auth0Identifier { get; set; }
+        public Guid CategoryUUID { get; set; }
 
         public SessionFocus() {}
 
-        public SessionFocus(DateTime startTime, int studyingMinutes, int? breakMinutes, string auth0Identifier)
+        public SessionFocus(InitiateFocusRequest focusRequest)
         {
             UUID = Guid.NewGuid();
-            StartDtTime = startTime;
-            StudyingMinutes = studyingMinutes;
+            StartDtTime = focusRequest.StartTime;
+            StudyingMinutes = focusRequest.StudyingMinutes;
 
-            if (studyingMinutes <= 10)
+            if (StudyingMinutes <= 10)
                 throw new TempusException("Studying minutes must be bigger than 10 minutes for consistent learning.");
 
-            if (breakMinutes <= 5 && breakMinutes != null)
+            if (focusRequest.BreakMinutes != null && focusRequest.BreakMinutes <= 5)
                 throw new TempusException("Break minutes must be bigger than 5 minutes for consistent learning.");
 
-            BreakMinutes = breakMinutes;
-            SupposedFinish = StartDtTime.AddMinutes(studyingMinutes);
-            Auth0Identifier = auth0Identifier;
+            BreakMinutes = focusRequest.BreakMinutes;
+            SupposedFinish = StartDtTime.AddMinutes(StudyingMinutes);
+            Auth0Identifier = focusRequest.Auth0UserId;
+            CategoryUUID = focusRequest.CategoryUUID;
+
         }
     }
 }
