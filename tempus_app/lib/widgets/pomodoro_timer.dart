@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../libraries/globals.dart';
@@ -124,8 +125,10 @@ class _PomodoroTimerState extends State<PomodoroTimer>
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  AutoSizeText(
                     '${_pad(displayMin)}:${_pad(displaySec)}',
+                    maxLines: 1,
+                    minFontSize: 32,
                     style: const TextStyle(
                       fontSize: 42,
                       fontWeight: FontWeight.bold,
@@ -140,8 +143,10 @@ class _PomodoroTimerState extends State<PomodoroTimer>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  AutoSizeText(
                     running ? 'Em foco...' : 'Pressione para iniciar',
+                    maxLines: 1,
+                    minFontSize: 12,
                     style: const TextStyle(
                       color: Colors.white60,
                       fontSize: 16,
@@ -210,7 +215,12 @@ class _ActionButton extends StatelessWidget {
       ),
       onPressed: onPressed,
       icon: Icon(icon, size: 20),
-      label: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+      label: AutoSizeText(
+        text,
+        maxLines: 1,
+        minFontSize: 10,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

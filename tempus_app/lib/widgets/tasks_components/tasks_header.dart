@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class TasksHeader extends StatelessWidget {
@@ -13,7 +14,7 @@ class TasksHeader extends StatelessWidget {
           Positioned(
             left: 0,
             right: 0,
-            top: 66,
+            top: 10,
             child: SizedBox(
               height: 36,
               child: Center(
@@ -26,9 +27,10 @@ class TasksHeader extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ).createShader(bounds);
                   },
-                  child: const Text(
+                  child: const AutoSizeText(
                     'Tarefas',
                     textAlign: TextAlign.center,
+                    maxLines: 1,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -41,17 +43,20 @@ class TasksHeader extends StatelessWidget {
               ),
             ),
           ),
-          const Positioned(
+
+          Positioned(
             left: 0,
             right: 0,
-            top: 114,
+            top: 66,
             child: SizedBox(
               height: 48,
               child: Center(
-                child: Text(
+                child: AutoSizeText(
                   'Crie e gerencie suas tarefas para manter-se organizado e produtivo.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  maxLines: 2,
+                  minFontSize: 12,
+                  style: const TextStyle(
                     color: Color(0xFFA0A0A0),
                     fontSize: 16,
                     fontFamily: 'Arimo',

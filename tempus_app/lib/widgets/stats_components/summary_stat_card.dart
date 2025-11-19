@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class SummaryStatCard extends StatelessWidget {
   final String title;
@@ -92,8 +93,11 @@ class SummaryStatCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 32),
-                Text(
+                AutoSizeText(
                   title,
+                  maxLines: 1,
+                  minFontSize: 12,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFFA0A0A0),
                     fontSize: 16,
@@ -103,8 +107,11 @@ class SummaryStatCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                AutoSizeText(
                   value,
+                  maxLines: 1,
+                  minFontSize: 18,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFFF4F4F4),
                     fontSize: 26,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tempus_app/models/subject.dart';
 import 'package:tempus_app/models/task.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class TaskTile extends StatelessWidget {
   final TaskItem task;
@@ -32,20 +33,23 @@ class TaskTile extends StatelessWidget {
           activeColor: Color(subject.colorValue),
           checkColor: Colors.white,
         ),
-        title: Text(
+        title: AutoSizeText( 
           task.title,
+          maxLines: 2, 
+          minFontSize: 14,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             decoration: task.done ? TextDecoration.lineThrough : null,
             color: Colors.white,
             fontSize: 16,
           ),
         ),
-        subtitle: Text(
+        subtitle: AutoSizeText( 
           subject.name,
-          style: TextStyle(
-            color: Color(subject.colorValue),
-            fontSize: 12,
-          ),
+          maxLines: 1,
+          minFontSize: 10,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: Color(subject.colorValue), fontSize: 12),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline, color: Color(0xFFD4D4D4)),

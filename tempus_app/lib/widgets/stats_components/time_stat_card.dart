@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class TimeStatCard extends StatelessWidget {
   final String realTime;
@@ -90,9 +91,20 @@ class TimeStatCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Text(
-                      "Visão Geral de Tempo",
-                      style: TextStyle(color: Color(0xFFA0A0A0), fontSize: 14),
+                    const Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 12.0),
+                        child: AutoSizeText(
+                          "Visão Geral de Tempo",
+                          textAlign: TextAlign.end,
+                          maxLines: 1,
+                          minFontSize: 10,
+                          style: TextStyle(
+                            color: Color(0xFFA0A0A0),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -102,7 +114,9 @@ class TimeStatCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildStatColumn("Tempo Real", realTime),
+                    const SizedBox(width: 8), // Espaço entre colunas
                     _buildStatColumn("Planejado", plannedTime),
+                    const SizedBox(width: 8), // Espaço entre colunas
                     _buildStatColumn("Média/Sessão", avgTime),
                   ],
                 ),
@@ -119,8 +133,11 @@ class TimeStatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          AutoSizeText(
             label,
+            maxLines: 1,
+            minFontSize: 9,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFFA0A0A0),
               fontSize: 12,
@@ -128,12 +145,13 @@ class TimeStatCard extends StatelessWidget {
               fontWeight: FontWeight.w400,
               height: 1.50,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
-          Text(
+          AutoSizeText(
             value,
+            maxLines: 1,
+            minFontSize: 12,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFFF4F4F4),
               fontSize: 18,

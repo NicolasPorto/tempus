@@ -24,6 +24,7 @@ dependencies:
   permission_handler: ^11.3.1
   auth0_flutter: ^1.4.1
   http: ^1.2.0
+  auto_size_text: ^3.0.0
 
 dev_dependencies:
   flutter_test:

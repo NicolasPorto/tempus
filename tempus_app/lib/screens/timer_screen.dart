@@ -9,7 +9,6 @@ import '../widgets/timer_components/timer_header.dart';
 import '../widgets/timer_components/subject_selector.dart';
 import '../widgets/timer_components/empty_subject_card.dart';
 
-
 class TimerScreen extends StatelessWidget {
   const TimerScreen({super.key});
 
@@ -29,13 +28,13 @@ class _TimerScreenContent extends StatelessWidget {
 
   void _showSubjectManagerModal(BuildContext context) async {
     final controller = Provider.of<TimerController>(context, listen: false);
-    
+
     await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (_) => const SubjectManagerModal(),
     );
-    
+
     controller.loadSubjects();
   }
 
@@ -66,8 +65,8 @@ class _TimerScreenContent extends StatelessWidget {
                     ),
                   );
                 },
-                child: controller.isFocusMode 
-                    ? _buildFocusView(context, controller) 
+                child: controller.isFocusMode
+                    ? _buildFocusView(context, controller)
                     : _buildMainView(context, controller),
               ),
             ),
@@ -89,12 +88,10 @@ class _TimerScreenContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 32),
-            
             const TimerHeader(),
-            
+
             const SizedBox(height: 48),
-            
+
             SizedBox(
               width: double.infinity,
               child: Column(
@@ -107,9 +104,9 @@ class _TimerScreenContent extends StatelessWidget {
                     onManageTap: () => _showSubjectManagerModal(context),
                     onSubjectChanged: controller.selectSubject,
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   TimerControls(
                     key: const ValueKey('timer_controls'),
                     selectedSubject: controller.selectedSubject,
@@ -119,14 +116,14 @@ class _TimerScreenContent extends StatelessWidget {
                     initialDuration: controller.initialDuration,
                     isRunning: controller.isRunning,
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   if (controller.subjects.isEmpty && !controller.isLoading)
                     EmptySubjectCard(
                       onCreateTap: () => _showSubjectManagerModal(context),
                     ),
-                    
+
                   const SizedBox(height: 32),
                 ],
               ),

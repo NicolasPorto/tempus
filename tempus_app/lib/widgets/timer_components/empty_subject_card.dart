@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class EmptySubjectCard extends StatelessWidget {
@@ -31,15 +32,17 @@ class EmptySubjectCard extends StatelessWidget {
               child: Icon(Icons.book, color: Color(0xFFD4D4D4), size: 32),
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
+          Positioned(
+            left: 16,
+            right: 16,
             top: 69,
             child: Center(
-              child: Text(
+              child: AutoSizeText(
                 'Adicione uma matéria para começar',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                maxLines: 1,
+                minFontSize: 12,
+                style: const TextStyle(
                   color: Color(0xFFD4D4D4),
                   fontSize: 16,
                   fontFamily: 'Arimo',
@@ -71,17 +74,21 @@ class EmptySubjectCard extends StatelessWidget {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add, color: Colors.white, size: 16),
-                      SizedBox(width: 8),
-                      Text(
-                        'Criar Matéria',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontFamily: 'Arimo',
-                          fontWeight: FontWeight.w400,
-                          height: 1.43,
+                    children: [
+                      const Icon(Icons.add, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: AutoSizeText(
+                          'Criar Matéria',
+                          maxLines: 1,
+                          minFontSize: 10,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'Arimo',
+                            fontWeight: FontWeight.w400,
+                            height: 1.43,
+                          ),
                         ),
                       ),
                     ],

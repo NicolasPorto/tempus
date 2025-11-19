@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class EmptyTasksView extends StatelessWidget {
   final bool hasSubjects;
@@ -39,16 +40,22 @@ class EmptyTasksView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
+          AutoSizeText(
             hasSubjects ? 'Sem tarefas.' : 'Adicione matérias primeiro',
+            maxLines: 1,
+            minFontSize: 12,
+            textAlign: TextAlign.center,
             style: const TextStyle(color: Color(0xFF737373), fontSize: 16),
           ),
           const SizedBox(height: 4),
-          Text(
+          AutoSizeText(
             hasSubjects
                 ? 'Adicione tarefas no cartão acima.'
-                : 'Adicione matérias na aba "Timer".',
-            style: const TextStyle(color: Color(0xFF737373), fontSize: 14),
+                : 'Você precisa ter pelo menos uma matéria ativa para adicionar tarefas.',
+            maxLines: 2,
+            minFontSize: 10,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF525252), fontSize: 14),
           ),
         ],
       ),

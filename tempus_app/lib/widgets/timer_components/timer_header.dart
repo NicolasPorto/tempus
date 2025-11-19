@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class TimerHeader extends StatelessWidget {
@@ -7,13 +8,73 @@ class TimerHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 162,
-      child: Stack(
+      height: 200,
+      child: Stack( // CORREÇÃO: Substituído Column por Stack
         children: [
+          // Título 'Timer'
           Positioned(
             left: 0,
             right: 0,
-            top: 0,
+            top: 10, // Posição vertical ajustada
+            child: SizedBox(
+              height: 36,
+              child: Center(
+                child: ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) {
+                    return const LinearGradient(
+                      colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds);
+                  },
+                  child: const AutoSizeText(
+                    'Timer',
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w400,
+                      height: 1.50,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Subtítulo 'Organize seus estudos...'
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 66, // 10 (título) + 36 (altura do título) + ~20 (espaço)
+            child: SizedBox(
+              height: 48,
+              child: Center(
+                child: AutoSizeText(
+                  'Organize seus estudos com o método Pomodoro',
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  minFontSize: 12,
+                  style: const TextStyle(
+                    color: Color(0xFFA0A0A0),
+                    fontSize: 16,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w400,
+                    height: 1.50,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Container 'Sistema Pomodoro Ativo'
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 134, // 66 (subtítulo) + 48 (altura do subtítulo) + ~20 (espaço)
             child: Center(
               child: Container(
                 width: 250,
@@ -33,7 +94,7 @@ class TimerHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(33554400),
                   ),
                 ),
-                child: Stack(
+                child: Stack( // O Stack interno está correto para o ícone/texto
                   children: [
                     Positioned(
                       left: 15,
@@ -52,15 +113,17 @@ class TimerHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Center(
+                    Center(
                       child: SizedBox(
                         width: 300,
                         height: 24,
                         child: Center(
-                          child: Text(
+                          child: AutoSizeText(
                             'Sistema Pomodoro Ativo',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            maxLines: 1,
+                            minFontSize: 10,
+                            style: const TextStyle(
                               color: Color(0xFFA0A0A0),
                               fontSize: 16,
                               fontFamily: 'Arimo',
@@ -72,58 +135,6 @@ class TimerHeader extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 66,
-            child: SizedBox(
-              height: 36,
-              child: Center(
-                child: ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (bounds) {
-                    return const LinearGradient(
-                      colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ).createShader(bounds);
-                  },
-                  child: const Text(
-                    'Estudo Focado',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w400,
-                      height: 1.50,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            top: 114,
-            child: SizedBox(
-              height: 48,
-              child: Center(
-                child: Text(
-                  'Organize seus estudos com o método Pomodoro',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFA0A0A0),
-                    fontSize: 16,
-                    fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w400,
-                    height: 1.50,
-                  ),
                 ),
               ),
             ),

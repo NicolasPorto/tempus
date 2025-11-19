@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/subject.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class SubjectsBreakdownCard extends StatelessWidget {
   final Map<String, int> minutesBySubjectId;
@@ -78,8 +79,10 @@ class SubjectsBreakdownCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              const AutoSizeText(
                 'Matérias',
+                maxLines: 1,
+                minFontSize: 12,
                 style: TextStyle(
                   color: Color(0xFFF4F4F4),
                   fontSize: 16,
@@ -103,8 +106,11 @@ class SubjectsBreakdownCard extends StatelessWidget {
                   CircleAvatar(radius: 8, backgroundColor: s['color'] as Color),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: AutoSizeText(
                       s['name'] as String,
+                      maxLines: 1,
+                      minFontSize: 12,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFFF4F4F4),
                         fontSize: 16,
@@ -112,8 +118,11 @@ class SubjectsBreakdownCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
+                  AutoSizeText(
                     '${s['minutes']} min',
+                    maxLines: 1,
+                    minFontSize: 12,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFFA0A0A0),
                       fontSize: 16,

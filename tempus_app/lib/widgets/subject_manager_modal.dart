@@ -57,7 +57,10 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedColorValue == null) return;
 
-    await _apiService.createCategory(name, _selectedColorValue!.toRadixString(16));
+    await _apiService.createCategory(
+      name,
+      _selectedColorValue!.toRadixString(16),
+    );
     if (mounted) {
       Navigator.of(context).pop();
     }

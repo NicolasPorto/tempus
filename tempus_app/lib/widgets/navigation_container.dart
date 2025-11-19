@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import '../screens/timer_screen.dart';
 import '../screens/tasks_screen.dart';
 import '../screens/stats_screen.dart';
@@ -26,9 +28,21 @@ class _NavigationContainerState extends State<NavigationContainer> {
   final pages = const [TimerScreen(), TasksScreen(), StatsScreen()];
 
   final items = const [
-    {'label': 'Timer', 'icon': Icons.timer, 'index': 0},
-    {'label': 'Tarefas', 'icon': Icons.check_box, 'index': 1},
-    {'label': 'Estatísticas', 'icon': Icons.bar_chart, 'index': 2},
+    {
+      'label': 'Timer',
+      'asset': 'lib/assets/icons/icon_bar_timer.svg',
+      'index': 0,
+    },
+    {
+      'label': 'Tarefas',
+      'asset': 'lib/assets/icons/icon_bar_tasks.svg',
+      'index': 1,
+    },
+    {
+      'label': 'Estatísticas',
+      'asset': 'lib/assets/icons/icon_bar_stats.svg',
+      'index': 2,
+    },
   ];
 
   @override
@@ -47,7 +61,6 @@ class _NavigationContainerState extends State<NavigationContainer> {
             if (isFocusMode) {
               return const SizedBox.shrink();
             }
-
             return child!;
           },
           child: Container(
@@ -61,16 +74,13 @@ class _NavigationContainerState extends State<NavigationContainer> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-
             child: Stack(
               children: [
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-
                   left: _initialOffset + (_current * _stepSize),
                   top: (_containerHeight - _indicatorHeight) / 3.0,
-
                   child: Container(
                     width: _buttonWidth,
                     height: _indicatorHeight,
@@ -104,12 +114,12 @@ class _NavigationContainerState extends State<NavigationContainer> {
                     ),
                   ),
                 ),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: items.map((item) {
                     final index = item['index'] as int;
                     final label = item['label'] as String;
+                    final asset = item['asset'] as String;
                     final selected = index == _current;
 
                     return GestureDetector(
@@ -127,31 +137,53 @@ class _NavigationContainerState extends State<NavigationContainer> {
                         width: _buttonWidth,
                         height: _indicatorHeight,
                         child: Center(
-                          child: Transform.translate(
-                            offset: const Offset(0, 2),
-                            child: ShaderMask(
-                              blendMode: BlendMode.srcIn,
-                              shaderCallback: (bounds) {
-                                return const LinearGradient(
-                                  colors: [
-                                    Color(0xFFAC46FF),
-                                    Color(0xFF2B7FFF),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ).createShader(bounds);
-                              },
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  color: selected
-                                      ? Colors.white
-                                      : const Color(0xFFA0A0A0),
-                                  fontSize: 14,
-                                  fontFamily: 'Arimo',
-                                  fontWeight: FontWeight.w400,
+                          child: ShaderMask(
+                            blendMode: BlendMode.srcIn,
+                            shaderCallback: (bounds) {
+                              return const LinearGradient(
+                                colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ).createShader(bounds);
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 3.5),
+                                  child: SvgPicture.asset(
+                                    asset,
+                                    width: 14,
+                                    height: 14,
+                                    colorFilter: ColorFilter.mode(
+                                      selected
+                                          ? Colors.white
+                                          : const Color(0xFFA0A0A0),
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 6),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: AutoSizeText(
+                                    label,
+                                    maxLines: 1,
+                                    minFontSize: 10,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: selected
+                                          ? Colors.white
+                                          : const Color(0xFFA0A0A0),
+                                      fontSize: 13,
+                                      fontFamily: 'Arimo',
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

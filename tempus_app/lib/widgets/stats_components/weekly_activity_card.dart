@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class WeeklyActivityCard extends StatelessWidget {
+  final List<String> days = const [
+    'SEG',
+    'TER',
+    'QUA',
+    'QUI',
+    'SEX',
+    'SÁB',
+    'DOM',
+  ];
+  final List<int> barHeights = const [0, 0, 0, 0, 0, 0, 0];
+
   const WeeklyActivityCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<String> days = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
-    final List<int> barHeights = [0, 0, 0, 0, 0, 0, 0];
+    const double MIN_BAR_HEIGHT = 10.0;
+    const double MAX_BAR_HEIGHT = 100.0;
+    final int maxTime = barHeights.reduce((a, b) => a > b ? a : b);
 
     return Container(
       width: double.infinity,
@@ -60,13 +73,18 @@ class WeeklyActivityCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Atividade dos Últimos 7 Dias',
-                style: TextStyle(
-                  color: Color(0xFFF4F4F4),
-                  fontSize: 16,
-                  fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w400,
+              const Expanded(
+                child: AutoSizeText(
+                  'Atividade dos Últimos 7 Dias',
+                  maxLines: 1,
+                  minFontSize: 12,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFFF4F4F4),
+                    fontSize: 16,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
             ],
@@ -78,7 +96,15 @@ class WeeklyActivityCard extends StatelessWidget {
             children: days.asMap().entries.map((entry) {
               int index = entry.key;
               String day = entry.value;
-              int heightFactor = barHeights[index] == 0 ? 10 : 50;
+              int value = barHeights[index];
+
+              final double currentHeight = maxTime > 0
+                  ? (value / maxTime) * MAX_BAR_HEIGHT
+                  : MIN_BAR_HEIGHT;
+              final double barHeight = currentHeight.clamp(
+                MIN_BAR_HEIGHT,
+                MAX_BAR_HEIGHT,
+              );
 
               return Expanded(
                 child: Padding(
@@ -87,7 +113,7 @@ class WeeklyActivityCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        height: heightFactor.toDouble(),
+                        height: barHeight,
                         width: double.infinity,
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
@@ -111,12 +137,16 @@ class WeeklyActivityCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Center(
-                          child: Text(
-                            '0',
+                        child: Center(
+                          child: AutoSizeText(
+                            value.toString(),
+                            maxLines: 1,
+                            minFontSize: 8,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF525252),
+                              color: value > 0
+                                  ? const Color(0xFFF4F4F4)
+                                  : const Color(0xFF525252),
                               fontSize: 16,
                               fontFamily: 'Arimo',
                               fontWeight: FontWeight.w400,
@@ -125,8 +155,10 @@ class WeeklyActivityCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      AutoSizeText(
                         day,
+                        maxLines: 1,
+                        minFontSize: 10,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF737373),

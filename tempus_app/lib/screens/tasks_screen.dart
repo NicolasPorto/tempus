@@ -85,9 +85,10 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
+            const SizedBox(height: 20),
             const TasksHeader(),
 
-            const SizedBox(height: 50),
+            const SizedBox(height: 20),
 
             NewTaskCard(
               controller: _ctrl,
@@ -101,7 +102,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
               onAddTask: _addTask,
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
 
             _buildTaskList(),
 

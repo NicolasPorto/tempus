@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tempus_app/widgets/stats_components/time_stat_card.dart';
 import '../services/storage_service.dart';
-import '../widgets/stats_components/summary_stat_card.dart';
 import '../services/api_service.dart';
+
+import '../widgets/stats_components/time_stat_card.dart';
+import '../widgets/stats_components/summary_stat_card.dart';
+import '../widgets/stats_components/weekly_activity_card.dart';
+import '../widgets/stats_components/subjects_breakdown_card.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -29,14 +32,17 @@ class _StatsScreenState extends State<StatsScreen> {
   Future<void> _fetchData() async {
     final apiService = Provider.of<ApiService>(context, listen: false);
     try {
-      final stats = await apiService.obtainAverageSessionStats();
-      final finishedSessions = await apiService.obtainFinishedSessions();
-      final sessionStreak = await apiService.obtainSessionStreak();
+      final results = await Future.wait([
+        apiService.obtainAverageSessionStats(),
+        apiService.obtainFinishedSessions(),
+        apiService.obtainSessionStreak(),
+      ]);
+
       if (mounted) {
         setState(() {
-          _sessionStats = stats;
-          _finishedSessions = finishedSessions;
-          _sessionStreak = sessionStreak;
+          _sessionStats = results[0] as Map<String, dynamic>;
+          _finishedSessions = results[1] as int;
+          _sessionStreak = results[2] as int;
           _isLoading = false;
         });
       }
@@ -53,14 +59,11 @@ class _StatsScreenState extends State<StatsScreen> {
     final store = StorageService.instance;
 
     final int apiTotalMinutes = _sessionStats?['totalTimeStudied'] ?? 0;
-    final int apiSupposedMinutes =
-        _sessionStats?['supposedTotalTimeStudied'] ?? 0;
+    final int apiSupposedMinutes = _sessionStats?['supposedTotalTimeStudied'] ?? 0;
     final int apiAvgMinutes = _sessionStats?['timeStudied'] ?? 0;
 
     final String displayTotal = _isLoading ? '...' : '$apiTotalMinutes min';
-    final String displaySupposed = _isLoading
-        ? '...'
-        : '$apiSupposedMinutes min';
+    final String displaySupposed = _isLoading ? '...' : '$apiSupposedMinutes min';
     final String displayAvg = _isLoading ? '...' : '$apiAvgMinutes min';
 
     final totalTasks = store.tasks.length;
@@ -70,24 +73,19 @@ class _StatsScreenState extends State<StatsScreen> {
     for (var s in store.subjects) {
       bySubject[s.id] = 0;
     }
+
     for (var sess in store.sessions) {
-      bySubject[sess.subjectId] =
-          (bySubject[sess.subjectId] ?? 0) + sess.durationMinutes;
+      bySubject[sess.subjectId] = (bySubject[sess.subjectId] ?? 0) + sess.durationMinutes;
     }
 
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.only(
-          top: 32,
-          left: 16,
-          right: 16,
-          bottom: 32,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            
             // Card 1: Tempo
             TimeStatCard(
               realTime: displayTotal,
@@ -100,7 +98,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
             const SizedBox(height: 32),
 
-            // Card 2: Sessões (Local)
+            // Card 2: Sessões Finalizadas
             SummaryStatCard(
               title: 'Sessões Finalizadas',
               value: _isLoading ? '...' : '$_finishedSessions',
@@ -108,16 +106,41 @@ class _StatsScreenState extends State<StatsScreen> {
               barColors: const [Color(0xFFAC46FF), Color(0xFFF6329A)],
               icon: Icons.check_circle_outline,
             ),
+            
             const SizedBox(height: 32),
 
-            // Card 3: Streak
+            // Card 3: Tarefas (Estava faltando no seu código anterior)
             SummaryStatCard(
-              title: 'Sequência (Streak)',
-              value: _isLoading ? '...' : '$_sessionStreak dias',
-              iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
-              barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
-              icon: Icons.local_fire_department,
+              title: 'Tarefas Concluídas',
+              value: '$completedTasks/$totalTasks',
+              iconColors: const [Color(0x1900C850), Color(0x1900BC7C)],
+              barColors: const [Color(0xFF00C850), Color(0xFF00BC7C)],
+              icon: Icons.task_alt,
             ),
+
+            const SizedBox(height: 32),
+
+            // // Card 4: Streak
+            // SummaryStatCard(
+            //   title: 'Sequência (Streak)',
+            //   value: _isLoading ? '...' : '$_sessionStreak dias',
+            //   iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
+            //   barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
+            //   icon: Icons.local_fire_department,
+            // ),
+
+            // const SizedBox(height: 32),
+
+            // // Card 5: Atividade Semanal (Gráfico)
+            // const WeeklyActivityCard(),
+
+            // const SizedBox(height: 32),
+
+            // // Card 6: Matérias (Lista)
+            // SubjectsBreakdownCard(
+            //   minutesBySubjectId: bySubject,
+            //   allSubjects: store.subjects,
+            // ),
           ],
         ),
       ),

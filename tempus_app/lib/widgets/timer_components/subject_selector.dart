@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tempus_app/models/subject.dart';
@@ -48,8 +49,10 @@ class SubjectSelector extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    const AutoSizeText(
                       'Selecione a matéria',
+                      maxLines: 1,
+                      minFontSize: 12,
                       style: TextStyle(
                         color: Color(0xFFD4D4D4),
                         fontSize: 16,
@@ -82,14 +85,18 @@ class SubjectSelector extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Gerenciar',
-                          style: TextStyle(
-                            color: Color(0xFFD4D4D4),
-                            fontSize: 16,
-                            fontFamily: 'Arimo',
-                            fontWeight: FontWeight.w400,
-                            height: 1.50,
+                        const Flexible(
+                          child: AutoSizeText(
+                            'Gerenciar',
+                            maxLines: 1,
+                            minFontSize: 10,
+                            style: TextStyle(
+                              color: Color(0xFFD4D4D4),
+                              fontSize: 16,
+                              fontFamily: 'Arimo',
+                              fontWeight: FontWeight.w400,
+                              height: 1.50,
+                            ),
                           ),
                         ),
                       ],
@@ -143,8 +150,11 @@ class SubjectSelector extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       isExpanded: true,
                       onChanged: subjects.isEmpty ? null : onSubjectChanged,
-                      hint: const Text(
+                      hint: const AutoSizeText(
                         'Escolha uma matéria...',
+                        maxLines: 1,
+                        minFontSize: 10,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Color(0xFF717182),
                           fontSize: 14,
@@ -180,7 +190,15 @@ class SubjectSelector extends StatelessWidget {
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              Text(subject.name, style: textStyle),
+                              Expanded(
+                                child: AutoSizeText(
+                                  subject.name,
+                                  style: textStyle,
+                                  maxLines: 1,
+                                  minFontSize: 10,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -191,30 +209,37 @@ class SubjectSelector extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               if (selectedSubject != null)
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 10,
-                                      height: 10,
-                                      margin: const EdgeInsets.only(right: 8),
-                                      decoration: BoxDecoration(
-                                        color: Color(
-                                          selectedSubject!.colorValue,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          color: Color(
+                                            selectedSubject!.colorValue,
+                                          ),
+                                          shape: BoxShape.circle,
                                         ),
-                                        shape: BoxShape.circle,
                                       ),
-                                    ),
-                                    Text(
-                                      selectedSubject!.name,
-                                      style: const TextStyle(
-                                        color: Color(0xFFF4F4F4),
-                                        fontSize: 14,
-                                        fontFamily: 'Arimo',
-                                        fontWeight: FontWeight.w400,
-                                        height: 1.43,
+                                      Expanded(
+                                        child: AutoSizeText(
+                                          selectedSubject!.name,
+                                          maxLines: 1,
+                                          minFontSize: 10,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Color(0xFFF4F4F4),
+                                            fontSize: 14,
+                                            fontFamily: 'Arimo',
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.43,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                             ],
                           );

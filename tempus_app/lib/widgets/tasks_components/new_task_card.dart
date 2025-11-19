@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tempus_app/models/subject.dart';
@@ -21,10 +22,12 @@ class NewTaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSubjectSelected = subjects.isNotEmpty;
-    
+
     final selectedSubject = subjects.firstWhere(
-        (s) => s.id == selectedSubjectId,
-        orElse: () => subjects.isNotEmpty ? subjects.first : Subject(id: '', name: '', colorValue: 0xFFD4D4D4, categoryId: ''),
+      (s) => s.id == selectedSubjectId,
+      orElse: () => subjects.isNotEmpty
+          ? subjects.first
+          : Subject(id: '', name: '', colorValue: 0xFFD4D4D4, categoryId: ''),
     );
 
     return Stack(
@@ -68,14 +71,15 @@ class NewTaskCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Nova Tarefa',
+                    const AutoSizeText(
+                      "Nova Tarefa",
+                      maxLines: 1,
+                      minFontSize: 14,
                       style: TextStyle(
                         color: Color(0xFFF4F4F4),
-                        fontSize: 16,
+                        fontSize: 18,
                         fontFamily: 'Arimo',
-                        fontWeight: FontWeight.w400,
-                        height: 1.50,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -124,11 +128,12 @@ class NewTaskCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const AutoSizeText(
           'Título da Tarefa',
+          maxLines: 1,
+          minFontSize: 10,
           style: TextStyle(
             color: Color(0xFFD4D4D4),
-            fontSize: 14,
             fontFamily: 'Arimo',
             fontWeight: FontWeight.w400,
             height: 1,
@@ -178,17 +183,18 @@ class NewTaskCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const AutoSizeText(
           'Matéria',
+          maxLines: 1,
+          minFontSize: 10,
           style: TextStyle(
             color: Color(0xFFD4D4D4),
-            fontSize: 14,
-            fontFamily: 'Arimo',
+            overflow: TextOverflow.ellipsis,
             fontWeight: FontWeight.w400,
-            height: 1,
           ),
         ),
         const SizedBox(height: 12),
+
         Container(
           width: double.infinity,
           height: 36,
@@ -209,24 +215,25 @@ class NewTaskCard extends StatelessWidget {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: subjects.any((s) => s.id == selectedSubjectId) ? selectedSubjectId : null,
+              value: subjects.any((s) => s.id == selectedSubjectId)
+                  ? selectedSubjectId
+                  : null,
               icon: Opacity(
                 opacity: subjects.isEmpty ? 0.2 : 0.50,
-                child: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFD4D4D4)),
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Color(0xFFD4D4D4),
+                ),
               ),
               dropdownColor: const Color.fromARGB(202, 23, 23, 23),
               borderRadius: BorderRadius.circular(12),
               isExpanded: true,
               onChanged: subjects.isEmpty ? null : onSubjectChanged,
-              hint: const Text(
-                'Selecione a matéria...',
-                style: TextStyle(
-                  color: Color(0xFF717182),
-                  fontSize: 14,
-                  fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w400,
-                  height: 1.43,
-                ),
+              hint: const AutoSizeText(
+                'Selecione uma matéria',
+                maxLines: 1,
+                minFontSize: 10,
+                style: TextStyle(color: Color(0xFF737373)),
               ),
               items: subjects.map((s) {
                 final isSelected = s.id == selectedSubjectId;
@@ -251,7 +258,12 @@ class NewTaskCard extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      Text(s.name, style: textStyle),
+                      AutoSizeText(
+                        s.name,
+                        style: textStyle,
+                        maxLines: 1,
+                        minFontSize: 10,
+                      ),
                     ],
                   ),
                 );
@@ -270,22 +282,28 @@ class NewTaskCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Color(
                                 subjects
-                                    .firstWhere((x) => x.id == selectedSubjectId, orElse: () => s)
+                                    .firstWhere(
+                                      (x) => x.id == selectedSubjectId,
+                                      orElse: () => s,
+                                    )
                                     .colorValue,
                               ),
                               shape: BoxShape.circle,
                             ),
                           ),
-                          Text(
+                          AutoSizeText(
                             subjects
-                                .firstWhere((x) => x.id == selectedSubjectId, orElse: () => s)
+                                .firstWhere(
+                                  (x) => x.id == selectedSubjectId,
+                                  orElse: () => s,
+                                )
                                 .name,
+                            maxLines: 1,
+                            minFontSize: 10,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Color(0xFFF4F4F4),
-                              fontSize: 14,
-                              fontFamily: 'Arimo',
-                              fontWeight: FontWeight.w400,
-                              height: 1.43,
+                              fontSize: 16,
                             ),
                           ),
                         ],
@@ -338,14 +356,14 @@ class NewTaskCard extends StatelessWidget {
             children: [
               Icon(Icons.add, color: Colors.white, size: 20),
               SizedBox(width: 8),
-              Text(
+              AutoSizeText(
                 'Adicionar Tarefa',
+                maxLines: 1,
+                minFontSize: 10,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
                   fontFamily: 'Arimo',
                   fontWeight: FontWeight.w400,
-                  height: 1.43,
                 ),
               ),
             ],
