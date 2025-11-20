@@ -191,6 +191,19 @@ class _StatsScreenState extends State<StatsScreen> {
             _buildLogoutButton(context),
             
             const SizedBox(height: 32.0), // Margem final para garantir scroll
+            
+            // const SizedBox(height: 32),
+
+            // // Card 5: Atividade Semanal (Gráfico)
+            // const WeeklyActivityCard(),
+
+            // const SizedBox(height: 32),
+
+            // // Card 6: Matérias (Lista)
+            // SubjectsBreakdownCard(
+            //   minutesBySubjectId: bySubject,
+            //   allSubjects: store.subjects,
+            // ),
           ],
         ),
       ),
