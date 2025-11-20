@@ -117,7 +117,7 @@ class _StatsScreenState extends State<StatsScreen> {
             
             const SizedBox(height: 32),
 
-            // Card 3: Tarefas (Estava faltando no seu código anterior)
+            // Card 3: Tarefas
             SummaryStatCard(
               title: 'Tarefas Concluídas',
               value: '$_completedTasks/$_totalTasks', // Use the variables here
@@ -136,7 +136,9 @@ class _StatsScreenState extends State<StatsScreen> {
               barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
               icon: Icons.local_fire_department,
             ),
-
+            
+            const SizedBox(height: 64.0),
+            
             // const SizedBox(height: 32),
 
             // // Card 5: Atividade Semanal (Gráfico)

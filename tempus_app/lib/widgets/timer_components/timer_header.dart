@@ -9,13 +9,12 @@ class TimerHeader extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 200,
-      child: Stack( // CORREÇÃO: Substituído Column por Stack
+      child: Stack(
         children: [
-          // Título 'Timer'
           Positioned(
             left: 0,
             right: 0,
-            top: 10, // Posição vertical ajustada
+            top: 10,
             child: SizedBox(
               height: 36,
               child: Center(
@@ -44,12 +43,11 @@ class TimerHeader extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Subtítulo 'Organize seus estudos...'
+
           Positioned(
             left: 0,
             right: 0,
-            top: 66, // 10 (título) + 36 (altura do título) + ~20 (espaço)
+            top: 66,
             child: SizedBox(
               height: 48,
               child: Center(
@@ -69,12 +67,11 @@ class TimerHeader extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Container 'Sistema Pomodoro Ativo'
+
           Positioned(
             left: 0,
             right: 0,
-            top: 134, // 66 (subtítulo) + 48 (altura do subtítulo) + ~20 (espaço)
+            top: 134,
             child: Center(
               child: Container(
                 width: 250,
@@ -94,7 +91,7 @@ class TimerHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(33554400),
                   ),
                 ),
-                child: Stack( // O Stack interno está correto para o ícone/texto
+                child: Stack(
                   children: [
                     Positioned(
                       left: 15,

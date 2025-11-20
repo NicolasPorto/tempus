@@ -26,7 +26,7 @@ class _TasksScreenContent extends StatefulWidget {
 
 class _TasksScreenContentState extends State<_TasksScreenContent> {
   final TextEditingController _ctrl = TextEditingController();
-  
+
   List<TaskItem> _tasks = [];
   List<Subject> _subjects = [];
   String selectedSubjectId = '';
@@ -43,23 +43,24 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     final api = context.read<ApiService>();
 
     try {
-      // Fetch categories and tasks in parallel
       final results = await Future.wait([
         api.listAllCategories(),
         api.getAllTasks(),
       ]);
 
-      final categories = results[0] as List<dynamic>; // List<Category>
-      final tasks = results[1] as List<dynamic>;      // List<TaskItem>
+      final categories = results[0] as List<dynamic>;
+      final tasks = results[1] as List<dynamic>;
 
       if (mounted) {
         setState(() {
-          // Convert Backend Categories to Frontend Subjects
-          _subjects = categories.map((c) => c.toSubject()).toList().cast<Subject>();
+          _subjects = categories
+              .map((c) => c.toSubject())
+              .toList()
+              .cast<Subject>();
           _tasks = tasks.cast<TaskItem>();
 
-          // Set default dropdown value if needed
-          if (_subjects.isNotEmpty && ! _subjects.any((s) => s.id == selectedSubjectId)) {
+          if (_subjects.isNotEmpty &&
+              !_subjects.any((s) => s.id == selectedSubjectId)) {
             selectedSubjectId = _subjects.first.id;
           }
         });
@@ -82,7 +83,6 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
 
-    // Determine which subject ID to use
     String subjectIdToUse = selectedSubjectId;
     if (subjectIdToUse.isEmpty && _subjects.isNotEmpty) {
       subjectIdToUse = _subjects.first.id;
@@ -90,41 +90,35 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
     setState(() => _isLoading = true);
     final api = context.read<ApiService>();
-    
-    // Call API
+
     final success = await api.createTask(text, subjectIdToUse);
 
     if (success) {
       _ctrl.clear();
-      await _loadData(); // Reload to get the new task with its real UUID
+      await _loadData();
     } else {
-       if (mounted) setState(() => _isLoading = false);
-       // Optionally show an error snackbar here
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
- Future<void> _toggleTask(TaskItem task) async {
-    // 1. Optimistic UI Update (visually toggle immediately)
+  Future<void> _toggleTask(TaskItem task) async {
     setState(() {
       task.done = !task.done;
     });
 
     final api = context.read<ApiService>();
-    
-    // 2. Send the NEW status (task.done is already flipped above) to the backend
+
     final success = await api.toggleTaskStatus(task.id, task.done);
 
-    // 3. If API fails, revert the change
     if (!success) {
       setState(() {
-        task.done = !task.done; 
+        task.done = !task.done;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to update task status")),
       );
     } else {
-      // Optional: Reload data to ensure perfect sync, though optimistic update handles the UI
-      // _loadData(); 
+      // _loadData();
     }
   }
 
@@ -137,7 +131,6 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure selectedSubjectId is valid
     if (_subjects.isNotEmpty &&
         !_subjects.any((s) => s.id == selectedSubjectId)) {
       selectedSubjectId = _subjects.first.id;
@@ -166,13 +159,13 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
             ),
 
             const SizedBox(height: 20),
-            
+
             if (_isLoading && _tasks.isEmpty)
               const Center(child: CircularProgressIndicator())
             else
               _buildTaskList(),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 64.0),
           ],
         ),
       ),
@@ -190,11 +183,10 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
       itemCount: _tasks.length,
       itemBuilder: (context, i) {
         final t = _tasks[i];
-        
-        // Find the subject for the task to display color
+
         final subj = _subjects.firstWhere(
           (s) => s.id == t.subjectId,
-          orElse: () => _subjects.first, // Fallback
+          orElse: () => _subjects.first,
         );
 
         return TaskTile(

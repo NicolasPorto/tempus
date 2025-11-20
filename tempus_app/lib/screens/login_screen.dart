@@ -223,28 +223,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              Container(
-                alignment: Alignment.center,
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: double.infinity,
-                    height: 0.99,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment(0.00, 0.50),
-                        end: Alignment(1.00, 0.50),
-                        colors: [
-                          Color(0x00000000),
-                          Color(0x7FAC46FF),
-                          Color(0x00000000),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
               const Text(
                 'Seus dados são armazenados localmente no seu dispositivo',
                 textAlign: TextAlign.center,
