@@ -10,25 +10,22 @@ namespace Tempus.API.Controllers
     [ApiController]
     [Route("[controller]")]
     [Authorize]
-    public class CategoryController : ControllerBase
+    public class TaskController : ControllerBase
     {
-        private readonly ICategoryService _categoryService;
+        private readonly ITaskService _taskService;
 
-        public CategoryController(ICategoryService categoryService)
+        public TaskController(ITaskService taskService)
         {
-            _categoryService = categoryService;
+            _taskService = taskService;
         }
 
         [HttpPost]
-        public IActionResult CreateCategory(CreateCategoryRequest createCategoryRequest)
+        public IActionResult CreateTask(CreateTaskRequest createTaskRequest)
         {
             try
             {
-                var categoryId = _categoryService.CreateCategory(createCategoryRequest);
-                return Ok(new ResponseBase
-                {
-                    Message = categoryId.ToString()
-                });
+                _taskService.CreateTask(createTaskRequest);
+                return Ok();
             }
             catch (TempusException temEx)
             {
@@ -43,12 +40,33 @@ namespace Tempus.API.Controllers
             }
         }
 
-        [HttpDelete("{categoryUuid}")]
-        public IActionResult RemoveCategory(Guid categoryUuid)
+        [HttpPost("finish/{taskUuid}")]
+        public IActionResult FinishTask(Guid taskUuid)
         {
             try
             {
-                _categoryService.RemoveCategory(categoryUuid);
+                _taskService.FinishTask(taskUuid);
+                return Ok();
+            }
+            catch (TempusException temEx)
+            {
+                return BadRequest(new ResponseBase
+                {
+                    Message = temEx.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [HttpDelete("{taskUuid}")]
+        public IActionResult DeleteTask(Guid taskUuid)
+        {
+            try
+            {
+                _taskService.DeleteTask(taskUuid);
                 return Ok();
             }
             catch (TempusException temEx)
@@ -65,12 +83,12 @@ namespace Tempus.API.Controllers
         }
 
         [HttpGet("{auth0Identifier}")]
-        public IActionResult ListAll(string auth0Identifier)
+        public IActionResult GetAll(string auth0Identifier)
         {
             try
             {
-                var categoryList = _categoryService.ListAll(auth0Identifier);
-                return Ok(categoryList);
+                var taskList = _taskService.GetAll(auth0Identifier);
+                return Ok(taskList);
             }
             catch (TempusException temEx)
             {

@@ -63,7 +63,7 @@ class BlackoutWrapper extends StatelessWidget {
       ignoring: !isBlackedOut,
       child: AnimatedOpacity(
         opacity: blackoutOpacity,
-        duration: const Duration(milliseconds: 750),
+        duration: const Duration(milliseconds: 1250),
         child: GestureDetector(
           onVerticalDragUpdate: (details) {
             dimmer.updateDragOffset(details.delta.dy);
@@ -123,7 +123,7 @@ class BlackoutWrapper extends StatelessWidget {
         return Stack(
           children: [
             const HomeScreen(),
-            if (dimmer.blackoutOpacity > 0.0) _blackoutOverlay(context, dimmer),
+            _blackoutOverlay(context, dimmer),
           ],
         );
       },
