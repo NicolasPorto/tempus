@@ -29,13 +29,6 @@ class StorageService {
           .toList();
     }
 
-    final tJson = _prefs.getString('tasks');
-    if (tJson != null) {
-      tasks = (jsonDecode(tJson) as List)
-          .map((e) => TaskItem.fromMap(e))
-          .toList();
-    }
-
     final seJson = _prefs.getString('sessions');
     if (seJson != null) {
       sessions = (jsonDecode(seJson) as List)

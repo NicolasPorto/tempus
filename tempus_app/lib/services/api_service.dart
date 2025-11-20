@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:tempus_app/services/authentication_service.dart';
 import 'package:auth0_flutter/auth0_flutter.dart';
 import '../models/category.dart';
+import '../models/task.dart';
 
 class ApiService {
   final AuthenticationService _authService;
@@ -405,6 +406,76 @@ class ApiService {
       print('Exception during HTTP call: $e');
       print('--------------------------------');
       return;
+    }
+  }
+Future<List<TaskItem>> getAllTasks() async {
+    final identifier = _authService.credentials?.user.sub;
+    if (identifier == null) return [];
+
+    final url = Uri.parse('$_baseUrl/Task/$identifier');
+    
+    try {
+      final headers = await _getAuthHeaders();
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> parsedJson = jsonDecode(response.body);
+        return parsedJson
+            .map((x) => TaskItem.fromJson(x as Map<String, dynamic>))
+            .toList();
+      } else {
+        print('Failed to fetch tasks. Status: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching tasks: $e');
+      return [];
+    }
+  }
+
+  Future<bool> createTask(String title, String categoryUuid, {int minutesMeta = 25}) async {
+    final url = Uri.parse('$_baseUrl/Task');
+    
+    try {
+      final headers = await _getAuthHeaders();
+      final body = jsonEncode({
+        'Name': title,
+        'MinutesMeta': minutesMeta,
+        'CategoryUUID': categoryUuid,
+        'Auth0Identifier': _authService.credentials?.user.sub,
+      });
+
+      final response = await http.post(url, headers: headers, body: body);
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error creating task: $e');
+      return false;
+    }
+  }
+
+  Future<bool> toggleTaskStatus(String taskUuid, bool isDone) async {
+    final url = Uri.parse('$_baseUrl/Task/toggle/$taskUuid?done=$isDone');
+    
+    try {
+      final headers = await _getAuthHeaders();
+      final response = await http.post(url, headers: headers);
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error finishing task: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteTask(String taskUuid) async {
+    final url = Uri.parse('$_baseUrl/Task/$taskUuid');
+    
+    try {
+      final headers = await _getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error deleting task: $e');
+      return false;
     }
   }
 }

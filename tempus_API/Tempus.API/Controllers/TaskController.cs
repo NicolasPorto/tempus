@@ -40,12 +40,12 @@ namespace Tempus.API.Controllers
             }
         }
 
-        [HttpPost("finish/{taskUuid}")]
-        public IActionResult FinishTask(Guid taskUuid)
+        [HttpPost("toggle/{taskUuid}")]
+        public IActionResult FinishTask(Guid taskUuid, [FromQuery] bool done)
         {
             try
             {
-                _taskService.FinishTask(taskUuid);
+                _taskService.FinishTask(taskUuid, done);
                 return Ok();
             }
             catch (TempusException temEx)

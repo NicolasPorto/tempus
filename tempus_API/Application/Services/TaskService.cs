@@ -22,12 +22,12 @@ namespace Application.Services
             taskRepository.Delete(task);
         }
 
-        public void FinishTask(Guid taskUUID)
+        public void FinishTask(Guid taskUUID, bool done)
         {
             var task =
                 taskRepository.GetByUuid(taskUUID);
 
-            task.Done = true;
+            task.Done = done;
             taskRepository.Update(task);
         }
 

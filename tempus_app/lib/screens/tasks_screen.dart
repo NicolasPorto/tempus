@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/storage_service.dart';
+import 'package:provider/provider.dart';
+import 'package:tempus_app/services/api_service.dart';
 import '../models/task.dart';
+import '../models/subject.dart';
 import '../widgets/tasks_components/tasks_header.dart';
 import '../widgets/tasks_components/new_task_card.dart';
 import '../widgets/tasks_components/empty_tasks_view.dart';
@@ -23,21 +25,49 @@ class _TasksScreenContent extends StatefulWidget {
 }
 
 class _TasksScreenContentState extends State<_TasksScreenContent> {
-  final store = StorageService.instance;
   final TextEditingController _ctrl = TextEditingController();
+  
+  List<TaskItem> _tasks = [];
+  List<Subject> _subjects = [];
   String selectedSubjectId = '';
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeSubjectSelection();
+    _loadData();
   }
 
-  void _initializeSubjectSelection() {
-    if (store.subjects.isNotEmpty) {
-      setState(() {
-        selectedSubjectId = store.subjects.first.id;
-      });
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final api = context.read<ApiService>();
+
+    try {
+      // Fetch categories and tasks in parallel
+      final results = await Future.wait([
+        api.listAllCategories(),
+        api.getAllTasks(),
+      ]);
+
+      final categories = results[0] as List<dynamic>; // List<Category>
+      final tasks = results[1] as List<dynamic>;      // List<TaskItem>
+
+      if (mounted) {
+        setState(() {
+          // Convert Backend Categories to Frontend Subjects
+          _subjects = categories.map((c) => c.toSubject()).toList().cast<Subject>();
+          _tasks = tasks.cast<TaskItem>();
+
+          // Set default dropdown value if needed
+          if (_subjects.isNotEmpty && ! _subjects.any((s) => s.id == selectedSubjectId)) {
+            selectedSubjectId = _subjects.first.id;
+          }
+        });
+      }
+    } catch (e) {
+      print("Error loading data: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -47,37 +77,70 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     super.dispose();
   }
 
-  void _addTask() async {
-    if (store.subjects.isEmpty) return;
-
+  Future<void> _addTask() async {
+    if (_subjects.isEmpty) return;
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
 
-    if (selectedSubjectId.isEmpty && store.subjects.isNotEmpty) {
-      selectedSubjectId = store.subjects.first.id;
+    // Determine which subject ID to use
+    String subjectIdToUse = selectedSubjectId;
+    if (subjectIdToUse.isEmpty && _subjects.isNotEmpty) {
+      subjectIdToUse = _subjects.first.id;
     }
 
-    final t = TaskItem(title: text, subjectId: selectedSubjectId);
-    await store.addTask(t);
-    _ctrl.clear();
-    setState(() {});
+    setState(() => _isLoading = true);
+    final api = context.read<ApiService>();
+    
+    // Call API
+    final success = await api.createTask(text, subjectIdToUse);
+
+    if (success) {
+      _ctrl.clear();
+      await _loadData(); // Reload to get the new task with its real UUID
+    } else {
+       if (mounted) setState(() => _isLoading = false);
+       // Optionally show an error snackbar here
+    }
   }
 
-  Future<void> _toggleTask(String taskId) async {
-    await store.toggleTask(taskId);
-    setState(() {});
+ Future<void> _toggleTask(TaskItem task) async {
+    // 1. Optimistic UI Update (visually toggle immediately)
+    setState(() {
+      task.done = !task.done;
+    });
+
+    final api = context.read<ApiService>();
+    
+    // 2. Send the NEW status (task.done is already flipped above) to the backend
+    final success = await api.toggleTaskStatus(task.id, task.done);
+
+    // 3. If API fails, revert the change
+    if (!success) {
+      setState(() {
+        task.done = !task.done; 
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update task status")),
+      );
+    } else {
+      // Optional: Reload data to ensure perfect sync, though optimistic update handles the UI
+      // _loadData(); 
+    }
   }
 
   Future<void> _deleteTask(String taskId) async {
-    await store.removeTask(taskId);
-    setState(() {});
+    setState(() => _isLoading = true);
+    final api = context.read<ApiService>();
+    await api.deleteTask(taskId);
+    await _loadData();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (store.subjects.isNotEmpty &&
-        !store.subjects.any((s) => s.id == selectedSubjectId)) {
-      selectedSubjectId = store.subjects.first.id;
+    // Ensure selectedSubjectId is valid
+    if (_subjects.isNotEmpty &&
+        !_subjects.any((s) => s.id == selectedSubjectId)) {
+      selectedSubjectId = _subjects.first.id;
     }
 
     return SingleChildScrollView(
@@ -92,7 +155,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
             NewTaskCard(
               controller: _ctrl,
-              subjects: store.subjects,
+              subjects: _subjects,
               selectedSubjectId: selectedSubjectId,
               onSubjectChanged: (newValue) {
                 setState(() {
@@ -103,8 +166,11 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
             ),
 
             const SizedBox(height: 20),
-
-            _buildTaskList(),
+            
+            if (_isLoading && _tasks.isEmpty)
+              const Center(child: CircularProgressIndicator())
+            else
+              _buildTaskList(),
 
             const SizedBox(height: 20),
           ],
@@ -114,27 +180,27 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   }
 
   Widget _buildTaskList() {
-    if (store.tasks.isEmpty || store.subjects.isEmpty) {
-      return EmptyTasksView(hasSubjects: store.subjects.isNotEmpty);
+    if (_tasks.isEmpty || _subjects.isEmpty) {
+      return EmptyTasksView(hasSubjects: _subjects.isNotEmpty);
     }
 
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: store.tasks.length,
+      itemCount: _tasks.length,
       itemBuilder: (context, i) {
-        final t = store.tasks[i];
-        final subj = store.subjects.firstWhere(
+        final t = _tasks[i];
+        
+        // Find the subject for the task to display color
+        final subj = _subjects.firstWhere(
           (s) => s.id == t.subjectId,
-          orElse: () => store.subjects.isNotEmpty
-              ? store.subjects.first
-              : store.subjects.firstWhere((s) => true),
+          orElse: () => _subjects.first, // Fallback
         );
 
         return TaskTile(
           task: t,
           subject: subj,
-          onToggle: (_) => _toggleTask(t.id),
+          onToggle: (_) => _toggleTask(t),
           onDelete: () => _deleteTask(t.id),
         );
       },

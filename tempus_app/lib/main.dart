@@ -10,6 +10,7 @@ import 'services/storage_service.dart';
 import 'services/authentication_service.dart';
 import 'screens/auth_wrapper.dart';
 import 'services/api_service.dart';
+import 'services/navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ void main() async {
         Provider(create: (context) => AuthenticationService()),
         ChangeNotifierProvider(create: (context) => TempusGlobals()),
         ChangeNotifierProvider<ScreenDimmer>(create: (context) => screenDimmer),
+        ChangeNotifierProvider(create: (context) => NavigationService()),
         ProxyProvider<AuthenticationService, ApiService>(
           update: (context, authService, previousApiService) =>
               ApiService(authService),

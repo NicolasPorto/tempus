@@ -85,11 +85,11 @@ class SummaryStatCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 20,
-                      color: Color(0xFFA0A0A0),
-                    ),
+                    // const Icon(
+                    //   Icons.arrow_forward_ios,
+                    //   size: 20,
+                    //   color: Color(0xFFA0A0A0),
+                    // ),
                   ],
                 ),
                 const SizedBox(height: 32),

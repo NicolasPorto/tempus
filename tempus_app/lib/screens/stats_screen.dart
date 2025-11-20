@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/storage_service.dart';
 import '../services/api_service.dart';
+import '../models/task.dart';
 
 import '../widgets/stats_components/time_stat_card.dart';
 import '../widgets/stats_components/summary_stat_card.dart';
@@ -21,6 +22,9 @@ class _StatsScreenState extends State<StatsScreen> {
   int? _finishedSessions;
   int? _sessionStreak;
 
+  int _completedTasks = 0;
+  int _totalTasks = 0;
+  
   @override
   void initState() {
     super.initState();
@@ -36,6 +40,7 @@ class _StatsScreenState extends State<StatsScreen> {
         apiService.obtainAverageSessionStats(),
         apiService.obtainFinishedSessions(),
         apiService.obtainSessionStreak(),
+        apiService.getAllTasks()
       ]);
 
       if (mounted) {
@@ -43,6 +48,9 @@ class _StatsScreenState extends State<StatsScreen> {
           _sessionStats = results[0] as Map<String, dynamic>;
           _finishedSessions = results[1] as int;
           _sessionStreak = results[2] as int;
+          final tasks = results[3] as List<TaskItem>;
+          _totalTasks = tasks.length;
+          _completedTasks = tasks.where((t) => t.done).length;
           _isLoading = false;
         });
       }
@@ -112,7 +120,7 @@ class _StatsScreenState extends State<StatsScreen> {
             // Card 3: Tarefas (Estava faltando no seu código anterior)
             SummaryStatCard(
               title: 'Tarefas Concluídas',
-              value: '$completedTasks/$totalTasks',
+              value: '$_completedTasks/$_totalTasks', // Use the variables here
               iconColors: const [Color(0x1900C850), Color(0x1900BC7C)],
               barColors: const [Color(0xFF00C850), Color(0xFF00BC7C)],
               icon: Icons.task_alt,
@@ -120,14 +128,14 @@ class _StatsScreenState extends State<StatsScreen> {
 
             const SizedBox(height: 32),
 
-            // // Card 4: Streak
-            // SummaryStatCard(
-            //   title: 'Sequência (Streak)',
-            //   value: _isLoading ? '...' : '$_sessionStreak dias',
-            //   iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
-            //   barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
-            //   icon: Icons.local_fire_department,
-            // ),
+            // Card 4: Streak
+            SummaryStatCard(
+              title: 'Sequência de sessões (Streak)',
+              value: _isLoading ? '...' : '$_sessionStreak',
+              iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
+              barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
+              icon: Icons.local_fire_department,
+            ),
 
             // const SizedBox(height: 32),
 
