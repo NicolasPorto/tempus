@@ -22,6 +22,7 @@ class AuthenticationService {
         _credentials = await _auth0.credentialsManager.credentials();
         print('--- AUTH RESTORED ---');
         print('Access Token: ${_credentials?.accessToken}');
+        print('Credentials: ${_credentials?.user.name}');
         print('-----------------------');
         return true;
       }
@@ -46,7 +47,7 @@ class AuthenticationService {
               'offline_access' // <--- This requests the Refresh Token
             },
           );
-      
+
       _credentials = creds;
 
       print('--- AUTH SUCCESS ---');
