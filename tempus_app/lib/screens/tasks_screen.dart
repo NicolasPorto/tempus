@@ -30,6 +30,9 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   List<TaskItem> _tasks = [];
   List<Subject> _subjects = [];
   String selectedSubjectId = '';
+
+  // NEW: State for the hour scroller
+  int _selectedHours = 0;
   bool _isLoading = false;
 
   @override
@@ -90,11 +93,21 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
     setState(() => _isLoading = true);
     final api = context.read<ApiService>();
+    int minutesToSave = _selectedHours * 60;
+    if (minutesToSave == 0) minutesToSave = 25; // Default fallback if 0 selected
 
-    final success = await api.createTask(text, subjectIdToUse);
+    final success = await api.createTask(
+        text,
+        subjectIdToUse,
+        minutesMeta: minutesToSave
+    );
 
     if (success) {
       _ctrl.clear();
+      // Reset hours
+      setState(() {
+        _selectedHours = 0;
+      });
       await _loadData();
     } else {
       if (mounted) setState(() => _isLoading = false);
@@ -117,8 +130,6 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to update task status")),
       );
-    } else {
-      // _loadData();
     }
   }
 
@@ -150,9 +161,17 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
               controller: _ctrl,
               subjects: _subjects,
               selectedSubjectId: selectedSubjectId,
+              // NEW: Pass state
+              selectedHours: _selectedHours,
               onSubjectChanged: (newValue) {
                 setState(() {
                   selectedSubjectId = newValue ?? '';
+                });
+              },
+              // NEW: Handle updates
+              onHoursChanged: (val) {
+                setState(() {
+                  _selectedHours = val;
                 });
               },
               onAddTask: _addTask,
@@ -185,7 +204,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         final t = _tasks[i];
 
         final subj = _subjects.firstWhere(
-          (s) => s.id == t.subjectId,
+              (s) => s.id == t.subjectId,
           orElse: () => _subjects.first,
         );
 

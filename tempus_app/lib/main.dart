@@ -3,29 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tempus_app/widgets/animated_background.dart';
-import '/libraries/globals.dart';
-import '/libraries/screen_dimmer.dart';
-import 'screens/home_screen.dart';
-import 'services/storage_service.dart';
-import 'services/authentication_service.dart';
-import 'screens/auth_wrapper.dart';
-import 'services/api_service.dart';
-import 'services/navigation_service.dart';
+import 'package:tempus_app/libraries/globals.dart';
+import 'package:tempus_app/libraries/screen_dimmer.dart';
+import 'package:tempus_app/screens/home_screen.dart';
+import 'package:tempus_app/services/storage_service.dart';
+import 'package:tempus_app/services/authentication_service.dart';
+import 'package:tempus_app/screens/auth_wrapper.dart';
+import 'package:tempus_app/services/api_service.dart';
+import 'package:tempus_app/services/navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   await StorageService.initialize(prefs);
+
   runApp(
     MultiProvider(
       providers: [
         Provider(create: (context) => AuthenticationService()),
-        ChangeNotifierProvider(create: (context) => TempusGlobals()),
+
+        // FIXED: Use '.value' to use the singleton instance from globals.dart
+        // This ensures ApiService and the UI listen to the EXACT SAME object.
+        ChangeNotifierProvider.value(value: tempusGlobals),
+
         ChangeNotifierProvider<ScreenDimmer>(create: (context) => screenDimmer),
         ChangeNotifierProvider(create: (context) => NavigationService()),
-        ProxyProvider<AuthenticationService, ApiService>(
-          update: (context, authService, previousApiService) =>
-              ApiService(authService),
+
+        ProxyProvider2<AuthenticationService, TempusGlobals, ApiService>(
+          update: (context, authService, globals, previousApiService) =>
+              ApiService(authService, globals),
         ),
       ],
       child: const TempusApp(),
@@ -47,7 +53,25 @@ class TempusApp extends StatelessWidget {
         ).copyWith(background: Colors.transparent),
       ),
       debugShowCheckedModeBanner: false,
-      home: const AnimatedBackground(child: AuthWrapper()),
+      home: Stack(
+        children: [
+          const AnimatedBackground(child: AuthWrapper()),
+          // Global Loading Overlay
+          Consumer<TempusGlobals>(
+            builder: (context, globals, child) {
+              // Only show if loading is true
+              if (!globals.isLoading) return const SizedBox.shrink();
+
+              return Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

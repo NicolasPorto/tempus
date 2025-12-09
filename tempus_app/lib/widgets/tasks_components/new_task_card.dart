@@ -10,6 +10,10 @@ class NewTaskCard extends StatelessWidget {
   final ValueChanged<String?> onSubjectChanged;
   final VoidCallback onAddTask;
 
+  // NEW: Fields for hour selection
+  final int selectedHours;
+  final ValueChanged<int> onHoursChanged;
+
   const NewTaskCard({
     super.key,
     required this.controller,
@@ -17,6 +21,9 @@ class NewTaskCard extends StatelessWidget {
     required this.selectedSubjectId,
     required this.onSubjectChanged,
     required this.onAddTask,
+    // Add to constructor
+    required this.selectedHours,
+    required this.onHoursChanged,
   });
 
   @override
@@ -24,7 +31,7 @@ class NewTaskCard extends StatelessWidget {
     final isSubjectSelected = subjects.isNotEmpty;
 
     final selectedSubject = subjects.firstWhere(
-      (s) => s.id == selectedSubjectId,
+          (s) => s.id == selectedSubjectId,
       orElse: () => subjects.isNotEmpty
           ? subjects.first
           : Subject(id: '', name: '', colorValue: 0xFFD4D4D4, categoryId: ''),
@@ -85,7 +92,10 @@ class NewTaskCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 32),
-                _buildTitleInput(selectedSubject.colorValue, isSubjectSelected),
+
+                // UPDATED: Now calls the new method that includes the scroller
+                _buildTitleAndDurationInput(selectedSubject.colorValue, isSubjectSelected),
+
                 const SizedBox(height: 24),
                 _buildSubjectDropdown(),
                 const SizedBox(height: 48),
@@ -124,57 +134,123 @@ class NewTaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleInput(int colorValue, bool isSubjectSelected) {
-    return Column(
+  // NEW: Replaced _buildTitleInput with this composite widget
+  Widget _buildTitleAndDurationInput(int colorValue, bool isSubjectSelected) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AutoSizeText(
-          'Título da Tarefa',
-          maxLines: 1,
-          minFontSize: 10,
-          style: TextStyle(
-            color: Color(0xFFD4D4D4),
-            fontFamily: 'Arimo',
-            fontWeight: FontWeight.w400,
-            height: 1,
+        // LEFT: The Text Field
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const AutoSizeText(
+                'Título da Tarefa',
+                maxLines: 1,
+                minFontSize: 10,
+                style: TextStyle(
+                  color: Color(0xFFD4D4D4),
+                  fontFamily: 'Arimo',
+                  fontWeight: FontWeight.w400,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: ShapeDecoration(
+                  color: const Color(0x7F0A0A0A),
+                  shape: RoundedRectangleBorder(
+                    side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: TextField(
+                  controller: controller,
+                  cursorColor: isSubjectSelected
+                      ? Color(colorValue)
+                      : const Color(0xFFD4D4D4),
+                  style: const TextStyle(
+                    color: Color(0xFFF4F4F4),
+                    fontSize: 16,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w400,
+                  ),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 9),
+                    hintText: 'Ex: Resolver exercícios...',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF717182),
+                      fontSize: 16,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: ShapeDecoration(
-            color: const Color(0x7F0A0A0A),
-            shape: RoundedRectangleBorder(
-              side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: TextField(
-            controller: controller,
-            cursorColor: isSubjectSelected
-                ? Color(colorValue)
-                : const Color(0xFFD4D4D4),
-            style: const TextStyle(
-              color: Color(0xFFF4F4F4),
-              fontSize: 16,
-              fontFamily: 'Arimo',
-              fontWeight: FontWeight.w400,
-            ),
-            decoration: const InputDecoration(
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              hintText: 'Ex: Resolver exercícios do capítulo 5...',
-              hintStyle: TextStyle(
-                color: Color(0xFF717182),
-                fontSize: 16,
+
+        const SizedBox(width: 16),
+
+        // RIGHT: The Hour Scroller
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const AutoSizeText(
+              'Horas',
+              maxLines: 1,
+              minFontSize: 10,
+              style: TextStyle(
+                color: Color(0xFFD4D4D4),
                 fontFamily: 'Arimo',
                 fontWeight: FontWeight.w400,
+                height: 1,
               ),
-              border: InputBorder.none,
             ),
-          ),
-        ),
+            const SizedBox(height: 12),
+            Container(
+              width: 50,
+              height: 48,
+              decoration: ShapeDecoration(
+                color: const Color(0x7F0A0A0A),
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: ListWheelScrollView.useDelegate(
+                itemExtent: 30,
+                perspective: 0.005,
+                diameterRatio: 1.2,
+                physics: const FixedExtentScrollPhysics(),
+                onSelectedItemChanged: onHoursChanged,
+                childDelegate: ListWheelChildBuilderDelegate(
+                  childCount: 13, // 0 to 12 hours
+                  builder: (context, index) {
+                    final isSelected = index == selectedHours;
+                    return Center(
+                      child: Text(
+                        index.toString(),
+                        style: TextStyle(
+                          fontFamily: 'Arimo',
+                          fontSize: 16,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? (isSubjectSelected ? Color(colorValue) : Colors.white)
+                              : const Color(0xFF717182),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        )
       ],
     );
   }
@@ -284,8 +360,8 @@ class NewTaskCard extends StatelessWidget {
                                 subjects
                                     .firstWhere(
                                       (x) => x.id == selectedSubjectId,
-                                      orElse: () => s,
-                                    )
+                                  orElse: () => s,
+                                )
                                     .colorValue,
                               ),
                               shape: BoxShape.circle,
@@ -295,8 +371,8 @@ class NewTaskCard extends StatelessWidget {
                             subjects
                                 .firstWhere(
                                   (x) => x.id == selectedSubjectId,
-                                  orElse: () => s,
-                                )
+                              orElse: () => s,
+                            )
                                 .name,
                             maxLines: 1,
                             minFontSize: 10,
