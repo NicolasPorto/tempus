@@ -9,11 +9,15 @@ import 'package:tempus_app/models/session.dart';
 import 'package:tempus_app/models/subject.dart';
 import 'package:tempus_app/services/api_service.dart';
 import 'package:tempus_app/services/storage_service.dart';
+import 'dart:math';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 final ValueNotifier<bool> isFocusModeGlobalNotifier = ValueNotifier(false);
 
 class TimerController extends ChangeNotifier {
   final ApiService apiService;
+  InterstitialAd? _interstitialAd;
+  final Random _random = Random();
 
   List<Subject> _subjects = [];
   Subject? _selectedSubject;
@@ -44,6 +48,36 @@ class TimerController extends ChangeNotifier {
 
   TimerController({required this.apiService}) {
     Future.microtask(() => _init());
+    loadAd();
+  }
+
+  void loadAd() {
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/1033173712', // ID de Teste Intersticial
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+          print("Anúncio carregado com sucesso!"); // Adicione este log
+        },
+        onAdFailedToLoad: (error) {
+          print("Falha ao carregar: $error");
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _showAdWithProbability() {
+    if (_random.nextInt(3) == 0) {
+      if (_interstitialAd != null) {
+        _interstitialAd!.show();
+        _interstitialAd = null;
+        loadAd();
+      } else {
+        loadAd();
+      }
+    }
   }
 
   Future<void> _init() async {
@@ -168,6 +202,7 @@ class TimerController extends ChangeNotifier {
     }
 
     _stopFocusSession();
+    _showAdWithProbability();
     notifyListeners();
   }
 
