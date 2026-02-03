@@ -21,8 +21,8 @@ class TimerController extends ChangeNotifier {
 
   // --- Estados do Timer ---
   bool _isFocusMode = false;
-  static const int _initialDuration = 25 * 60;
-  int _currentDuration = _initialDuration;
+  int _initialDuration = 25 * 60;
+  int _currentDuration = 25 * 60;
   Timer? _timer;
   Timer? _autoDimmingTimer;
   bool _isRunning = false;
@@ -44,6 +44,14 @@ class TimerController extends ChangeNotifier {
 
   TimerController({required this.apiService}) {
     Future.microtask(() => _init());
+  }
+
+  void setDuration(int minutes) {
+    if (_isRunning) return; // Segurança: não muda se estiver rodando
+
+    _initialDuration = minutes * 60;
+    _currentDuration = _initialDuration;
+    notifyListeners();
   }
 
   Future<void> _init() async {
