@@ -11,10 +11,12 @@ import 'package:tempus_app/services/authentication_service.dart';
 import 'package:tempus_app/screens/auth_wrapper.dart';
 import 'package:tempus_app/services/api_service.dart';
 import 'package:tempus_app/services/navigation_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+  await MobileAds.instance.initialize();
   await StorageService.initialize(prefs);
 
   runApp(

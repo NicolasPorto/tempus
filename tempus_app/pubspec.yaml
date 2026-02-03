@@ -25,6 +25,7 @@ dependencies:
   auth0_flutter: ^1.4.1
   http: ^1.2.0
   auto_size_text: ^3.0.0
+  google_mobile_ads: ^5.2.0
 
 dev_dependencies:
   flutter_test:
