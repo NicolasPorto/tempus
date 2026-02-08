@@ -53,12 +53,12 @@ class TimerController extends ChangeNotifier {
 
   void loadAd() {
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1033173712', // ID de Teste Intersticial
+      adUnitId: 'ca-app-pub-4001641241004927/2089137240',
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
-          print("Anúncio carregado com sucesso!"); // Adicione este log
+          print("Anúncio carregado com sucesso!");
         },
         onAdFailedToLoad: (error) {
           print("Falha ao carregar: $error");
