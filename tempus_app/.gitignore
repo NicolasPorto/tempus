@@ -27,11 +27,19 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# Flutter generated plugin files
+**/flutter/generated_plugin_registrant.cc
+**/flutter/generated_plugin_registrant.h
+**/flutter/generated_plugins.cmake
+**/Flutter/GeneratedPluginRegistrant.swift
+pubspec.lock
 
 # Symbolication related
 app.*.symbols
