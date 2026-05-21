@@ -12,7 +12,7 @@ dependencies:
 
   provider: ^6.1.1
   cupertino_icons: ^1.0.8
-  shared_preferences: ^2.0.15
+  supabase_flutter: ^2.5.0
   dynamic_background: ^0.5.0
   flutter_moving_background: ^0.0.5
   screen_brightness: ^1.0.0
@@ -22,8 +22,6 @@ dependencies:
   flutter_svg: ^2.0.0
   flutter_sound: ^9.3.0
   permission_handler: ^11.3.1
-  auth0_flutter: ^1.4.1
-  http: ^1.2.0
   auto_size_text: ^3.0.0
   google_mobile_ads: ^5.2.0
 

@@ -1,40 +1,26 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tempus_app/widgets/animated_background.dart';
 import 'package:tempus_app/libraries/globals.dart';
 import 'package:tempus_app/libraries/screen_dimmer.dart';
 import 'package:tempus_app/screens/home_screen.dart';
-import 'package:tempus_app/services/storage_service.dart';
-import 'package:tempus_app/services/authentication_service.dart';
 import 'package:tempus_app/screens/auth_wrapper.dart';
-import 'package:tempus_app/services/api_service.dart';
-import 'package:tempus_app/services/navigation_service.dart';
+import 'package:tempus_app/services/supabase_service.dart';
+import 'package:tempus_app/core/supabase/supabase_client.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
+  await SupabaseClientConfig.initialize();
   await MobileAds.instance.initialize();
-  await StorageService.initialize(prefs);
 
   runApp(
     MultiProvider(
       providers: [
-        Provider(create: (context) => AuthenticationService()),
-
-        // FIXED: Use '.value' to use the singleton instance from globals.dart
-        // This ensures ApiService and the UI listen to the EXACT SAME object.
+        Provider(create: (_) => SupabaseService()),
         ChangeNotifierProvider.value(value: tempusGlobals),
-
-        ChangeNotifierProvider<ScreenDimmer>(create: (context) => screenDimmer),
-        ChangeNotifierProvider(create: (context) => NavigationService()),
-
-        ProxyProvider2<AuthenticationService, TempusGlobals, ApiService>(
-          update: (context, authService, globals, previousApiService) =>
-              ApiService(authService, globals),
-        ),
+        ChangeNotifierProvider<ScreenDimmer>(create: (_) => screenDimmer),
       ],
       child: const TempusApp(),
     ),
@@ -58,17 +44,12 @@ class TempusApp extends StatelessWidget {
       home: Stack(
         children: [
           const AnimatedBackground(child: AuthWrapper()),
-          // Global Loading Overlay
           Consumer<TempusGlobals>(
             builder: (context, globals, child) {
-              // Only show if loading is true
               if (!globals.isLoading) return const SizedBox.shrink();
-
               return Container(
                 color: Colors.black54,
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const Center(child: CircularProgressIndicator()),
               );
             },
           ),
@@ -175,9 +156,8 @@ class AudioWavePainter extends CustomPainter {
     final path = Path();
     path.moveTo(0, size.height / 2);
 
-    final double maxAmplitude = size.height;
-    final double minDb = 35.0;
-    final double maxDb = 90.0;
+    const double minDb = 35.0;
+    const double maxDb = 90.0;
 
     double amplitude;
 
@@ -186,12 +166,10 @@ class AudioWavePainter extends CustomPainter {
     } else {
       double clampedDb = decibels.clamp(minDb, maxDb);
       double normalizedDb = (clampedDb - minDb) / (maxDb - minDb);
-      amplitude = max(1.0, normalizedDb * maxAmplitude);
+      amplitude = max(1.0, normalizedDb * size.height);
     }
 
-    final double step = 5;
-
-    for (double x = 0; x <= size.width; x += step) {
+    for (double x = 0; x <= size.width; x += 5) {
       final double noise = (_random.nextDouble() - 0.5) * amplitude;
       final y = (size.height / 2) + noise;
       path.lineTo(x, y);
@@ -201,7 +179,6 @@ class AudioWavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant AudioWavePainter oldDelegate) {
-    return decibels != oldDelegate.decibels;
-  }
+  bool shouldRepaint(covariant AudioWavePainter oldDelegate) =>
+      decibels != oldDelegate.decibels;
 }

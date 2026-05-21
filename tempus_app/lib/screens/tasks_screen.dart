@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tempus_app/services/api_service.dart';
+import 'package:tempus_app/services/supabase_service.dart';
 import '../models/task.dart';
 import '../models/subject.dart';
 import '../widgets/tasks_components/tasks_header.dart';
@@ -30,8 +30,6 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   List<TaskItem> _tasks = [];
   List<Subject> _subjects = [];
   String selectedSubjectId = '';
-
-  // NEW: State for the hour scroller
   int _selectedHours = 0;
   bool _isLoading = false;
 
@@ -43,12 +41,12 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final api = context.read<ApiService>();
+    final svc = context.read<SupabaseService>();
 
     try {
       final results = await Future.wait([
-        api.listAllCategories(),
-        api.getAllTasks(),
+        svc.listCategories(),
+        svc.listTasks(),
       ]);
 
       final categories = results[0] as List<dynamic>;
@@ -56,10 +54,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
       if (mounted) {
         setState(() {
-          _subjects = categories
-              .map((c) => c.toSubject())
-              .toList()
-              .cast<Subject>();
+          _subjects = categories.map((c) => c.toSubject()).toList().cast<Subject>();
           _tasks = tasks.cast<TaskItem>();
 
           if (_subjects.isNotEmpty &&
@@ -69,7 +64,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         });
       }
     } catch (e) {
-      print("Error loading data: $e");
+      print('Error loading data: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -92,22 +87,19 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     }
 
     setState(() => _isLoading = true);
-    final api = context.read<ApiService>();
+    final svc = context.read<SupabaseService>();
     int minutesToSave = _selectedHours * 60;
-    if (minutesToSave == 0) minutesToSave = 25; // Default fallback if 0 selected
+    if (minutesToSave == 0) minutesToSave = 25;
 
-    final success = await api.createTask(
-        text,
-        subjectIdToUse,
-        minutesMeta: minutesToSave
+    final success = await svc.createTask(
+      text,
+      subjectIdToUse,
+      minutesMeta: minutesToSave,
     );
 
     if (success) {
       _ctrl.clear();
-      // Reset hours
-      setState(() {
-        _selectedHours = 0;
-      });
+      setState(() => _selectedHours = 0);
       await _loadData();
     } else {
       if (mounted) setState(() => _isLoading = false);
@@ -115,28 +107,24 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   }
 
   Future<void> _toggleTask(TaskItem task) async {
-    setState(() {
-      task.done = !task.done;
-    });
+    setState(() => task.done = !task.done);
 
-    final api = context.read<ApiService>();
-
-    final success = await api.toggleTaskStatus(task.id, task.done);
+    final svc = context.read<SupabaseService>();
+    final success = await svc.toggleTask(task.id, task.done);
 
     if (!success) {
-      setState(() {
-        task.done = !task.done;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update task status")),
-      );
+      setState(() => task.done = !task.done);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Falha ao atualizar tarefa')),
+        );
+      }
     }
   }
 
   Future<void> _deleteTask(String taskId) async {
     setState(() => _isLoading = true);
-    final api = context.read<ApiService>();
-    await api.deleteTask(taskId);
+    await context.read<SupabaseService>().deleteTask(taskId);
     await _loadData();
   }
 
@@ -154,36 +142,25 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           children: [
             const SizedBox(height: 20),
             const TasksHeader(),
-
             const SizedBox(height: 20),
-
             NewTaskCard(
               controller: _ctrl,
               subjects: _subjects,
               selectedSubjectId: selectedSubjectId,
-              // NEW: Pass state
               selectedHours: _selectedHours,
               onSubjectChanged: (newValue) {
-                setState(() {
-                  selectedSubjectId = newValue ?? '';
-                });
+                setState(() => selectedSubjectId = newValue ?? '');
               },
-              // NEW: Handle updates
               onHoursChanged: (val) {
-                setState(() {
-                  _selectedHours = val;
-                });
+                setState(() => _selectedHours = val);
               },
               onAddTask: _addTask,
             ),
-
             const SizedBox(height: 20),
-
             if (_isLoading && _tasks.isEmpty)
               const Center(child: CircularProgressIndicator())
             else
               _buildTaskList(),
-
             const SizedBox(height: 64.0),
           ],
         ),
@@ -202,12 +179,10 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
       itemCount: _tasks.length,
       itemBuilder: (context, i) {
         final t = _tasks[i];
-
         final subj = _subjects.firstWhere(
-              (s) => s.id == t.subjectId,
+          (s) => s.id == t.subjectId,
           orElse: () => _subjects.first,
         );
-
         return TaskTile(
           task: t,
           subject: subj,

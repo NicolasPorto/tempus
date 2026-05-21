@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tempus_app/controller/timer_controller.dart';
-import 'package:tempus_app/services/api_service.dart';
+import 'package:tempus_app/services/supabase_service.dart';
 
 import '../widgets/timer_controls.dart';
 import '../widgets/subject_manager_modal.dart';
@@ -16,7 +16,7 @@ class TimerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => TimerController(
-        apiService: Provider.of<ApiService>(context, listen: false),
+        supabaseService: Provider.of<SupabaseService>(context, listen: false),
       ),
       child: const _TimerScreenContent(),
     );
@@ -56,10 +56,8 @@ class _TimerScreenContent extends StatelessWidget {
                     opacity: animation,
                     child: ScaleTransition(
                       scale: animation.drive(
-                        Tween<double>(
-                          begin: 0.8,
-                          end: 1.0,
-                        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                        Tween<double>(begin: 0.8, end: 1.0)
+                            .chain(CurveTween(curve: Curves.easeOutCubic)),
                       ),
                       child: child,
                     ),
@@ -89,9 +87,7 @@ class _TimerScreenContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const TimerHeader(),
-
             const SizedBox(height: 48),
-
             SizedBox(
               width: double.infinity,
               child: Column(
@@ -104,27 +100,23 @@ class _TimerScreenContent extends StatelessWidget {
                     onManageTap: () => _showSubjectManagerModal(context),
                     onSubjectChanged: controller.selectSubject,
                   ),
-
                   const SizedBox(height: 40),
-
                   TimerControls(
                     key: const ValueKey('timer_controls'),
                     selectedSubject: controller.selectedSubject,
                     onToggleTimer: controller.toggleTimer,
                     onResetTimer: controller.resetTimer,
-                    onDurationChanged: (minutes) => controller.setDuration(minutes),
+                    onDurationChanged: (minutes) =>
+                        controller.setDuration(minutes),
                     currentDuration: controller.currentDuration,
                     initialDuration: controller.initialDuration,
                     isRunning: controller.isRunning,
                   ),
-
                   const SizedBox(height: 40),
-
                   if (controller.subjects.isEmpty && !controller.isLoading)
                     EmptySubjectCard(
                       onCreateTap: () => _showSubjectManagerModal(context),
                     ),
-
                   const SizedBox(height: 32),
                 ],
               ),
@@ -136,12 +128,11 @@ class _TimerScreenContent extends StatelessWidget {
   }
 
   Widget _buildFocusView(BuildContext context, TimerController controller) {
-    const double requiredTopSpacing = 200.0;
     return Center(
       key: const ValueKey('focus'),
       child: Column(
         children: [
-          const SizedBox(height: requiredTopSpacing),
+          const SizedBox(height: 200),
           TimerControls(
             key: const ValueKey('timer_controls'),
             selectedSubject: controller.selectedSubject,

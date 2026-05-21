@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../main.dart';
-import '../services/authentication_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../services/supabase_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,44 +14,19 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   void _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    final authService = Provider.of<AuthenticationService>(
-      context,
-      listen: false,
-    );
-
-    bool didLogin = false;
     try {
-      didLogin = await authService.login();
+      await context.read<SupabaseService>().signInWithGoogle();
+      // A navegação é gerenciada pelo AuthWrapper via onAuthStateChange
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login falhou: $e')),
+        );
       }
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    if (didLogin && context.mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (!context.mounted) return;
-
-        if (context.mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const BlackoutWrapper()),
-          );
-        }
-      });
-    } else if (!didLogin) {
-      setState(() {
-        _isLoading = false;
-      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -224,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
 
               const Text(
-                'Seus dados são armazenados localmente no seu dispositivo',
+                'Seus dados são sincronizados com segurança na nuvem',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF737373),

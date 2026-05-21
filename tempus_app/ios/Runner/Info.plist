@@ -54,7 +54,7 @@
             <string>Editor</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>YOUR_SCHEME</string>
+                <string>com.dev.tempusapp</string>
             </array>
         </dict>
     </array>

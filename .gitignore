@@ -342,3 +342,7 @@ ASALocalRun/
 /tempus_API/Application/obj/Application.csproj.nuget.dgspec.json
 /tempus_API/Application/obj/project.assets.json
 /tempus_API/Application/obj/project.nuget.cache
+
+# tempus_web (React)
+tempus_web/node_modules/
+tempus_web/dist/

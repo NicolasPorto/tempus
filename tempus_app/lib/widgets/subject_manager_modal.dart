@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
 import 'package:provider/provider.dart';
+import '../services/supabase_service.dart';
 
 class SubjectManagerModal extends StatefulWidget {
   const SubjectManagerModal({super.key});
@@ -11,7 +11,7 @@ class SubjectManagerModal extends StatefulWidget {
 
 class _SubjectManagerModalState extends State<SubjectManagerModal> {
   final TextEditingController _nameController = TextEditingController();
-  late ApiService _apiService;
+  late SupabaseService _supabaseService;
 
   final List<int> _availableColors = const [
     0xFFEF4444,
@@ -33,7 +33,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
     _selectedColorValue = _availableColors.first;
     _nameController.addListener(_updateButtonState);
     _updateButtonState();
-    _apiService = Provider.of<ApiService>(context, listen: false);
+    _supabaseService = Provider.of<SupabaseService>(context, listen: false);
   }
 
   @override
@@ -47,9 +47,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
     final newText = _nameController.text.trim();
     final isEnabled = newText.isNotEmpty && _selectedColorValue != null;
     if (_isButtonEnabled != isEnabled) {
-      setState(() {
-        _isButtonEnabled = isEnabled;
-      });
+      setState(() => _isButtonEnabled = isEnabled);
     }
   }
 
@@ -57,22 +55,19 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedColorValue == null) return;
 
-    await _apiService.createCategory(
-      name,
-      _selectedColorValue!.toRadixString(16),
-    );
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    // Extrai apenas RRGGBB (sem alpha) e adiciona o prefixo #
+    final hex =
+        '#${(_selectedColorValue! & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+
+    await _supabaseService.createCategory(name, hex);
+    if (mounted) Navigator.of(context).pop();
   }
 
   Widget _buildColorButton(int colorValue) {
     final isSelected = _selectedColorValue == colorValue;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedColorValue = colorValue;
-        });
+        setState(() => _selectedColorValue = colorValue);
         _updateButtonState();
       },
       child: Container(
@@ -92,7 +87,6 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
               color: Color(colorValue).withOpacity(0.4),
               blurRadius: 16,
               offset: const Offset(0, 4),
-              spreadRadius: 0,
             ),
           ],
         ),
@@ -258,9 +252,8 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                     Wrap(
                       spacing: 8.0,
                       runSpacing: 8.0,
-                      children: _availableColors
-                          .map(_buildColorButton)
-                          .toList(),
+                      children:
+                          _availableColors.map(_buildColorButton).toList(),
                     ),
                     const SizedBox(height: 24),
                     GestureDetector(

@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/storage_service.dart';
-import '../services/api_service.dart';
+import '../services/supabase_service.dart';
 import '../models/task.dart';
-
-// 1. Adicione estes imports para o Logout funcionar
-import '../services/authentication_service.dart';
-import 'auth_wrapper.dart'; 
+import '../screens/auth_wrapper.dart';
 
 import '../widgets/stats_components/time_stat_card.dart';
 import '../widgets/stats_components/summary_stat_card.dart';
-import '../widgets/stats_components/weekly_activity_card.dart';
-import '../widgets/stats_components/subjects_breakdown_card.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -21,10 +15,8 @@ class StatsScreen extends StatefulWidget {
 }
 
 class _StatsScreenState extends State<StatsScreen> {
-  // ... (Seu código existente de variáveis e initState/fetchData permanece igual) ...
   bool _isLoading = true;
   Map<String, dynamic>? _sessionStats;
-  int? _finishedSessions;
   int? _sessionStreak;
   int _completedTasks = 0;
   int _totalTasks = 0;
@@ -32,63 +24,50 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
   }
 
   Future<void> _fetchData() async {
-    // ... (Seu código existente do _fetchData permanece igual) ...
-    final apiService = Provider.of<ApiService>(context, listen: false);
+    final svc = context.read<SupabaseService>();
     try {
       final results = await Future.wait([
-        apiService.obtainAverageSessionStats(),
-        apiService.obtainFinishedSessions(),
-        apiService.obtainSessionStreak(),
-        apiService.getAllTasks()
+        svc.getSessionStats(),
+        svc.getStreak(),
+        svc.listTasks(),
       ]);
 
       if (mounted) {
         setState(() {
           _sessionStats = results[0] as Map<String, dynamic>;
-          _finishedSessions = results[1] as int;
-          _sessionStreak = results[2] as int;
-          final tasks = results[3] as List<TaskItem>;
+          _sessionStreak = results[1] as int;
+          final tasks = results[2] as List<TaskItem>;
           _totalTasks = tasks.length;
           _completedTasks = tasks.where((t) => t.done).length;
           _isLoading = false;
         });
       }
     } catch (e) {
-      print("Erro ao carregar estatísticas: $e");
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      print('Erro ao carregar estatísticas: $e');
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // 2. Função auxiliar para criar o botão de Logout
   Widget _buildLogoutButton(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        // Mostra um indicador de carregamento rápido ou apenas executa
-        final authService = Provider.of<AuthenticationService>(context, listen: false);
-        
+        final svc = context.read<SupabaseService>();
         try {
-          await authService.logout();
-          
+          await svc.signOut();
           if (context.mounted) {
-            // Redireciona para a tela de login/wrapper e remove a pilha de navegação
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const AuthWrapper()),
+              MaterialPageRoute(builder: (_) => const AuthWrapper()),
               (route) => false,
             );
           }
         } catch (e) {
-          print("Erro ao fazer logout: $e");
           if (context.mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Erro ao sair da conta.")),
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Erro ao sair da conta.')),
             );
           }
         }
@@ -97,17 +76,15 @@ class _StatsScreenState extends State<StatsScreen> {
         width: double.infinity,
         height: 56,
         decoration: ShapeDecoration(
-          // Fundo vermelho bem suave
-          color: const Color(0x1AFF3B30), 
+          color: const Color(0x1AFF3B30),
           shape: RoundedRectangleBorder(
-            // Borda vermelha para indicar ação destrutiva/sair
-            side: const BorderSide(width: 1, color: Color(0xFFFF3B30)), 
+            side: const BorderSide(width: 1, color: Color(0xFFFF3B30)),
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.logout, color: Color(0xFFFF3B30), size: 20),
             SizedBox(width: 10),
             Text(
@@ -127,15 +104,16 @@ class _StatsScreenState extends State<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (Cálculos de variáveis do build permanecem iguais) ...
-    final store = StorageService.instance;
-
-    final int apiTotalMinutes = _sessionStats?['totalTimeStudied'] ?? 0;
-    final int apiSupposedMinutes = _sessionStats?['supposedTotalTimeStudied'] ?? 0;
-    final int apiAvgMinutes = _sessionStats?['timeStudied'] ?? 0;
+    final int apiTotalMinutes = _sessionStats?['totalTimeStudied'] as int? ?? 0;
+    final int apiSupposedMinutes =
+        _sessionStats?['supposedTotalTimeStudied'] as int? ?? 0;
+    final int apiAvgMinutes = _sessionStats?['avgTimeStudied'] as int? ?? 0;
+    final int finishedSessions =
+        (_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0;
 
     final String displayTotal = _isLoading ? '...' : '$apiTotalMinutes min';
-    final String displaySupposed = _isLoading ? '...' : '$apiSupposedMinutes min';
+    final String displaySupposed =
+        _isLoading ? '...' : '$apiSupposedMinutes min';
     final String displayAvg = _isLoading ? '...' : '$apiAvgMinutes min';
 
     return SingleChildScrollView(
@@ -145,13 +123,18 @@ class _StatsScreenState extends State<StatsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             TimeStatCard(
               realTime: displayTotal,
               plannedTime: displaySupposed,
               avgTime: displayAvg,
-              iconColors: const [Color.fromARGB(24, 70, 203, 255), Color.fromARGB(24, 50, 168, 246)],
-              barColors: const [Color.fromARGB(255, 70, 172, 255), Color.fromARGB(255, 50, 168, 246)],
+              iconColors: const [
+                Color.fromARGB(24, 70, 203, 255),
+                Color.fromARGB(24, 50, 168, 246)
+              ],
+              barColors: const [
+                Color.fromARGB(255, 70, 172, 255),
+                Color.fromARGB(255, 50, 168, 246)
+              ],
               icon: Icons.av_timer,
             ),
 
@@ -159,12 +142,12 @@ class _StatsScreenState extends State<StatsScreen> {
 
             SummaryStatCard(
               title: 'Sessões Finalizadas',
-              value: _isLoading ? '...' : '$_finishedSessions',
+              value: _isLoading ? '...' : '$finishedSessions',
               iconColors: const [Color(0x19AC46FF), Color(0x19F6329A)],
               barColors: const [Color(0xFFAC46FF), Color(0xFFF6329A)],
               icon: Icons.check_circle_outline,
             ),
-            
+
             const SizedBox(height: 32),
 
             SummaryStatCard(
@@ -184,26 +167,12 @@ class _StatsScreenState extends State<StatsScreen> {
               barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
               icon: Icons.local_fire_department,
             ),
-            
-            const SizedBox(height: 48.0), // Aumentei um pouco o espaçamento
 
-            // 3. Inserção do Botão de Logout
+            const SizedBox(height: 48.0),
+
             _buildLogoutButton(context),
-            
-            const SizedBox(height: 32.0), // Margem final para garantir scroll
-            
-            // const SizedBox(height: 32),
 
-            // // Card 5: Atividade Semanal (Gráfico)
-            // const WeeklyActivityCard(),
-
-            // const SizedBox(height: 32),
-
-            // // Card 6: Matérias (Lista)
-            // SubjectsBreakdownCard(
-            //   minutesBySubjectId: bySubject,
-            //   allSubjects: store.subjects,
-            // ),
+            const SizedBox(height: 32.0),
           ],
         ),
       ),

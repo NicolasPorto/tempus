@@ -17,11 +17,11 @@ class TaskItem {
 
   factory TaskItem.fromJson(Map<String, dynamic> json) {
     return TaskItem(
-      id: json['uuid'] ?? '',
+      id: json['id'] ?? '',
       title: json['name'] ?? '',
       done: json['done'] ?? false,
-      subjectId: json['categoryUUID'] ?? '',
-      minutesMeta: json['minutesMeta'] ?? 25,
+      subjectId: json['category_id'] ?? '',
+      minutesMeta: json['minutes_meta'] ?? 25,
     );
   }
 

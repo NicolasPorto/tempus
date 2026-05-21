@@ -28,11 +28,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders.putAll(mapOf(
-            "auth0Domain" to "dev-tempus.us.auth0.com",
-            "auth0Scheme" to "com.dev.tempusapp",
-            "auth0ClientId" to "H6jITfyPgE1IyIR5rbyRCJtGjJ99alhK"
-        ))
     }
 
     buildTypes {

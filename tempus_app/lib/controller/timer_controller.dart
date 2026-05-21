@@ -5,17 +5,15 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:vibration/vibration.dart';
 import 'package:tempus_app/libraries/screen_dimmer.dart';
-import 'package:tempus_app/models/session.dart';
 import 'package:tempus_app/models/subject.dart';
-import 'package:tempus_app/services/api_service.dart';
-import 'package:tempus_app/services/storage_service.dart';
+import 'package:tempus_app/services/supabase_service.dart';
 import 'dart:math';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 final ValueNotifier<bool> isFocusModeGlobalNotifier = ValueNotifier(false);
 
 class TimerController extends ChangeNotifier {
-  final ApiService apiService;
+  final SupabaseService supabaseService;
   InterstitialAd? _interstitialAd;
   final Random _random = Random();
 
@@ -23,7 +21,6 @@ class TimerController extends ChangeNotifier {
   Subject? _selectedSubject;
   bool _isLoading = true;
 
-  // --- Estados do Timer ---
   bool _isFocusMode = false;
   int _initialDuration = 25 * 60;
   int _currentDuration = 25 * 60;
@@ -32,12 +29,10 @@ class TimerController extends ChangeNotifier {
   bool _isRunning = false;
   String? _sessionUuid;
 
-  // --- Áudio ---
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isPlayerReady = false;
   Uint8List? _beepSound;
 
-  // --- Getters ---
   List<Subject> get subjects => _subjects;
   Subject? get selectedSubject => _selectedSubject;
   bool get isLoading => _isLoading;
@@ -46,7 +41,7 @@ class TimerController extends ChangeNotifier {
   int get initialDuration => _initialDuration;
   bool get isRunning => _isRunning;
 
-  TimerController({required this.apiService}) {
+  TimerController({required this.supabaseService}) {
     Future.microtask(() => _init());
     loadAd();
   }
@@ -58,10 +53,8 @@ class TimerController extends ChangeNotifier {
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
-          print("Anúncio carregado com sucesso!");
         },
         onAdFailedToLoad: (error) {
-          print("Falha ao carregar: $error");
           _interstitialAd = null;
         },
       ),
@@ -81,8 +74,7 @@ class TimerController extends ChangeNotifier {
   }
 
   void setDuration(int minutes) {
-    if (_isRunning) return; // Segurança: não muda se estiver rodando
-
+    if (_isRunning) return;
     _initialDuration = minutes * 60;
     _currentDuration = _initialDuration;
     notifyListeners();
@@ -93,12 +85,10 @@ class TimerController extends ChangeNotifier {
       await _player.openPlayer();
       _isPlayerReady = true;
       await _loadBeepSound();
-      
       screenDimmer.onReveal = _resetAutoDimmingTimer;
-      
       await loadSubjects();
     } catch (e) {
-      print("Erro na inicialização do TimerController: $e");
+      print('Erro na inicialização do TimerController: $e');
     }
   }
 
@@ -111,22 +101,20 @@ class TimerController extends ChangeNotifier {
     super.dispose();
   }
 
-  // --- Gerenciamento de Matérias ---
   Future<void> loadSubjects() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      var categories = await apiService.listAllCategories();
-      final subjectsList = categories.map((e) => e.toSubject()).toList();
+      final categories = await supabaseService.listCategories();
+      _subjects = categories.map((e) => e.toSubject()).toList();
 
-      _subjects = subjectsList;
-      
-      if (_selectedSubject == null || !_subjects.contains(_selectedSubject)) {
+      if (_selectedSubject == null ||
+          !_subjects.any((s) => s.id == _selectedSubject!.id)) {
         _selectedSubject = _subjects.isNotEmpty ? _subjects.first : null;
       }
     } catch (e) {
-      print("Erro ao carregar matérias: $e");
+      print('Erro ao carregar matérias: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -138,7 +126,6 @@ class TimerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- Lógica do Timer ---
   void toggleTimer() {
     if (_selectedSubject == null) return;
     if (_isRunning) {
@@ -191,19 +178,10 @@ class TimerController extends ChangeNotifier {
   void _stopTimer() {
     _autoDimmingTimer?.cancel();
     screenDimmer.stopBlackout();
-
-    if (_selectedSubject != null) {
-      final session = SessionLog(
-        subjectId: _selectedSubject!.id,
-        durationMinutes: (_initialDuration - _currentDuration) ~/ 60,
-      );
-      StorageService.instance.addSessionLog(session);
-    }
-
     _timer?.cancel();
     _isRunning = false;
     _currentDuration = _initialDuration;
-    
+
     if (_isFocusMode) {
       _isFocusMode = false;
       isFocusModeGlobalNotifier.value = false;
@@ -214,23 +192,22 @@ class TimerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- API Helpers ---
   Future<void> _initiateFocusSession() async {
     final int studyMinutes = _initialDuration ~/ 60;
     try {
-      final result = await Future.wait([
-        apiService.initiateFocus(DateTime.now(), studyMinutes, _selectedSubject!.id)
-      ]);
-      _sessionUuid = result[0];
+      _sessionUuid = await supabaseService.startSession(
+        studyMinutes,
+        _selectedSubject!.id,
+      );
     } catch (e) {
-      print('Error initiating session API: $e');
+      print('Error initiating session: $e');
     }
   }
 
   Future<void> _stopFocusSession() async {
     if (_sessionUuid != null) {
       try {
-        await apiService.stopFocus(_sessionUuid!);
+        await supabaseService.stopSession(_sessionUuid!);
       } catch (e) {
         print('Error stopping focus: $e');
       } finally {
@@ -239,7 +216,6 @@ class TimerController extends ChangeNotifier {
     }
   }
 
-  // --- Áudio e Alertas ---
   Future<void> _loadBeepSound() async {
     try {
       final data = await rootBundle.load('lib/assets/sounds/beep.mp3');
@@ -285,7 +261,6 @@ class TimerController extends ChangeNotifier {
     await _playBeep();
   }
 
-  // --- Dimmer Logic ---
   void _resetAutoDimmingTimer() {
     _autoDimmingTimer?.cancel();
     _autoDimmingTimer = Timer(const Duration(seconds: 5), () {

@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
-import '../services/authentication_service.dart';
 import 'login_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -14,22 +14,32 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     _checkAuthStatus();
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (mounted) {
+        setState(() {
+          _isAuthenticated = data.session != null;
+        });
+      }
+    });
   }
 
-  void _checkAuthStatus() async {
-    final authService = Provider.of<AuthenticationService>(
-      context,
-      listen: false,
-    );
-    final isAuthenticated = await authService.checkCredentials();
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
+  void _checkAuthStatus() {
+    final session = Supabase.instance.client.auth.currentSession;
     setState(() {
-      _isAuthenticated = isAuthenticated;
+      _isAuthenticated = session != null;
       _isLoading = false;
     });
   }
@@ -38,15 +48,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color.fromARGB(255, 18, 32, 47),
+        backgroundColor: Color(0xFF06040A),
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
 
-    if (_isAuthenticated) {
-      return const BlackoutWrapper();
-    } else {
-      return const LoginScreen();
-    }
+    return _isAuthenticated ? const BlackoutWrapper() : const LoginScreen();
   }
 }

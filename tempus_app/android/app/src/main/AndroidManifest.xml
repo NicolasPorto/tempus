@@ -26,19 +26,15 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
 
-        <activity
-            android:name="com.auth0.android.provider.RedirectActivity"
-            android:exported="true">
+            <!-- Supabase OAuth callback deep link -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:host="${auth0Domain}"
-                    android:pathPrefix="/android/${applicationId}/callback"
-                    android:scheme="${auth0Scheme}" />
+                    android:scheme="com.dev.tempusapp"
+                    android:host="login-callback" />
             </intent-filter>
         </activity>
 

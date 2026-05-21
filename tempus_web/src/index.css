@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Arimo', sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #06040A;
+  color: #F4F4F4;
+  margin: 0;
+  padding: 0;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, #AC46FF, #2B7FFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: rgba(23, 23, 23, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.btn-gradient {
+  background: linear-gradient(to right, #AC46FF, #2B7FFF);
+  border-radius: 14px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(172, 70, 255, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-gradient:hover {
+  opacity: 0.9;
+}
+
+html {
+  scroll-behavior: smooth;
+}
