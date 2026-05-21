@@ -346,3 +346,5 @@ ASALocalRun/
 # tempus_web (React)
 tempus_web/node_modules/
 tempus_web/dist/
+
+.claude/
