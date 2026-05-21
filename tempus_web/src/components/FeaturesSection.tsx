@@ -1,3 +1,5 @@
+import RevealWrapper from './RevealWrapper'
+
 interface FeatureCardProps {
   title: string
   description: string
@@ -109,7 +111,7 @@ export default function FeaturesSection() {
       }}
     >
       {/* Section header */}
-      <div style={{ textAlign: 'center', marginBottom: 56 }}>
+      <RevealWrapper delay={0} style={{ textAlign: 'center', marginBottom: 56 }}>
         <h2
           style={{
             fontSize: 'clamp(28px, 5vw, 40px)',
@@ -124,7 +126,7 @@ export default function FeaturesSection() {
         <p style={{ fontSize: 16, color: '#A0A0A0', margin: 0 }}>
           Funcionalidades projetadas para maximizar seu foco e produtividade
         </p>
-      </div>
+      </RevealWrapper>
 
       {/* Cards grid */}
       <div
@@ -134,8 +136,10 @@ export default function FeaturesSection() {
           gap: 20,
         }}
       >
-        {features.map(f => (
-          <FeatureCard key={f.title} {...f} />
+        {features.map((f, i) => (
+          <RevealWrapper key={f.title} delay={i * 130}>
+            <FeatureCard {...f} />
+          </RevealWrapper>
         ))}
       </div>
     </section>

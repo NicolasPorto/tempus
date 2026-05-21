@@ -1,3 +1,5 @@
+import RevealWrapper from './RevealWrapper'
+
 interface StepProps {
   number: string
   title: string
@@ -5,7 +7,7 @@ interface StepProps {
   isLast?: boolean
 }
 
-function Step({ number, title, description, isLast }: StepProps) {
+function Step({ number, title, description }: StepProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1 }}>
       {/* Number circle */}
@@ -68,7 +70,7 @@ export default function HowItWorksSection() {
       }}
     >
       {/* Section header */}
-      <div style={{ textAlign: 'center', marginBottom: 64 }}>
+      <RevealWrapper delay={0} style={{ textAlign: 'center', marginBottom: 64 }}>
         <h2
           style={{
             fontSize: 'clamp(28px, 5vw, 40px)',
@@ -82,7 +84,7 @@ export default function HowItWorksSection() {
         <p style={{ fontSize: 16, color: '#A0A0A0', margin: 0 }}>
           Três passos simples para uma sessão de foco produtiva
         </p>
-      </div>
+      </RevealWrapper>
 
       {/* Steps */}
       <div
@@ -94,55 +96,70 @@ export default function HowItWorksSection() {
           justifyContent: 'center',
         }}
       >
-        <Step
-          number="1"
-          title="Selecione"
-          description="Escolha a matéria e defina o tempo de foco: 15, 20, 25 ou 30 minutos"
-        />
-        <Arrow />
-        <Step
-          number="2"
-          title="Foque"
-          description="O timer conta regressivamente enquanto a tela escurece automaticamente para eliminar distrações"
-        />
-        <Arrow />
-        <Step
-          number="3"
-          title="Revise"
-          description="Analise suas estatísticas, mantenha sua sequência diária e veja seu progresso crescer"
-          isLast
-        />
+        <RevealWrapper delay={100} style={{ flex: 1, minWidth: 180 }}>
+          <Step
+            number="1"
+            title="Selecione"
+            description="Escolha a matéria e defina o tempo de foco: 15, 20, 25 ou 30 minutos"
+          />
+        </RevealWrapper>
+
+        <RevealWrapper delay={200} style={{ alignSelf: 'flex-start', paddingTop: 20 }}>
+          <Arrow />
+        </RevealWrapper>
+
+        <RevealWrapper delay={300} style={{ flex: 1, minWidth: 180 }}>
+          <Step
+            number="2"
+            title="Foque"
+            description="O timer conta regressivamente enquanto a tela escurece automaticamente para eliminar distrações"
+          />
+        </RevealWrapper>
+
+        <RevealWrapper delay={400} style={{ alignSelf: 'flex-start', paddingTop: 20 }}>
+          <Arrow />
+        </RevealWrapper>
+
+        <RevealWrapper delay={500} style={{ flex: 1, minWidth: 180 }}>
+          <Step
+            number="3"
+            title="Revise"
+            description="Analise suas estatísticas, mantenha sua sequência diária e veja seu progresso crescer"
+            isLast
+          />
+        </RevealWrapper>
       </div>
 
       {/* Bottom CTA card */}
-      <div
-        className="glass-card"
-        style={{
-          marginTop: 72,
-          padding: '36px 32px',
-          textAlign: 'center',
-        }}
-      >
-        <p
+      <RevealWrapper delay={100} style={{ marginTop: 72 }}>
+        <div
+          className="glass-card"
           style={{
-            fontSize: 22,
-            fontWeight: 700,
-            color: '#F4F4F4',
-            margin: '0 0 8px',
+            padding: '36px 32px',
+            textAlign: 'center',
           }}
         >
-          Pronto para estudar com mais foco?
-        </p>
-        <p style={{ fontSize: 14, color: '#A0A0A0', margin: '0 0 24px' }}>
-          Gratuito. Sem anúncios intrusivos. Feito para estudantes.
-        </p>
-        <button
-          className="btn-gradient"
-          style={{ padding: '14px 36px', fontSize: 16 }}
-        >
-          Baixar o Tempus
-        </button>
-      </div>
+          <p
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: '#F4F4F4',
+              margin: '0 0 8px',
+            }}
+          >
+            Pronto para estudar com mais foco?
+          </p>
+          <p style={{ fontSize: 14, color: '#A0A0A0', margin: '0 0 24px' }}>
+            Gratuito. Sem anúncios intrusivos. Feito para estudantes.
+          </p>
+          <button
+            className="btn-gradient"
+            style={{ padding: '14px 36px', fontSize: 16 }}
+          >
+            Baixar o Tempus
+          </button>
+        </div>
+      </RevealWrapper>
     </section>
   )
 }
