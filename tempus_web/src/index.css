@@ -36,13 +36,45 @@ body {
   box-shadow: 0 4px 15px rgba(172, 70, 255, 0.3);
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
 .btn-gradient:hover {
-  opacity: 0.9;
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Phone mockup floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.phone-float {
+  animation: float 4.5s ease-in-out infinite;
+}
+
+/* Responsive navbar */
+@media (max-width: 640px) {
+  .nav-desktop {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .nav-hamburger {
+    display: none !important;
+  }
+
+  .nav-mobile-menu {
+    display: none !important;
+  }
 }

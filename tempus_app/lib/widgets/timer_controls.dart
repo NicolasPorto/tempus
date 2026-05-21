@@ -4,6 +4,7 @@ import '../models/subject.dart';
 import 'timer_painter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
+import '../controller/timer_controller.dart';
 
 extension GradientColor on Color {
   static const LinearGradient purpleBlueGradient = LinearGradient(
@@ -23,6 +24,10 @@ class TimerControls extends StatefulWidget {
   final int currentDuration;
   final int initialDuration;
   final bool isRunning;
+  final bool isPomodoroMode;
+  final PomodoroPhase pomodoroPhase;
+  final int pomodoroRound;
+  final VoidCallback? onTogglePomodoroMode;
 
   const TimerControls({
     super.key,
@@ -33,6 +38,10 @@ class TimerControls extends StatefulWidget {
     required this.currentDuration,
     required this.initialDuration,
     required this.isRunning,
+    this.isPomodoroMode = false,
+    this.pomodoroPhase = PomodoroPhase.work,
+    this.pomodoroRound = 0,
+    this.onTogglePomodoroMode,
   });
 
   @override
@@ -75,6 +84,10 @@ class _TimerControlsState extends State<TimerControls>
 
     if (!canChange) return const SizedBox(height: 100);
 
+    if (widget.isPomodoroMode) {
+      return _buildPomodoroPhaseSelector();
+    }
+
     final List<int> presets = [15, 20, 25, 30];
     int currentMinutes = widget.initialDuration ~/ 60;
 
@@ -98,11 +111,162 @@ class _TimerControlsState extends State<TimerControls>
               ...presets.map(
                 (min) => _buildPresetButton(min, currentMinutes == min),
               ),
-
               _buildPickerButton(currentMinutes),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPomodoroPhaseSelector() {
+    final phase = widget.pomodoroPhase;
+    final round = widget.pomodoroRound;
+
+    String phaseLabel;
+    String phaseDuration;
+    Color phaseColor;
+
+    switch (phase) {
+      case PomodoroPhase.work:
+        phaseLabel = 'Sessão de Foco';
+        phaseDuration = '25 min';
+        phaseColor = const Color(0xFFAC46FF);
+        break;
+      case PomodoroPhase.shortBreak:
+        phaseLabel = 'Pausa Curta';
+        phaseDuration = '5 min';
+        phaseColor = const Color(0xFF00C850);
+        break;
+      case PomodoroPhase.longBreak:
+        phaseLabel = 'Pausa Longa';
+        phaseDuration = '15 min';
+        phaseColor = const Color(0xFF2B7FFF);
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: phaseColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: phaseColor.withOpacity(0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      phaseLabel,
+                      style: TextStyle(
+                        color: phaseColor,
+                        fontSize: 13,
+                        fontFamily: 'Arimo',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '· $phaseDuration',
+                      style: TextStyle(
+                        color: phaseColor.withOpacity(0.7),
+                        fontSize: 12,
+                        fontFamily: 'Arimo',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Round progress dots (4 pomodoros = 1 long break cycle)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(4, (i) {
+              final completed = i < (round % 4);
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: completed
+                      ? const Color(0xFFAC46FF)
+                      : const Color(0xFF2C2C34),
+                  border: Border.all(
+                    color: completed
+                        ? const Color(0xFFAC46FF)
+                        : const Color(0xFF444444),
+                    width: 1,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPomodoroToggle() {
+    if (widget.isRunning) return const SizedBox.shrink();
+
+    final bool isPaused =
+        widget.currentDuration < widget.initialDuration && !widget.isRunning;
+    if (isPaused) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onTogglePomodoroMode?.call();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: widget.isPomodoroMode
+              ? const Color(0xFFAC46FF).withOpacity(0.15)
+              : const Color(0xFF171717),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: widget.isPomodoroMode
+                ? const Color(0xFFAC46FF).withOpacity(0.5)
+                : const Color(0x19FFFEFE),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.repeat,
+              size: 14,
+              color: widget.isPomodoroMode
+                  ? const Color(0xFFAC46FF)
+                  : const Color(0xFFA0A0A0),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Modo Pomodoro',
+              style: TextStyle(
+                color: widget.isPomodoroMode
+                    ? const Color(0xFFAC46FF)
+                    : const Color(0xFFA0A0A0),
+                fontSize: 12,
+                fontFamily: 'Arimo',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -216,6 +380,34 @@ class _TimerControlsState extends State<TimerControls>
     String statusText;
     if (!isSubjectSelected) {
       statusText = 'Selecione uma matéria';
+    } else if (widget.isPomodoroMode) {
+      if (widget.isRunning) {
+        switch (widget.pomodoroPhase) {
+          case PomodoroPhase.work:
+            statusText = 'Foco em andamento';
+            break;
+          case PomodoroPhase.shortBreak:
+            statusText = 'Pausa Curta';
+            break;
+          case PomodoroPhase.longBreak:
+            statusText = 'Pausa Longa';
+            break;
+        }
+      } else if (isPaused) {
+        statusText = 'Pausado';
+      } else {
+        switch (widget.pomodoroPhase) {
+          case PomodoroPhase.work:
+            statusText = 'Iniciar sessão de foco';
+            break;
+          case PomodoroPhase.shortBreak:
+            statusText = 'Iniciar pausa curta';
+            break;
+          case PomodoroPhase.longBreak:
+            statusText = 'Iniciar pausa longa';
+            break;
+        }
+      }
     } else if (widget.isRunning) {
       statusText = 'Foco em andamento';
     } else if (isPaused) {
@@ -225,10 +417,27 @@ class _TimerControlsState extends State<TimerControls>
     }
 
     final playPauseButtonOpacity = isSubjectSelected ? 1.0 : 0.5;
-
     final playPauseIcon = widget.isRunning ? Icons.pause : Icons.play_arrow;
     final playPauseText = widget.isRunning ? 'Pausar Foco' : 'Iniciar Foco';
     final bool showResetButton = widget.isRunning || isPaused;
+
+    // Use phase color for the progress arc in Pomodoro mode
+    Color progressColor;
+    if (widget.isPomodoroMode) {
+      switch (widget.pomodoroPhase) {
+        case PomodoroPhase.work:
+          progressColor = Color(widget.selectedSubject?.colorValue ?? 0xFF9042FF);
+          break;
+        case PomodoroPhase.shortBreak:
+          progressColor = const Color(0xFF00C850);
+          break;
+        case PomodoroPhase.longBreak:
+          progressColor = const Color(0xFF2B7FFF);
+          break;
+      }
+    } else {
+      progressColor = Color(widget.selectedSubject?.colorValue ?? 0xFF9042FF);
+    }
 
     return Column(
       children: [
@@ -266,9 +475,7 @@ class _TimerControlsState extends State<TimerControls>
                     child: CustomPaint(
                       painter: TimerPainter(
                         backgroundColor: const Color(0xFF2C2C34),
-                        progressColor: Color(
-                          widget.selectedSubject?.colorValue ?? 0xFF9042FF,
-                        ),
+                        progressColor: progressColor,
                         progress:
                             widget.currentDuration / widget.initialDuration,
                       ),
@@ -328,6 +535,10 @@ class _TimerControlsState extends State<TimerControls>
         const SizedBox(height: 20),
 
         _buildTimeSelector(),
+
+        const SizedBox(height: 8),
+
+        _buildPomodoroToggle(),
 
         const SizedBox(height: 20),
         Center(
@@ -508,8 +719,6 @@ class _TimerControlsState extends State<TimerControls>
   }
 }
 
-// Coloque esta classe logo abaixo de _TimerControlsState
-// Adicione esta classe no final de timer_controls.dart
 class GradientPillThumb extends SliderComponentShape {
   final LinearGradient gradient;
 
@@ -517,11 +726,9 @@ class GradientPillThumb extends SliderComponentShape {
 
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    // Definimos o tamanho como uma pílula (largura: 36, altura: 24)
     return const Size(36.0, 24.0);
   }
 
-  // ASSINATURA CORRIGIDA PARA O NOVO FLUTTER
   @override
   void paint(
     PaintingContext context,
@@ -539,7 +746,6 @@ class GradientPillThumb extends SliderComponentShape {
   }) {
     final Canvas canvas = context.canvas;
 
-    // Tamanho da pílula
     const double width = 36.0;
     const double height = 24.0;
     final Rect rect = Rect.fromCenter(
@@ -548,20 +754,17 @@ class GradientPillThumb extends SliderComponentShape {
       height: height,
     );
 
-    // Efeito de sombra (Iluminação suave) - Usando a cor azul do gradiente
     final Color shadowColor = gradient.colors.last.withOpacity(0.5);
     final Paint shadowPaint = Paint()
       ..color = shadowColor
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
 
-    // 1. Desenha a Sombra (Efeito de Brilho)
     final RRect rRectShadow = RRect.fromRectAndRadius(
       rect.translate(0, 2),
       const Radius.circular(12.0),
     );
     canvas.drawRRect(rRectShadow, shadowPaint);
 
-    // 2. Desenha a Pílula com Gradiente
     final RRect rRectGradient = RRect.fromRectAndRadius(
       rect,
       const Radius.circular(12.0),
@@ -573,12 +776,9 @@ class GradientPillThumb extends SliderComponentShape {
   }
 }
 
-// ----------------------------------------------------------------------
-
-// Adicione esta classe também no final de timer_controls.dart
 class RecessedTrackShape extends SliderTrackShape {
   final Color baseColor;
-  final LinearGradient activeGradient; // Novo: Recebe o gradiente
+  final LinearGradient activeGradient;
 
   const RecessedTrackShape({
     required this.baseColor,
@@ -593,7 +793,6 @@ class RecessedTrackShape extends SliderTrackShape {
     bool isEnabled = false,
     bool isDiscrete = false,
   }) {
-    // Aumenta a altura para que o efeito "afundado" seja mais visível
     final double trackHeight = sliderTheme.trackHeight! * 1.5;
     final double trackLeft = offset.dx;
     final double trackTop =
@@ -602,7 +801,6 @@ class RecessedTrackShape extends SliderTrackShape {
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
 
-  // ASSINATURA CORRIGIDA PARA O NOVO FLUTTER
   @override
   void paint(
     PaintingContext context,
@@ -614,7 +812,7 @@ class RecessedTrackShape extends SliderTrackShape {
     required Offset thumbCenter,
     bool isDiscrete = false,
     bool isEnabled = false,
-    Offset? secondaryOffset, // PARÂMETRO NECESSÁRIO
+    Offset? secondaryOffset,
   }) {
     if (sliderTheme.trackHeight == 0) return;
 
@@ -628,7 +826,6 @@ class RecessedTrackShape extends SliderTrackShape {
 
     final Canvas canvas = context.canvas;
 
-    // 1. Desenha a trilha inteira (o fundo "afundado")
     final RRect fullTrack = RRect.fromRectAndRadius(
       Rect.fromLTRB(
         trackRect.left,
@@ -639,10 +836,8 @@ class RecessedTrackShape extends SliderTrackShape {
       const Radius.circular(6.0),
     );
 
-    // Usamos a cor base para o fundo (efeito recessed)
     canvas.drawRRect(fullTrack, Paint()..color = baseColor);
 
-    // 2. Desenha a trilha ativa (o progresso com gradiente)
     final Rect activeRect = Rect.fromLTRB(
       trackRect.left,
       trackRect.top,
@@ -650,7 +845,6 @@ class RecessedTrackShape extends SliderTrackShape {
       trackRect.bottom,
     );
 
-    // Usa o gradiente que foi passado para a classe
     final Paint activePaint = Paint()
       ..shader = activeGradient.createShader(activeRect);
 

@@ -12,6 +12,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 final ValueNotifier<bool> isFocusModeGlobalNotifier = ValueNotifier(false);
 
+enum PomodoroPhase { work, shortBreak, longBreak }
+
 class TimerController extends ChangeNotifier {
   final SupabaseService supabaseService;
   InterstitialAd? _interstitialAd;
@@ -20,6 +22,7 @@ class TimerController extends ChangeNotifier {
   List<Subject> _subjects = [];
   Subject? _selectedSubject;
   bool _isLoading = true;
+  bool _disposed = false;
 
   bool _isFocusMode = false;
   int _initialDuration = 25 * 60;
@@ -28,6 +31,15 @@ class TimerController extends ChangeNotifier {
   Timer? _autoDimmingTimer;
   bool _isRunning = false;
   String? _sessionUuid;
+
+  // Pomodoro
+  bool _isPomodoroMode = false;
+  PomodoroPhase _pomodoroPhase = PomodoroPhase.work;
+  int _pomodoroRound = 0;
+  int _pomodoroTransitionToken = 0; // cancels auto-start on reset/toggle
+  static const int _pomodoroWorkMinutes = 25;
+  static const int _pomodoroShortBreakMinutes = 5;
+  static const int _pomodoroLongBreakMinutes = 15;
 
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isPlayerReady = false;
@@ -40,6 +52,9 @@ class TimerController extends ChangeNotifier {
   int get currentDuration => _currentDuration;
   int get initialDuration => _initialDuration;
   bool get isRunning => _isRunning;
+  bool get isPomodoroMode => _isPomodoroMode;
+  PomodoroPhase get pomodoroPhase => _pomodoroPhase;
+  int get pomodoroRound => _pomodoroRound;
 
   TimerController({required this.supabaseService}) {
     Future.microtask(() => _init());
@@ -80,6 +95,19 @@ class TimerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void togglePomodoroMode() {
+    if (_isRunning) return;
+    _pomodoroTransitionToken++;
+    _isPomodoroMode = !_isPomodoroMode;
+    if (_isPomodoroMode) {
+      _pomodoroPhase = PomodoroPhase.work;
+      _pomodoroRound = 0;
+      _initialDuration = _pomodoroWorkMinutes * 60;
+      _currentDuration = _initialDuration;
+    }
+    notifyListeners();
+  }
+
   Future<void> _init() async {
     try {
       await _player.openPlayer();
@@ -94,6 +122,7 @@ class TimerController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     _autoDimmingTimer?.cancel();
     screenDimmer.onReveal = null;
@@ -136,7 +165,19 @@ class TimerController extends ChangeNotifier {
   }
 
   void resetTimer() {
-    _stopTimer();
+    _pomodoroTransitionToken++; // cancel any pending auto-start
+    _timer?.cancel();
+    _autoDimmingTimer?.cancel();
+    screenDimmer.stopBlackout();
+    _isRunning = false;
+    _stopFocusSession();
+
+    if (_isPomodoroMode) {
+      _pomodoroPhase = PomodoroPhase.work;
+      _pomodoroRound = 0;
+      _initialDuration = _pomodoroWorkMinutes * 60;
+    }
+    _currentDuration = _initialDuration;
     _isFocusMode = false;
     isFocusModeGlobalNotifier.value = false;
     notifyListeners();
@@ -148,16 +189,20 @@ class TimerController extends ChangeNotifier {
     try {
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_currentDuration <= 0) {
-          _stopTimer();
+          _onTimerNaturalEnd();
         } else {
           _currentDuration--;
           _checkAlerts();
           notifyListeners();
         }
       });
-      _initiateFocusSession();
+
+      // Only create a Supabase session for work phases
+      if (!_isPomodoroMode || _pomodoroPhase == PomodoroPhase.work) {
+        _initiateFocusSession();
+      }
     } catch (e) {
-      print('Error initiating focus session: $e');
+      print('Error starting timer: $e');
     }
 
     _isRunning = true;
@@ -175,21 +220,58 @@ class TimerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _stopTimer() {
+  void _onTimerNaturalEnd() {
     _autoDimmingTimer?.cancel();
     screenDimmer.stopBlackout();
     _timer?.cancel();
     _isRunning = false;
-    _currentDuration = _initialDuration;
 
-    if (_isFocusMode) {
-      _isFocusMode = false;
-      isFocusModeGlobalNotifier.value = false;
+    // Stop session only for work phases
+    if (!_isPomodoroMode || _pomodoroPhase == PomodoroPhase.work) {
+      _stopFocusSession();
     }
 
-    _stopFocusSession();
-    _showAdWithProbability();
+    _playCompletionAlert();
+
+    if (_isPomodoroMode) {
+      _handlePomodoroTransition();
+    } else {
+      _currentDuration = _initialDuration;
+      _isFocusMode = false;
+      isFocusModeGlobalNotifier.value = false;
+      _showAdWithProbability();
+      notifyListeners();
+    }
+  }
+
+  void _handlePomodoroTransition() {
+    if (_pomodoroPhase == PomodoroPhase.work) {
+      _pomodoroRound++;
+      if (_pomodoroRound % 4 == 0) {
+        _pomodoroPhase = PomodoroPhase.longBreak;
+        _initialDuration = _pomodoroLongBreakMinutes * 60;
+      } else {
+        _pomodoroPhase = PomodoroPhase.shortBreak;
+        _initialDuration = _pomodoroShortBreakMinutes * 60;
+      }
+    } else {
+      _pomodoroPhase = PomodoroPhase.work;
+      _initialDuration = _pomodoroWorkMinutes * 60;
+    }
+    _currentDuration = _initialDuration;
+    final int token = ++_pomodoroTransitionToken;
     notifyListeners();
+
+    // Auto-start next phase after a brief pause (cancelled if user resets/toggles)
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!_disposed &&
+          token == _pomodoroTransitionToken &&
+          _isPomodoroMode &&
+          !_isRunning &&
+          _selectedSubject != null) {
+        _startTimer();
+      }
+    });
   }
 
   Future<void> _initiateFocusSession() async {
@@ -231,6 +313,17 @@ class TimerController extends ChangeNotifier {
       await _player.startPlayer(fromDataBuffer: _beepSound);
     } catch (e) {
       print('Error playing beep: $e');
+    }
+  }
+
+  Future<void> _playCompletionAlert() async {
+    await _playBeep();
+    await Future.delayed(const Duration(milliseconds: 400));
+    await _playBeep();
+    await Future.delayed(const Duration(milliseconds: 400));
+    await _playBeep();
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(pattern: [0, 500, 200, 500, 200, 500]);
     }
   }
 

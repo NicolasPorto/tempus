@@ -61,6 +61,7 @@ function Arrow() {
 export default function HowItWorksSection() {
   return (
     <section
+      id="como-funciona"
       style={{
         position: 'relative',
         zIndex: 1,

@@ -102,6 +102,7 @@ export default function FeaturesSection() {
 
   return (
     <section
+      id="funcionalidades"
       style={{
         position: 'relative',
         zIndex: 1,

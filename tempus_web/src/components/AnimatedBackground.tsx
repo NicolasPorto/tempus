@@ -46,7 +46,7 @@ export default function AnimatedBackground() {
       const cx = canvas.width / 2
       const cy = canvas.height / 2
 
-      orbs.forEach((orb, i) => {
+      orbs.forEach((orb) => {
         const angle = t * orb.speedX + orb.phase
         const x = cx + Math.cos(angle) * canvas.width * 0.35
         const angle2 = t * orb.speedY + orb.phase + 0.5

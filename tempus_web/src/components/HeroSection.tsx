@@ -3,6 +3,7 @@ import RevealWrapper from './RevealWrapper'
 export default function HeroSection() {
   return (
     <section
+      id="inicio"
       style={{
         position: 'relative',
         zIndex: 1,
@@ -10,7 +11,7 @@ export default function HeroSection() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px 16px',
+        padding: '88px 16px 24px',
       }}
     >
       <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>

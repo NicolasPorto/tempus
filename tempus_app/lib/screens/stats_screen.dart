@@ -28,6 +28,7 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Future<void> _fetchData() async {
+    if (mounted) setState(() => _isLoading = true);
     final svc = context.read<SupabaseService>();
     try {
       final results = await Future.wait([
@@ -50,6 +51,14 @@ class _StatsScreenState extends State<StatsScreen> {
       print('Erro ao carregar estatísticas: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _formatMinutes(int minutes) {
+    if (minutes == 0) return '0 min';
+    if (minutes < 60) return '$minutes min';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m > 0 ? '${h}h ${m}min' : '${h}h';
   }
 
   Widget _buildLogoutButton(BuildContext context) {
@@ -111,69 +120,77 @@ class _StatsScreenState extends State<StatsScreen> {
     final int finishedSessions =
         (_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0;
 
-    final String displayTotal = _isLoading ? '...' : '$apiTotalMinutes min';
+    final String displayTotal =
+        _isLoading ? '...' : _formatMinutes(apiTotalMinutes);
     final String displaySupposed =
-        _isLoading ? '...' : '$apiSupposedMinutes min';
-    final String displayAvg = _isLoading ? '...' : '$apiAvgMinutes min';
+        _isLoading ? '...' : _formatMinutes(apiSupposedMinutes);
+    final String displayAvg =
+        _isLoading ? '...' : _formatMinutes(apiAvgMinutes);
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TimeStatCard(
-              realTime: displayTotal,
-              plannedTime: displaySupposed,
-              avgTime: displayAvg,
-              iconColors: const [
-                Color.fromARGB(24, 70, 203, 255),
-                Color.fromARGB(24, 50, 168, 246)
-              ],
-              barColors: const [
-                Color.fromARGB(255, 70, 172, 255),
-                Color.fromARGB(255, 50, 168, 246)
-              ],
-              icon: Icons.av_timer,
-            ),
+    return RefreshIndicator(
+      onRefresh: _fetchData,
+      color: const Color(0xFFAC46FF),
+      backgroundColor: const Color(0xFF1E1E1E),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TimeStatCard(
+                realTime: displayTotal,
+                plannedTime: displaySupposed,
+                avgTime: displayAvg,
+                iconColors: const [
+                  Color.fromARGB(24, 70, 203, 255),
+                  Color.fromARGB(24, 50, 168, 246)
+                ],
+                barColors: const [
+                  Color.fromARGB(255, 70, 172, 255),
+                  Color.fromARGB(255, 50, 168, 246)
+                ],
+                icon: Icons.av_timer,
+              ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            SummaryStatCard(
-              title: 'Sessões Finalizadas',
-              value: _isLoading ? '...' : '$finishedSessions',
-              iconColors: const [Color(0x19AC46FF), Color(0x19F6329A)],
-              barColors: const [Color(0xFFAC46FF), Color(0xFFF6329A)],
-              icon: Icons.check_circle_outline,
-            ),
+              SummaryStatCard(
+                title: 'Sessões Finalizadas',
+                value: _isLoading ? '...' : '$finishedSessions',
+                iconColors: const [Color(0x19AC46FF), Color(0x19F6329A)],
+                barColors: const [Color(0xFFAC46FF), Color(0xFFF6329A)],
+                icon: Icons.check_circle_outline,
+              ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            SummaryStatCard(
-              title: 'Tarefas Concluídas',
-              value: '$_completedTasks/$_totalTasks',
-              iconColors: const [Color(0x1900C850), Color(0x1900BC7C)],
-              barColors: const [Color(0xFF00C850), Color(0xFF00BC7C)],
-              icon: Icons.task_alt,
-            ),
+              SummaryStatCard(
+                title: 'Tarefas Concluídas',
+                value: '$_completedTasks/$_totalTasks',
+                iconColors: const [Color(0x1900C850), Color(0x1900BC7C)],
+                barColors: const [Color(0xFF00C850), Color(0xFF00BC7C)],
+                icon: Icons.task_alt,
+              ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            SummaryStatCard(
-              title: 'Sequência de sessões (Streak)',
-              value: _isLoading ? '...' : '$_sessionStreak',
-              iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
-              barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
-              icon: Icons.local_fire_department,
-            ),
+              SummaryStatCard(
+                title: 'Sequência de sessões',
+                value: _isLoading ? '...' : '$_sessionStreak',
+                iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
+                barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
+                icon: Icons.local_fire_department,
+              ),
 
-            const SizedBox(height: 48.0),
+              const SizedBox(height: 48.0),
 
-            _buildLogoutButton(context),
+              _buildLogoutButton(context),
 
-            const SizedBox(height: 32.0),
-          ],
+              const SizedBox(height: 32.0),
+            ],
+          ),
         ),
       ),
     );
