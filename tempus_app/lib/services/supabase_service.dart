@@ -119,13 +119,46 @@ class SupabaseService {
     }
   }
 
-  Future<void> stopSession(String sessionId) async {
+  Future<void> stopSession(String sessionId, {int? realMinutes}) async {
     try {
       await _supabase.from('session_focus').update({
         'finish_dt': DateTime.now().toIso8601String(),
+        // Sobrescreve studying_minutes com o tempo real de foco (sem pausas).
+        // O tempo planejado original é preservado em supposed_finish - start_dt.
+        if (realMinutes != null && realMinutes > 0)
+          'studying_minutes': realMinutes,
       }).eq('id', sessionId);
     } catch (e) {
       print('Error stopping session: $e');
+    }
+  }
+
+  /// Busca sessões finalizadas e calcula tempo real e planejado diretamente
+  /// das colunas (sem depender da RPC que pode estar incorreta).
+  Future<Map<String, int>> getSessionTimeSummary() async {
+    try {
+      final data = await _supabase
+          .from('session_focus')
+          .select('start_dt, supposed_finish, studying_minutes')
+          .not('finish_dt', 'is', null);
+
+      int totalReal = 0;
+      int totalPlanned = 0;
+
+      for (final row in (data as List)) {
+        totalReal += (row['studying_minutes'] as num?)?.toInt() ?? 0;
+
+        final start = DateTime.tryParse(row['start_dt'] ?? '');
+        final supposed = DateTime.tryParse(row['supposed_finish'] ?? '');
+        if (start != null && supposed != null) {
+          totalPlanned += supposed.difference(start).inMinutes;
+        }
+      }
+
+      return {'real': totalReal, 'planned': totalPlanned};
+    } catch (e) {
+      print('Error getting session time summary: $e');
+      return {'real': 0, 'planned': 0};
     }
   }
 

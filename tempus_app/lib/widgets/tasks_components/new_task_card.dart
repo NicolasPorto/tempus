@@ -31,7 +31,7 @@ class NewTaskCard extends StatelessWidget {
       (s) => s.id == selectedSubjectId,
       orElse: () => subjects.isNotEmpty
           ? subjects.first
-          : Subject(id: '', name: '', colorValue: 0xFFA855F7, categoryId: ''),
+          : Subject(id: '', name: '', colorValue: 0xFFA855F7),
     );
 
     final accentColor =

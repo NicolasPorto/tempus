@@ -26,7 +26,6 @@ class Category {
         id: id,
         name: name,
         colorValue: convertToColorValue(hexColor),
-        categoryId: id,
       );
 
   static int convertToColorValue(String hexColor) =>

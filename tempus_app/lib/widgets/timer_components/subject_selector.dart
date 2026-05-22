@@ -114,7 +114,9 @@ class SubjectSelector extends StatelessWidget {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<Subject>(
-                    value: selectedSubject,
+                    value: subjects.contains(selectedSubject)
+                        ? selectedSubject
+                        : null,
                     icon: Opacity(
                       opacity: subjects.isEmpty ? 0.2 : 0.6,
                       child: const Icon(

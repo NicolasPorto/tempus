@@ -16,6 +16,7 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _sessionStats;
+  Map<String, int> _timeSummary = {'real': 0, 'planned': 0};
   int? _sessionStreak;
   int _completedTasks = 0;
   int _totalTasks = 0;
@@ -34,6 +35,7 @@ class _StatsScreenState extends State<StatsScreen> {
         svc.getSessionStats(),
         svc.getStreak(),
         svc.listTasks(),
+        svc.getSessionTimeSummary(),
       ]);
 
       if (mounted) {
@@ -43,6 +45,7 @@ class _StatsScreenState extends State<StatsScreen> {
           final tasks = results[2] as List<TaskItem>;
           _totalTasks = tasks.length;
           _completedTasks = tasks.where((t) => t.done).length;
+          _timeSummary = results[3] as Map<String, int>;
           _isLoading = false;
         });
       }
@@ -62,15 +65,22 @@ class _StatsScreenState extends State<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final int apiTotal = _sessionStats?['totalTimeStudied'] as int? ?? 0;
-    final int apiSupposed = _sessionStats?['supposedTotalTimeStudied'] as int? ?? 0;
-    final int apiAvg = _sessionStats?['avgTimeStudied'] as int? ?? 0;
+    // Tempo real e planejado calculados diretamente das linhas do banco,
+    // evitando a RPC que pode usar studying_minutes para ambos os campos.
+    final int realMinutes = _timeSummary['real'] ?? 0;
+    final int plannedMinutes = _timeSummary['planned'] ?? 0;
+
     final int finishedSessions =
         (_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0;
 
-    final displayTotal = _isLoading ? '...' : _formatMinutes(apiTotal);
-    final displaySupposed = _isLoading ? '...' : _formatMinutes(apiSupposed);
-    final displayAvg = _isLoading ? '...' : _formatMinutes(apiAvg);
+    // Média por sessão calculada a partir do tempo real
+    final int avgMinutes = finishedSessions > 0
+        ? (realMinutes / finishedSessions).round()
+        : (_sessionStats?['avgTimeStudied'] as int? ?? 0);
+
+    final displayTotal = _isLoading ? '...' : _formatMinutes(realMinutes);
+    final displaySupposed = _isLoading ? '...' : _formatMinutes(plannedMinutes);
+    final displayAvg = _isLoading ? '...' : _formatMinutes(avgMinutes);
 
     return RefreshIndicator(
       onRefresh: _fetchData,

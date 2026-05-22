@@ -27,8 +27,9 @@ class TaskItem {
 
   Map<String, dynamic> toMap() => {
         'id': id,
-        'title': title,
+        'name': title,
         'done': done,
-        'subjectId': subjectId,
+        'category_id': subjectId,
+        'minutes_meta': minutesMeta,
       };
 }

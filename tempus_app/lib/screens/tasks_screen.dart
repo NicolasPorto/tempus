@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tempus_app/services/supabase_service.dart';
 import '../models/task.dart';
 import '../models/subject.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tasks_components/tasks_header.dart';
-import '../widgets/tasks_components/new_task_card.dart';
 import '../widgets/tasks_components/empty_tasks_view.dart';
 import '../widgets/tasks_components/task_tile.dart';
+import '../widgets/tasks_components/subject_filter_chips.dart';
+import '../widgets/tasks_components/add_task_sheet.dart';
+import '../widgets/subject_manager_modal.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -26,16 +29,24 @@ class _TasksScreenContent extends StatefulWidget {
 }
 
 class _TasksScreenContentState extends State<_TasksScreenContent> {
-  final TextEditingController _ctrl = TextEditingController();
-
   List<TaskItem> _tasks = [];
   List<Subject> _subjects = [];
-  String selectedSubjectId = '';
-  int _selectedHours = 0;
+  String? _selectedSubjectId;
   bool _isLoading = false;
+  bool _showCompleted = false;
 
   TaskItem? _pendingDeleteTask;
   late SupabaseService _svc;
+
+  List<TaskItem> get _filteredTasks => _selectedSubjectId == null
+      ? _tasks
+      : _tasks.where((t) => t.subjectId == _selectedSubjectId).toList();
+
+  List<TaskItem> get _pendingTasks =>
+      _filteredTasks.where((t) => !t.done).toList();
+
+  List<TaskItem> get _completedTasks =>
+      _filteredTasks.where((t) => t.done).toList();
 
   @override
   void initState() {
@@ -58,12 +69,13 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
       if (mounted) {
         setState(() {
-          _subjects = categories.map((c) => c.toSubject()).toList().cast<Subject>();
+          _subjects =
+              categories.map((c) => c.toSubject()).toList().cast<Subject>();
           _tasks = tasks.cast<TaskItem>();
 
-          if (_subjects.isNotEmpty &&
-              !_subjects.any((s) => s.id == selectedSubjectId)) {
-            selectedSubjectId = _subjects.first.id;
+          if (_selectedSubjectId != null &&
+              !_subjects.any((s) => s.id == _selectedSubjectId)) {
+            _selectedSubjectId = null;
           }
         });
       }
@@ -76,40 +88,17 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
   @override
   void dispose() {
-    _ctrl.dispose();
     if (_pendingDeleteTask != null) {
       _svc.deleteTask(_pendingDeleteTask!.id);
     }
     super.dispose();
   }
 
-  Future<void> _addTask() async {
-    if (_subjects.isEmpty) return;
-    final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
-
-    String subjectIdToUse = selectedSubjectId;
-    if (subjectIdToUse.isEmpty && _subjects.isNotEmpty) {
-      subjectIdToUse = _subjects.first.id;
-    }
-
-    setState(() => _isLoading = true);
-    int minutesToSave = _selectedHours * 60;
-    if (minutesToSave == 0) minutesToSave = 25;
-
-    final success = await _svc.createTask(
-      text,
-      subjectIdToUse,
-      minutesMeta: minutesToSave,
-    );
-
-    if (success) {
-      _ctrl.clear();
-      setState(() => _selectedHours = 0);
-      await _loadData();
-    } else {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  Future<bool> _addTask(String title, String subjectId, int minutes) async {
+    final success =
+        await _svc.createTask(title, subjectId, minutesMeta: minutes);
+    if (success) await _loadData();
+    return success;
   }
 
   Future<void> _toggleTask(TaskItem task) async {
@@ -154,8 +143,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           onPressed: () {
             if (mounted && _pendingDeleteTask?.id == task.id) {
               setState(() {
-                _tasks.add(task);
-                _tasks.sort((a, b) => a.title.compareTo(b.title));
+                _tasks.insert(0, task);
                 _pendingDeleteTask = null;
               });
             }
@@ -171,79 +159,227 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     });
   }
 
+  void _openAddTaskSheet() {
+    HapticFeedback.selectionClick();
+    AddTaskSheet.show(
+      context,
+      subjects: _subjects,
+      initialSubjectId: _selectedSubjectId ?? '',
+      onAdd: _addTask,
+    );
+  }
+
+  void _manageSubjects() {
+    showDialog(
+      context: context,
+      builder: (_) => const SubjectManagerModal(),
+    ).then((_) => _loadData());
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_subjects.isNotEmpty &&
-        !_subjects.any((s) => s.id == selectedSubjectId)) {
-      selectedSubjectId = _subjects.first.id;
-    }
+    final pendingCount = _tasks.where((t) => !t.done).length;
 
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      color: TempusColors.accent,
-      backgroundColor: TempusColors.surface,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const TasksHeader(),
-            const SizedBox(height: 20),
-            NewTaskCard(
-              controller: _ctrl,
-              subjects: _subjects,
-              selectedSubjectId: selectedSubjectId,
-              selectedHours: _selectedHours,
-              onSubjectChanged: (v) => setState(() => selectedSubjectId = v ?? ''),
-              onHoursChanged: (v) => setState(() => _selectedHours = v),
-              onAddTask: _addTask,
-            ),
-            const SizedBox(height: 20),
-            if (_isLoading && _tasks.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(
-                    color: TempusColors.accent,
-                  ),
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadData,
+          color: TempusColors.accent,
+          backgroundColor: TempusColors.surface,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TasksHeader(
+                  pendingCount: pendingCount,
+                  onManageSubjects: _manageSubjects,
                 ),
-              )
-            else
-              _buildTaskList(),
-            const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                if (_subjects.isNotEmpty) ...[
+                  SubjectFilterChips(
+                    subjects: _subjects,
+                    selectedId: _selectedSubjectId,
+                    onChanged: (id) =>
+                        setState(() => _selectedSubjectId = id),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                if (_isLoading && _tasks.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(
+                          color: TempusColors.accent),
+                    ),
+                  )
+                else
+                  _buildTaskList(),
+                const SizedBox(height: 100),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 24,
+          left: 20,
+          right: 20,
+          child: Center(child: _buildFab()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFab() {
+    return GestureDetector(
+      onTap: _openAddTaskSheet,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: TempusColors.gradient,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: TempusColors.accent.withOpacity(0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 26),
       ),
     );
   }
 
   Widget _buildTaskList() {
-    if (_tasks.isEmpty || _subjects.isEmpty) {
-      return Container(
-        height: MediaQuery.of(context).size.height * 0.35,
-        alignment: Alignment.center,
-        child: EmptyTasksView(hasSubjects: _subjects.isNotEmpty),
+    if (_subjects.isEmpty) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height * 0.50,
+        ),
+        child: Center(
+          child: EmptyTasksView(
+            hasSubjects: false,
+            onManageSubjects: _manageSubjects,
+          ),
+        ),
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _tasks.length,
-      itemBuilder: (context, i) {
-        final t = _tasks[i];
-        final subj = _subjects.firstWhere(
-          (s) => s.id == t.subjectId,
-          orElse: () => _subjects.first,
-        );
-        return TaskTile(
-          task: t,
-          subject: subj,
-          onToggle: (_) => _toggleTask(t),
-          onDelete: () => _deleteTask(t),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_pendingTasks.isEmpty && _completedTasks.isEmpty)
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height * 0.42,
+            ),
+            child: Center(child: EmptyTasksView(hasSubjects: true)),
+          )
+        else ...[
+          if (_pendingTasks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Tudo concluído nesta matéria!',
+                style: const TextStyle(
+                  color: TempusColors.textSub,
+                  fontSize: 13,
+                  fontFamily: 'Arimo',
+                ),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _pendingTasks.length,
+              itemBuilder: (context, i) {
+                final t = _pendingTasks[i];
+                final subj = _subjects.firstWhere(
+                  (s) => s.id == t.subjectId,
+                  orElse: () => _subjects.first,
+                );
+                return TaskTile(
+                  task: t,
+                  subject: subj,
+                  onToggle: (_) => _toggleTask(t),
+                  onDelete: () => _deleteTask(t),
+                );
+              },
+            ),
+          if (_completedTasks.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildCompletedSection(),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCompletedSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _showCompleted = !_showCompleted),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                AnimatedRotation(
+                  turns: _showCompleted ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: TempusColors.textSub,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Concluídas (${_completedTasks.length})',
+                  style: const TextStyle(
+                    color: TempusColors.textSub,
+                    fontSize: 13,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          child: _showCompleted
+              ? Opacity(
+                  opacity: 0.65,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _completedTasks.length,
+                    itemBuilder: (context, i) {
+                      final t = _completedTasks[i];
+                      final subj = _subjects.firstWhere(
+                        (s) => s.id == t.subjectId,
+                        orElse: () => _subjects.first,
+                      );
+                      return TaskTile(
+                        task: t,
+                        subject: subj,
+                        onToggle: (_) => _toggleTask(t),
+                        onDelete: () => _deleteTask(t),
+                      );
+                    },
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 }

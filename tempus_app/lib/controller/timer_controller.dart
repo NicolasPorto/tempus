@@ -28,6 +28,9 @@ class TimerController extends ChangeNotifier {
   int _initialDuration = 25 * 60;
   int _currentDuration = 25 * 60;
   Timer? _timer;
+
+  /// Segundos reais de foco acumulados na sessão atual (exclui pausas).
+  int _sessionElapsedSeconds = 0;
   Timer? _autoDimmingTimer;
   bool _isRunning = false;
   String? _sessionUuid;
@@ -166,6 +169,11 @@ class TimerController extends ChangeNotifier {
       if (_selectedSubject == null ||
           !_subjects.any((s) => s.id == _selectedSubject!.id)) {
         _selectedSubject = _subjects.isNotEmpty ? _subjects.first : null;
+      } else {
+        // Sempre atualizar a referência para o novo objeto da lista
+        // (sem isso, o DropdownButton não encontra o value e joga assertion)
+        _selectedSubject =
+            _subjects.firstWhere((s) => s.id == _selectedSubject!.id);
       }
     } catch (e) {
       print('Erro ao carregar matérias: $e');
@@ -217,6 +225,7 @@ class TimerController extends ChangeNotifier {
           _onTimerNaturalEnd();
         } else {
           _currentDuration--;
+          _sessionElapsedSeconds++;
           _checkAlerts();
           notifyListeners();
         }
@@ -302,6 +311,7 @@ class TimerController extends ChangeNotifier {
   }
 
   Future<void> _initiateFocusSession() async {
+    _sessionElapsedSeconds = 0; // zera o contador para a nova sessão
     final int studyMinutes = _initialDuration ~/ 60;
     try {
       _sessionUuid = await supabaseService.startSession(
@@ -315,12 +325,17 @@ class TimerController extends ChangeNotifier {
 
   Future<void> _stopFocusSession() async {
     if (_sessionUuid != null) {
+      // Converte segundos reais (sem pausas) para minutos — mínimo 1 min se algum tempo passou
+      final int realMinutes = _sessionElapsedSeconds >= 60
+          ? _sessionElapsedSeconds ~/ 60
+          : (_sessionElapsedSeconds > 0 ? 1 : 0);
       try {
-        await supabaseService.stopSession(_sessionUuid!);
+        await supabaseService.stopSession(_sessionUuid!, realMinutes: realMinutes);
       } catch (e) {
         print('Error stopping focus: $e');
       } finally {
         _sessionUuid = null;
+        _sessionElapsedSeconds = 0;
       }
     }
   }
