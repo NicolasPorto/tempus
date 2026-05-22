@@ -1,7 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tempus_app/models/subject.dart';
+import '../../theme/app_theme.dart';
 
 class NewTaskCard extends StatelessWidget {
   final TextEditingController controller;
@@ -9,8 +9,6 @@ class NewTaskCard extends StatelessWidget {
   final String selectedSubjectId;
   final ValueChanged<String?> onSubjectChanged;
   final VoidCallback onAddTask;
-
-  // NEW: Fields for hour selection
   final int selectedHours;
   final ValueChanged<int> onHoursChanged;
 
@@ -21,7 +19,6 @@ class NewTaskCard extends StatelessWidget {
     required this.selectedSubjectId,
     required this.onSubjectChanged,
     required this.onAddTask,
-    // Add to constructor
     required this.selectedHours,
     required this.onHoursChanged,
   });
@@ -31,160 +28,136 @@ class NewTaskCard extends StatelessWidget {
     final isSubjectSelected = subjects.isNotEmpty;
 
     final selectedSubject = subjects.firstWhere(
-          (s) => s.id == selectedSubjectId,
+      (s) => s.id == selectedSubjectId,
       orElse: () => subjects.isNotEmpty
           ? subjects.first
-          : Subject(id: '', name: '', colorValue: 0xFFD4D4D4, categoryId: ''),
+          : Subject(id: '', name: '', colorValue: 0xFFA855F7, categoryId: ''),
     );
 
-    return Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: 370,
-          clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment(0.00, 0.00),
-              end: Alignment(1.00, 1.00),
-              colors: [Color(0xCC171717), Color(0xCC0A0A0A)],
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            shadows: const [
-              BoxShadow(
-                color: Color(0x3F000000),
-                blurRadius: 50,
-                offset: Offset(0, 25),
-                spreadRadius: -12,
-              ),
-            ],
+    final accentColor =
+        isSubjectSelected ? Color(selectedSubject.colorValue) : TempusColors.accent;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: TempusColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x28000000),
+            blurRadius: 32,
+            offset: Offset(0, 12),
+            spreadRadius: -4,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Color accent bar at top
+          Container(
+            height: 3,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  accentColor,
+                  TempusColors.accentBlue,
+                ],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: SvgPicture.asset(
-                        'lib/assets/icons/icon_star.svg',
-                        width: 16,
-                        height: 16,
-                      ),
+                    const Icon(
+                      Icons.add_task_rounded,
+                      color: TempusColors.accent,
+                      size: 16,
                     ),
                     const SizedBox(width: 8),
-                    const AutoSizeText(
-                      "Nova Tarefa",
-                      maxLines: 1,
-                      minFontSize: 14,
+                    const Text(
+                      'Nova Tarefa',
                       style: TextStyle(
-                        color: Color(0xFFF4F4F4),
-                        fontSize: 18,
+                        color: TempusColors.text,
+                        fontSize: 16,
                         fontFamily: 'Arimo',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
 
-                // UPDATED: Now calls the new method that includes the scroller
-                _buildTitleAndDurationInput(selectedSubject.colorValue, isSubjectSelected),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 24),
+                _buildTitleAndDurationInput(accentColor, isSubjectSelected),
+
+                const SizedBox(height: 16),
+
                 _buildSubjectDropdown(),
-                const SizedBox(height: 48),
+
+                const SizedBox(height: 20),
+
                 _buildAddButton(isSubjectSelected),
               ],
             ),
           ),
-        ),
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-            child: Container(
-              width: double.infinity,
-              height: 4,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment(0.00, 0.50),
-                  end: Alignment(1.00, 0.50),
-                  colors: [
-                    Color(0xFFAC46FF),
-                    Color(0xFF2B7FFF),
-                    Color(0xFFF6329A),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  // NEW: Replaced _buildTitleInput with this composite widget
-  Widget _buildTitleAndDurationInput(int colorValue, bool isSubjectSelected) {
+  Widget _buildTitleAndDurationInput(Color accentColor, bool isSubjectSelected) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // LEFT: The Text Field
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AutoSizeText(
-                'Título da Tarefa',
-                maxLines: 1,
-                minFontSize: 10,
+              Text(
+                'Título',
                 style: TextStyle(
-                  color: Color(0xFFD4D4D4),
+                  color: TempusColors.textSub,
+                  fontSize: 11,
                   fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w400,
-                  height: 1,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Container(
-                height: 48,
+                height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: ShapeDecoration(
-                  color: const Color(0x7F0A0A0A),
-                  shape: RoundedRectangleBorder(
-                    side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                decoration: BoxDecoration(
+                  color: TempusColors.surfaceHigh,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: TempusColors.border),
                 ),
                 child: TextField(
                   controller: controller,
-                  cursorColor: isSubjectSelected
-                      ? Color(colorValue)
-                      : const Color(0xFFD4D4D4),
+                  cursorColor: accentColor,
                   style: const TextStyle(
-                    color: Color(0xFFF4F4F4),
-                    fontSize: 16,
+                    color: TempusColors.text,
+                    fontSize: 14,
                     fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w400,
                   ),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 9),
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     hintText: 'Ex: Resolver exercícios...',
                     hintStyle: TextStyle(
-                      color: Color(0xFF717182),
-                      fontSize: 16,
+                      color: TempusColors.textMuted,
+                      fontSize: 14,
                       fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
                   ),
@@ -194,54 +167,50 @@ class NewTaskCard extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
 
-        // RIGHT: The Hour Scroller
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const AutoSizeText(
+            Text(
               'Horas',
-              maxLines: 1,
-              minFontSize: 10,
               style: TextStyle(
-                color: Color(0xFFD4D4D4),
+                color: TempusColors.textSub,
+                fontSize: 11,
                 fontFamily: 'Arimo',
-                fontWeight: FontWeight.w400,
-                height: 1,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Container(
-              width: 50,
-              height: 48,
-              decoration: ShapeDecoration(
-                color: const Color(0x7F0A0A0A),
-                shape: RoundedRectangleBorder(
-                  side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-                  borderRadius: BorderRadius.circular(14),
-                ),
+              width: 52,
+              height: 44,
+              decoration: BoxDecoration(
+                color: TempusColors.surfaceHigh,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: TempusColors.border),
               ),
               child: ListWheelScrollView.useDelegate(
-                itemExtent: 30,
+                itemExtent: 28,
                 perspective: 0.005,
                 diameterRatio: 1.2,
                 physics: const FixedExtentScrollPhysics(),
                 onSelectedItemChanged: onHoursChanged,
                 childDelegate: ListWheelChildBuilderDelegate(
-                  childCount: 13, // 0 to 12 hours
+                  childCount: 13,
                   builder: (context, index) {
                     final isSelected = index == selectedHours;
                     return Center(
                       child: Text(
-                        index.toString(),
+                        '$index',
                         style: TextStyle(
                           fontFamily: 'Arimo',
-                          fontSize: 16,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected
-                              ? (isSubjectSelected ? Color(colorValue) : Colors.white)
-                              : const Color(0xFF717182),
+                          fontSize: 14,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: isSelected ? accentColor : TempusColors.textMuted,
                         ),
                       ),
                     );
@@ -250,7 +219,7 @@ class NewTaskCard extends StatelessWidget {
               ),
             ),
           ],
-        )
+        ),
       ],
     );
   }
@@ -259,35 +228,27 @@ class NewTaskCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AutoSizeText(
+        Text(
           'Matéria',
-          maxLines: 1,
-          minFontSize: 10,
           style: TextStyle(
-            color: Color(0xFFD4D4D4),
-            overflow: TextOverflow.ellipsis,
-            fontWeight: FontWeight.w400,
+            color: TempusColors.textSub,
+            fontSize: 11,
+            fontFamily: 'Arimo',
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 12),
-
+        const SizedBox(height: 8),
         Container(
           width: double.infinity,
-          height: 36,
+          height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: ShapeDecoration(
+          decoration: BoxDecoration(
             color: subjects.isEmpty
-                ? const Color(0x40171717)
-                : const Color(0x7F171717),
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: 1,
-                color: subjects.isEmpty
-                    ? const Color(0x19FFFEFE).withOpacity(0.5)
-                    : const Color(0x19FFFEFE),
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
+                ? TempusColors.surfaceHigh.withOpacity(0.5)
+                : TempusColors.surfaceHigh,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: TempusColors.border),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -295,39 +256,33 @@ class NewTaskCard extends StatelessWidget {
                   ? selectedSubjectId
                   : null,
               icon: Opacity(
-                opacity: subjects.isEmpty ? 0.2 : 0.50,
+                opacity: subjects.isEmpty ? 0.2 : 0.6,
                 child: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Color(0xFFD4D4D4),
+                  Icons.keyboard_arrow_down_rounded,
+                  color: TempusColors.textSub,
                 ),
               ),
-              dropdownColor: const Color.fromARGB(202, 23, 23, 23),
+              dropdownColor: TempusColors.surfaceHigh,
               borderRadius: BorderRadius.circular(12),
               isExpanded: true,
               onChanged: subjects.isEmpty ? null : onSubjectChanged,
-              hint: const AutoSizeText(
+              hint: Text(
                 'Selecione uma matéria',
-                maxLines: 1,
-                minFontSize: 10,
-                style: TextStyle(color: Color(0xFF737373)),
+                style: TextStyle(
+                  color: TempusColors.textMuted,
+                  fontSize: 14,
+                  fontFamily: 'Arimo',
+                ),
               ),
               items: subjects.map((s) {
                 final isSelected = s.id == selectedSubjectId;
-                final textStyle = TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFFD4D4D4),
-                  fontSize: 14,
-                  fontFamily: 'Arimo',
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  height: 1.43,
-                );
-
                 return DropdownMenuItem<String>(
                   value: s.id,
                   child: Row(
                     children: [
                       Container(
-                        width: 10,
-                        height: 10,
+                        width: 8,
+                        height: 8,
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
                           color: Color(s.colorValue),
@@ -336,53 +291,46 @@ class NewTaskCard extends StatelessWidget {
                       ),
                       AutoSizeText(
                         s.name,
-                        style: textStyle,
                         maxLines: 1,
                         minFontSize: 10,
+                        style: TextStyle(
+                          color: isSelected ? TempusColors.text : const Color(0xFFCCCCCC),
+                          fontSize: 14,
+                          fontFamily: 'Arimo',
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        ),
                       ),
                     ],
                   ),
                 );
               }).toList(),
-              selectedItemBuilder: (BuildContext context) {
+              selectedItemBuilder: (context) {
                 return subjects.map<Widget>((s) {
+                  final current = subjects.firstWhere(
+                    (x) => x.id == selectedSubjectId,
+                    orElse: () => s,
+                  );
                   return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: Color(
-                                subjects
-                                    .firstWhere(
-                                      (x) => x.id == selectedSubjectId,
-                                  orElse: () => s,
-                                )
-                                    .colorValue,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          AutoSizeText(
-                            subjects
-                                .firstWhere(
-                                  (x) => x.id == selectedSubjectId,
-                              orElse: () => s,
-                            )
-                                .name,
-                            maxLines: 1,
-                            minFontSize: 10,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFFF4F4F4),
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
+                      Container(
+                        width: 8,
+                        height: 8,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: Color(current.colorValue),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      AutoSizeText(
+                        current.name,
+                        maxLines: 1,
+                        minFontSize: 10,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: TempusColors.text,
+                          fontSize: 14,
+                          fontFamily: 'Arimo',
+                        ),
                       ),
                     ],
                   );
@@ -398,48 +346,35 @@ class NewTaskCard extends StatelessWidget {
   Widget _buildAddButton(bool isSubjectSelected) {
     return GestureDetector(
       onTap: isSubjectSelected ? onAddTask : null,
-      child: Opacity(
-        opacity: isSubjectSelected ? 1.0 : 0.50,
+      child: AnimatedOpacity(
+        opacity: isSubjectSelected ? 1.0 : 0.35,
+        duration: const Duration(milliseconds: 200),
         child: Container(
           width: double.infinity,
           height: 48,
-          decoration: ShapeDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment(0.00, 0.50),
-              end: Alignment(1.00, 0.50),
-              colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            shadows: const [
+          decoration: BoxDecoration(
+            gradient: TempusColors.gradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x19000000),
-                blurRadius: 6,
-                offset: Offset(0, 4),
-                spreadRadius: -4,
-              ),
-              BoxShadow(
-                color: Color(0x19000000),
-                blurRadius: 15,
-                offset: Offset(0, 10),
-                spreadRadius: -3,
+                color: TempusColors.accent.withOpacity(0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              AutoSizeText(
+              Icon(Icons.add_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 6),
+              Text(
                 'Adicionar Tarefa',
-                maxLines: 1,
-                minFontSize: 10,
                 style: TextStyle(
                   color: Colors.white,
+                  fontSize: 14,
                   fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],

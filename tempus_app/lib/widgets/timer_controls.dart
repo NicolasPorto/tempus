@@ -1,20 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/subject.dart';
 import 'timer_painter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart';
 import '../controller/timer_controller.dart';
-
-extension GradientColor on Color {
-  static const LinearGradient purpleBlueGradient = LinearGradient(
-    colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
-
-  LinearGradient get gradient => purpleBlueGradient;
-}
+import '../theme/app_theme.dart';
 
 class TimerControls extends StatefulWidget {
   final Subject? selectedSubject;
@@ -48,70 +39,139 @@ class TimerControls extends StatefulWidget {
   State<TimerControls> createState() => _TimerControlsState();
 }
 
-class _TimerControlsState extends State<TimerControls>
-    with TickerProviderStateMixin {
-  late AnimationController _rotationController;
-
+class _TimerControlsState extends State<TimerControls> {
   String get _formattedTime {
-    final minutes = (widget.currentDuration ~/ 60).toString().padLeft(2, '0');
-    final seconds = (widget.currentDuration % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    final m = (widget.currentDuration ~/ 60).toString().padLeft(2, '0');
+    final s = (widget.currentDuration % 60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
-  @override
-  void dispose() {
-    _rotationController.dispose();
-    super.dispose();
+  Color get _phaseColor {
+    if (!widget.isPomodoroMode) {
+      return Color(widget.selectedSubject?.colorValue ?? 0xFFA855F7);
+    }
+    switch (widget.pomodoroPhase) {
+      case PomodoroPhase.work:
+        return Color(widget.selectedSubject?.colorValue ?? 0xFFA855F7);
+      case PomodoroPhase.shortBreak:
+        return TempusColors.green;
+      case PomodoroPhase.longBreak:
+        return TempusColors.accentBlue;
+    }
   }
 
-  @override
-  void didUpdateWidget(covariant TimerControls oldWidget) {
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _rotationController = AnimationController(
-      duration: const Duration(seconds: 120),
-      vsync: this,
-    )..repeat();
+  Widget _buildTimerCircle(String statusText) {
+    return Center(
+      child: Container(
+        width: 320,
+        height: 320,
+        decoration: BoxDecoration(
+          color: TempusColors.surface,
+          borderRadius: BorderRadius.circular(44),
+          border: Border.all(color: TempusColors.border, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: _phaseColor.withOpacity(0.06),
+              blurRadius: 40,
+              spreadRadius: 0,
+            ),
+            const BoxShadow(
+              color: Color(0x50000000),
+              blurRadius: 40,
+              offset: Offset(0, 16),
+              spreadRadius: -8,
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 268,
+              height: 268,
+              child: CustomPaint(
+                painter: TimerPainter(
+                  backgroundColor: TempusColors.border,
+                  progressColor: _phaseColor,
+                  progress: widget.currentDuration / widget.initialDuration,
+                  glowEnabled: widget.isRunning,
+                ),
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: widget.onToggleTimer,
+                  child: Text(
+                    _formattedTime,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: TempusColors.text,
+                      fontSize: 72,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w700,
+                      height: 1.0,
+                      letterSpacing: -2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _phaseColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _phaseColor.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      color: _phaseColor,
+                      fontSize: 12,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTimeSelector() {
     final bool canChange =
         !widget.isRunning && widget.currentDuration == widget.initialDuration;
 
-    if (!canChange) return const SizedBox(height: 100);
+    if (!canChange) return const SizedBox(height: 80);
 
-    if (widget.isPomodoroMode) {
-      return _buildPomodoroPhaseSelector();
-    }
+    if (widget.isPomodoroMode) return _buildPomodoroPhaseSelector();
 
     final List<int> presets = [15, 20, 25, 30];
-    int currentMinutes = widget.initialDuration ~/ 60;
+    final int currentMinutes = widget.initialDuration ~/ 60;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          const Text(
-            "Duração do Foco",
+          Text(
+            'Duração do Foco',
             style: TextStyle(
-              color: Color(0xFFA0A0A0),
-              fontSize: 14,
+              color: TempusColors.textSub,
+              fontSize: 12,
               fontFamily: 'Arimo',
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ...presets.map(
-                (min) => _buildPresetButton(min, currentMinutes == min),
-              ),
-              _buildPickerButton(currentMinutes),
+              ...presets.map((m) => _buildPresetButton(m, currentMinutes == m)),
+              _buildPickerButton(),
             ],
           ),
         ],
@@ -125,88 +185,72 @@ class _TimerControlsState extends State<TimerControls>
 
     String phaseLabel;
     String phaseDuration;
-    Color phaseColor;
 
     switch (phase) {
       case PomodoroPhase.work:
         phaseLabel = 'Sessão de Foco';
         phaseDuration = '25 min';
-        phaseColor = const Color(0xFFAC46FF);
         break;
       case PomodoroPhase.shortBreak:
         phaseLabel = 'Pausa Curta';
         phaseDuration = '5 min';
-        phaseColor = const Color(0xFF00C850);
         break;
       case PomodoroPhase.longBreak:
         phaseLabel = 'Pausa Longa';
         phaseDuration = '15 min';
-        phaseColor = const Color(0xFF2B7FFF);
         break;
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: phaseColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: phaseColor.withOpacity(0.4)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _phaseColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: _phaseColor.withOpacity(0.35)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  phaseLabel,
+                  style: TextStyle(
+                    color: _phaseColor,
+                    fontSize: 13,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      phaseLabel,
-                      style: TextStyle(
-                        color: phaseColor,
-                        fontSize: 13,
-                        fontFamily: 'Arimo',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '· $phaseDuration',
-                      style: TextStyle(
-                        color: phaseColor.withOpacity(0.7),
-                        fontSize: 12,
-                        fontFamily: 'Arimo',
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 6),
+                Text(
+                  '· $phaseDuration',
+                  style: TextStyle(
+                    color: _phaseColor.withOpacity(0.6),
+                    fontSize: 12,
+                    fontFamily: 'Arimo',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          // Round progress dots (4 pomodoros = 1 long break cycle)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(4, (i) {
-              final completed = i < (round % 4);
-              return Container(
+              final done = i < (round % 4);
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 8,
+                width: done ? 18 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: completed
-                      ? const Color(0xFFAC46FF)
-                      : const Color(0xFF2C2C34),
-                  border: Border.all(
-                    color: completed
-                        ? const Color(0xFFAC46FF)
-                        : const Color(0xFF444444),
-                    width: 1,
-                  ),
+                  borderRadius: BorderRadius.circular(4),
+                  color: done
+                      ? TempusColors.accent
+                      : TempusColors.border,
                 ),
               );
             }),
@@ -218,9 +262,7 @@ class _TimerControlsState extends State<TimerControls>
 
   Widget _buildPomodoroToggle() {
     if (widget.isRunning) return const SizedBox.shrink();
-
-    final bool isPaused =
-        widget.currentDuration < widget.initialDuration && !widget.isRunning;
+    final isPaused = widget.currentDuration < widget.initialDuration;
     if (isPaused) return const SizedBox.shrink();
 
     return GestureDetector(
@@ -229,37 +271,36 @@ class _TimerControlsState extends State<TimerControls>
         widget.onTogglePomodoroMode?.call();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: widget.isPomodoroMode
-              ? const Color(0xFFAC46FF).withOpacity(0.15)
-              : const Color(0xFF171717),
+              ? TempusColors.accent.withOpacity(0.12)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: widget.isPomodoroMode
-                ? const Color(0xFFAC46FF).withOpacity(0.5)
-                : const Color(0x19FFFEFE),
-            width: 1,
+                ? TempusColors.accent.withOpacity(0.4)
+                : TempusColors.border,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.repeat,
-              size: 14,
+              Icons.repeat_rounded,
+              size: 13,
               color: widget.isPomodoroMode
-                  ? const Color(0xFFAC46FF)
-                  : const Color(0xFFA0A0A0),
+                  ? TempusColors.accent
+                  : TempusColors.textSub,
             ),
             const SizedBox(width: 6),
             Text(
               'Modo Pomodoro',
               style: TextStyle(
                 color: widget.isPomodoroMode
-                    ? const Color(0xFFAC46FF)
-                    : const Color(0xFFA0A0A0),
+                    ? TempusColors.accent
+                    : TempusColors.textSub,
                 fontSize: 12,
                 fontFamily: 'Arimo',
                 fontWeight: FontWeight.w500,
@@ -278,41 +319,50 @@ class _TimerControlsState extends State<TimerControls>
         widget.onDurationChanged?.call(minutes);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        duration: const Duration(milliseconds: 180),
+        width: 58,
+        height: 40,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected
-              ? Color.fromARGB(83, 172, 70, 255)
-              : const Color(0xFF171717),
-          gradient: isSelected ? GradientColor.purpleBlueGradient : null,
+          gradient: isSelected ? TempusColors.gradient : null,
+          color: isSelected ? null : TempusColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.transparent : const Color(0x19FFFEFE),
-            width: 1,
+            color: isSelected
+                ? Colors.transparent
+                : TempusColors.border,
           ),
         ),
         child: Text(
-          "$minutes",
+          '$minutes',
           style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFFA0A0A0),
-            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : TempusColors.textSub,
+            fontSize: 14,
+            fontFamily: 'Arimo',
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPickerButton(int currentMinutes) {
+  Widget _buildPickerButton() {
     return GestureDetector(
       onTap: () => _showCupertinoTimePicker(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        width: 44,
+        height: 40,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFF171717),
+          color: TempusColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0x33AC46FF), width: 1),
+          border: Border.all(color: TempusColors.accent.withOpacity(0.4)),
         ),
-        child: const Icon(Icons.more_time, color: Color(0xFFAC46FF), size: 20),
+        child: const Icon(
+          Icons.more_time_rounded,
+          color: TempusColors.accent,
+          size: 18,
+        ),
       ),
     );
   }
@@ -321,47 +371,38 @@ class _TimerControlsState extends State<TimerControls>
     showCupertinoModalPopup(
       context: context,
       builder: (context) => Container(
-        height: 300,
-        padding: const EdgeInsets.only(top: 6.0),
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        color: const Color(0xFF171717),
+        height: 280,
+        color: TempusColors.surfaceHigh,
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "Cancelar",
-                      style: TextStyle(color: Color(0xFFA0A0A0)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: TempusColors.textSub),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Confirmar',
+                    style: TextStyle(
+                      color: TempusColors.accent,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "Confirmar",
-                      style: TextStyle(
-                        color: Color(0xFFAC46FF),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             Expanded(
               child: CupertinoTimerPicker(
                 mode: CupertinoTimerPickerMode.hm,
                 initialTimerDuration: Duration(seconds: widget.initialDuration),
-                onTimerDurationChanged: (Duration newDuration) {
-                  if (newDuration.inMinutes > 0) {
-                    widget.onDurationChanged?.call(newDuration.inMinutes);
-                  }
+                onTimerDurationChanged: (d) {
+                  if (d.inMinutes > 0) widget.onDurationChanged?.call(d.inMinutes);
                 },
               ),
             ),
@@ -398,13 +439,13 @@ class _TimerControlsState extends State<TimerControls>
       } else {
         switch (widget.pomodoroPhase) {
           case PomodoroPhase.work:
-            statusText = 'Iniciar sessão de foco';
+            statusText = 'Iniciar foco';
             break;
           case PomodoroPhase.shortBreak:
-            statusText = 'Iniciar pausa curta';
+            statusText = 'Pausa curta';
             break;
           case PomodoroPhase.longBreak:
-            statusText = 'Iniciar pausa longa';
+            statusText = 'Pausa longa';
             break;
         }
       }
@@ -416,305 +457,97 @@ class _TimerControlsState extends State<TimerControls>
       statusText = 'Pressione para começar';
     }
 
-    final playPauseButtonOpacity = isSubjectSelected ? 1.0 : 0.5;
-    final playPauseIcon = widget.isRunning ? Icons.pause : Icons.play_arrow;
-    final playPauseText = widget.isRunning ? 'Pausar Foco' : 'Iniciar Foco';
-    final bool showResetButton = widget.isRunning || isPaused;
-
-    // Use phase color for the progress arc in Pomodoro mode
-    Color progressColor;
-    if (widget.isPomodoroMode) {
-      switch (widget.pomodoroPhase) {
-        case PomodoroPhase.work:
-          progressColor = Color(widget.selectedSubject?.colorValue ?? 0xFF9042FF);
-          break;
-        case PomodoroPhase.shortBreak:
-          progressColor = const Color(0xFF00C850);
-          break;
-        case PomodoroPhase.longBreak:
-          progressColor = const Color(0xFF2B7FFF);
-          break;
-      }
-    } else {
-      progressColor = Color(widget.selectedSubject?.colorValue ?? 0xFF9042FF);
-    }
+    final playIcon = widget.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded;
+    final playLabel = widget.isRunning ? 'Pausar' : 'Iniciar Foco';
+    final showReset = widget.isRunning || isPaused;
 
     return Column(
       children: [
-        Center(
-          child: Container(
-            width: 346,
-            height: 346,
-            decoration: ShapeDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment(0.00, 0.00),
-                end: Alignment(1.00, 1.00),
-                colors: [Color(0xCC171717), Color(0xCC0A0A0A)],
-              ),
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(width: 2, color: Color(0x19FFFEFE)),
-                borderRadius: BorderRadius.circular(48),
-              ),
-              shadows: const [
-                BoxShadow(
-                  color: Color(0x3F000000),
-                  blurRadius: 50,
-                  offset: Offset(0, 25),
-                  spreadRadius: -12,
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 280,
-                  height: 280,
-                  child: RotationTransition(
-                    turns: _rotationController,
-                    child: CustomPaint(
-                      painter: TimerPainter(
-                        backgroundColor: const Color(0xFF2C2C34),
-                        progressColor: progressColor,
-                        progress:
-                            widget.currentDuration / widget.initialDuration,
-                      ),
-                    ),
-                  ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        widget.onToggleTimer();
-                      },
-                      child: Text(
-                        _formattedTime,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 80,
-                          fontFamily: 'Arimo',
-                          fontWeight: FontWeight.w400,
-                          height: 1.20,
-                          letterSpacing: -2.40,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: ShaderMask(
-                        blendMode: BlendMode.srcIn,
-                        shaderCallback: (bounds) {
-                          return const LinearGradient(
-                            colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ).createShader(bounds);
-                        },
-                        child: Text(
-                          statusText,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFFA0A0A0),
-                            fontSize: 16,
-                            fontFamily: 'Arimo',
-                            fontWeight: FontWeight.w400,
-                            height: 1.50,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
+        _buildTimerCircle(statusText),
+
+        const SizedBox(height: 24),
 
         _buildTimeSelector(),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
 
         _buildPomodoroToggle(),
 
-        const SizedBox(height: 20),
-        Center(
-          child: SizedBox(
-            width: 230,
-            height: 56,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: widget.onToggleTimer,
-                    child: Opacity(
-                      opacity: playPauseButtonOpacity,
-                      child: Container(
-                        height: 56,
-                        decoration: ShapeDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment(0.00, 0.50),
-                            end: Alignment(1.00, 0.50),
-                            colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          shadows: const [
-                            BoxShadow(
-                              color: Color(0x19000000),
-                              blurRadius: 6,
-                              offset: Offset(0, 4),
-                              spreadRadius: -4,
-                            ),
-                            BoxShadow(
-                              color: Color(0x19000000),
-                              blurRadius: 15,
-                              offset: Offset(0, 10),
-                              spreadRadius: -3,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(playPauseIcon, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Text(
-                              playPauseText,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontFamily: 'Arimo',
-                                fontWeight: FontWeight.w400,
-                                height: 1.43,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                if (showResetButton) ...[
-                  const SizedBox(width: 16),
-                  GestureDetector(
-                    onTap: widget.onResetTimer,
+        const SizedBox(height: 24),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: widget.onToggleTimer,
+                  child: AnimatedOpacity(
+                    opacity: isSubjectSelected ? 1.0 : 0.4,
+                    duration: const Duration(milliseconds: 200),
                     child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: ShapeDecoration(
-                        color: const Color(0x7F171717),
-                        shape: RoundedRectangleBorder(
-                          side: const BorderSide(
-                            width: 2,
-                            color: Color(0x19FFFEFE),
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        shadows: const [
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: TempusColors.gradient,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
                           BoxShadow(
-                            color: Color(0x19000000),
-                            blurRadius: 6,
-                            offset: Offset(0, 4),
-                            spreadRadius: -4,
-                          ),
-                          BoxShadow(
-                            color: Color(0x19000000),
-                            blurRadius: 15,
-                            offset: Offset(0, 10),
-                            spreadRadius: -3,
+                            color: TempusColors.accent.withOpacity(0.25),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            child: SvgPicture.asset(
-                              'lib/assets/icons/icon_back.svg',
-                              width: 28,
-                              height: 28,
-                              colorFilter: const ColorFilter.mode(
-                                Colors.white,
-                                BlendMode.srcIn,
-                              ),
+                          Icon(playIcon, color: Colors.white, size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            playLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontFamily: 'Arimo',
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ],
+                ),
+              ),
+              if (showReset) ...[
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: widget.onResetTimer,
+                  child: Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: TempusColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: TempusColors.border),
+                    ),
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'lib/assets/icons/icon_back.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: const ColorFilter.mode(
+                          TempusColors.textSub,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ],
-    );
-  }
-
-  void _showManualInput(BuildContext context) {
-    final TextEditingController textController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF171717),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0x19FFFEFE)),
-        ),
-        title: const Text(
-          "Definir minutos",
-          style: TextStyle(color: Colors.white, fontFamily: 'Arimo'),
-        ),
-        content: TextField(
-          controller: textController,
-          keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: "Ex: 45",
-            hintStyle: TextStyle(color: Color(0xFFA0A0A0)),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFFAC46FF)),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF2B7FFF)),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancelar",
-              style: TextStyle(color: Color(0xFFA0A0A0)),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final int? value = int.tryParse(textController.text);
-              if (value != null && value > 0 && value <= 500) {
-                widget.onDurationChanged?.call(value);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(
-              "OK",
-              style: TextStyle(
-                color: Color(0xFFAC46FF),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -725,9 +558,7 @@ class GradientPillThumb extends SliderComponentShape {
   const GradientPillThumb({required this.gradient});
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return const Size(36.0, 24.0);
-  }
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(36, 24);
 
   @override
   void paint(
@@ -744,35 +575,16 @@ class GradientPillThumb extends SliderComponentShape {
     required double textScaleFactor,
     required double value,
   }) {
-    final Canvas canvas = context.canvas;
-
-    const double width = 36.0;
-    const double height = 24.0;
-    final Rect rect = Rect.fromCenter(
-      center: center,
-      width: width,
-      height: height,
-    );
-
-    final Color shadowColor = gradient.colors.last.withOpacity(0.5);
-    final Paint shadowPaint = Paint()
-      ..color = shadowColor
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
-
-    final RRect rRectShadow = RRect.fromRectAndRadius(
-      rect.translate(0, 2),
-      const Radius.circular(12.0),
-    );
-    canvas.drawRRect(rRectShadow, shadowPaint);
-
-    final RRect rRectGradient = RRect.fromRectAndRadius(
-      rect,
-      const Radius.circular(12.0),
-    );
+    final canvas = context.canvas;
+    final rect = Rect.fromCenter(center: center, width: 36, height: 24);
+    final rr = RRect.fromRectAndRadius(rect, const Radius.circular(12));
     canvas.drawRRect(
-      rRectGradient,
-      Paint()..shader = gradient.createShader(rect),
+      RRect.fromRectAndRadius(rect.translate(0, 2), const Radius.circular(12)),
+      Paint()
+        ..color = gradient.colors.last.withOpacity(0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
+    canvas.drawRRect(rr, Paint()..shader = gradient.createShader(rect));
   }
 }
 
@@ -780,10 +592,7 @@ class RecessedTrackShape extends SliderTrackShape {
   final Color baseColor;
   final LinearGradient activeGradient;
 
-  const RecessedTrackShape({
-    required this.baseColor,
-    required this.activeGradient,
-  });
+  const RecessedTrackShape({required this.baseColor, required this.activeGradient});
 
   @override
   Rect getPreferredRect({
@@ -793,12 +602,13 @@ class RecessedTrackShape extends SliderTrackShape {
     bool isEnabled = false,
     bool isDiscrete = false,
   }) {
-    final double trackHeight = sliderTheme.trackHeight! * 1.5;
-    final double trackLeft = offset.dx;
-    final double trackTop =
-        offset.dy + (parentBox.size.height - trackHeight) / 2;
-    final double trackWidth = parentBox.size.width;
-    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
+    final h = sliderTheme.trackHeight! * 1.5;
+    return Rect.fromLTWH(
+      offset.dx,
+      offset.dy + (parentBox.size.height - h) / 2,
+      parentBox.size.width,
+      h,
+    );
   }
 
   @override
@@ -815,43 +625,25 @@ class RecessedTrackShape extends SliderTrackShape {
     Offset? secondaryOffset,
   }) {
     if (sliderTheme.trackHeight == 0) return;
-
-    final Rect trackRect = getPreferredRect(
+    final trackRect = getPreferredRect(
       parentBox: parentBox,
       offset: offset,
       sliderTheme: sliderTheme,
-      isEnabled: isEnabled,
-      isDiscrete: isDiscrete,
     );
-
-    final Canvas canvas = context.canvas;
-
-    final RRect fullTrack = RRect.fromRectAndRadius(
-      Rect.fromLTRB(
-        trackRect.left,
-        trackRect.top,
-        trackRect.right,
-        trackRect.bottom,
-      ),
-      const Radius.circular(6.0),
+    final canvas = context.canvas;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(trackRect, const Radius.circular(6)),
+      Paint()..color = baseColor,
     );
-
-    canvas.drawRRect(fullTrack, Paint()..color = baseColor);
-
-    final Rect activeRect = Rect.fromLTRB(
+    final activeRect = Rect.fromLTRB(
       trackRect.left,
       trackRect.top,
       thumbCenter.dx,
       trackRect.bottom,
     );
-
-    final Paint activePaint = Paint()
-      ..shader = activeGradient.createShader(activeRect);
-
-    final RRect activeTrack = RRect.fromRectAndRadius(
-      activeRect,
-      const Radius.circular(6.0),
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(activeRect, const Radius.circular(6)),
+      Paint()..shader = activeGradient.createShader(activeRect),
     );
-    canvas.drawRRect(activeTrack, activePaint);
   }
 }

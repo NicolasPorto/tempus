@@ -1,5 +1,5 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
 
 class EmptySubjectCard extends StatelessWidget {
   final VoidCallback onCreateTap;
@@ -10,90 +10,65 @@ class EmptySubjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 170,
-      decoration: ShapeDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(0.00, 0.00),
-          end: Alignment(1.00, 1.00),
-          colors: [Color(0x7F171717), Color(0x7F0A0A0A)],
-        ),
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-          borderRadius: BorderRadius.circular(16),
-        ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: TempusColors.border),
       ),
-      child: Stack(
+      child: Column(
         children: [
-          const Positioned(
-            left: 0,
-            right: 0,
-            top: 25,
-            child: Center(
-              child: Icon(Icons.book, color: Color(0xFFD4D4D4), size: 32),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: TempusColors.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: TempusColors.accent.withOpacity(0.2)),
             ),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            top: 69,
-            child: Center(
-              child: AutoSizeText(
-                'Adicione uma matéria para começar',
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                minFontSize: 12,
-                style: const TextStyle(
-                  color: Color(0xFFD4D4D4),
-                  fontSize: 16,
-                  fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w400,
-                  height: 1.50,
-                ),
+            child: const Center(
+              child: Icon(
+                Icons.menu_book_rounded,
+                color: TempusColors.accent,
+                size: 22,
               ),
             ),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 109,
-            child: Center(
-              child: GestureDetector(
-                onTap: onCreateTap,
-                child: Container(
-                  width: 138.69,
-                  height: 36,
-                  decoration: ShapeDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment(0.00, 0.50),
-                      end: Alignment(1.00, 0.50),
-                      colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+          const SizedBox(height: 12),
+          const Text(
+            'Adicione uma matéria para começar',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: TempusColors.textSub,
+              fontSize: 14,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: onCreateTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: TempusColors.gradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'Criar Matéria',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add, color: Colors.white, size: 16),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: AutoSizeText(
-                          'Criar Matéria',
-                          maxLines: 1,
-                          minFontSize: 10,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'Arimo',
-                            fontWeight: FontWeight.w400,
-                            height: 1.43,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
           ),

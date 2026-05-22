@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tempus_app/widgets/animated_background.dart';
 import '../widgets/navigation_container.dart';
 import '../libraries/globals.dart';
 import 'package:provider/provider.dart';
@@ -15,10 +14,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     context.select<TempusGlobals, bool>((globals) => globals.onFocus);
 
-    return AnimatedBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: const NavigationContainer(),
+    return const Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        bottom: false,
+        child: NavigationContainer(),
       ),
     );
   }

@@ -46,29 +46,23 @@ class _TimerScreenContent extends StatelessWidget {
       onTap: controller.handleUserInteraction,
       onPanDown: (_) => controller.handleUserInteraction(),
       child: SingleChildScrollView(
-        child: Stack(
-          children: [
-            SafeArea(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: animation.drive(
-                        Tween<double>(begin: 0.8, end: 1.0)
-                            .chain(CurveTween(curve: Curves.easeOutCubic)),
-                      ),
-                      child: child,
-                    ),
-                  );
-                },
-                child: controller.isFocusMode
-                    ? _buildFocusView(context, controller)
-                    : _buildMainView(context, controller),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: animation.drive(
+                  Tween<double>(begin: 0.88, end: 1.0)
+                      .chain(CurveTween(curve: Curves.easeOutCubic)),
+                ),
+                child: child,
               ),
-            ),
-          ],
+            );
+          },
+          child: controller.isFocusMode
+              ? _buildFocusView(context, controller)
+              : _buildMainView(context, controller),
         ),
       ),
     );
@@ -77,55 +71,47 @@ class _TimerScreenContent extends StatelessWidget {
   Widget _buildMainView(BuildContext context, TimerController controller) {
     return Center(
       key: const ValueKey('main_view'),
-      child: Container(
-        color: Colors.transparent,
-        constraints: const BoxConstraints(maxWidth: 378),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const TimerHeader(),
-            const SizedBox(height: 48),
-            SizedBox(
-              width: double.infinity,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SubjectSelector(
-                    subjects: controller.subjects,
-                    selectedSubject: controller.selectedSubject,
-                    isLoading: controller.isLoading,
-                    onManageTap: () => _showSubjectManagerModal(context),
-                    onSubjectChanged: controller.selectSubject,
-                  ),
-                  const SizedBox(height: 40),
-                  TimerControls(
-                    key: const ValueKey('timer_controls'),
-                    selectedSubject: controller.selectedSubject,
-                    onToggleTimer: controller.toggleTimer,
-                    onResetTimer: controller.resetTimer,
-                    onDurationChanged: (minutes) =>
-                        controller.setDuration(minutes),
-                    currentDuration: controller.currentDuration,
-                    initialDuration: controller.initialDuration,
-                    isRunning: controller.isRunning,
-                    isPomodoroMode: controller.isPomodoroMode,
-                    pomodoroPhase: controller.pomodoroPhase,
-                    pomodoroRound: controller.pomodoroRound,
-                    onTogglePomodoroMode: controller.togglePomodoroMode,
-                  ),
-                  const SizedBox(height: 40),
-                  if (controller.subjects.isEmpty && !controller.isLoading)
-                    EmptySubjectCard(
-                      onCreateTap: () => _showSubjectManagerModal(context),
-                    ),
-                  const SizedBox(height: 32),
-                ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const TimerHeader(),
+              const SizedBox(height: 24),
+              SubjectSelector(
+                subjects: controller.subjects,
+                selectedSubject: controller.selectedSubject,
+                isLoading: controller.isLoading,
+                onManageTap: () => _showSubjectManagerModal(context),
+                onSubjectChanged: controller.selectSubject,
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              TimerControls(
+                key: const ValueKey('timer_controls'),
+                selectedSubject: controller.selectedSubject,
+                onToggleTimer: controller.toggleTimer,
+                onResetTimer: controller.resetTimer,
+                onDurationChanged: (m) => controller.setDuration(m),
+                currentDuration: controller.currentDuration,
+                initialDuration: controller.initialDuration,
+                isRunning: controller.isRunning,
+                isPomodoroMode: controller.isPomodoroMode,
+                pomodoroPhase: controller.pomodoroPhase,
+                pomodoroRound: controller.pomodoroRound,
+                onTogglePomodoroMode: controller.togglePomodoroMode,
+              ),
+              if (controller.subjects.isEmpty && !controller.isLoading) ...[
+                const SizedBox(height: 24),
+                EmptySubjectCard(
+                  onCreateTap: () => _showSubjectManagerModal(context),
+                ),
+              ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -134,24 +120,22 @@ class _TimerScreenContent extends StatelessWidget {
   Widget _buildFocusView(BuildContext context, TimerController controller) {
     return Center(
       key: const ValueKey('focus'),
-      child: Column(
-        children: [
-          const SizedBox(height: 200),
-          TimerControls(
-            key: const ValueKey('timer_controls'),
-            selectedSubject: controller.selectedSubject,
-            onToggleTimer: controller.toggleTimer,
-            onResetTimer: controller.resetTimer,
-            onDurationChanged: (minutes) => controller.setDuration(minutes),
-            currentDuration: controller.currentDuration,
-            initialDuration: controller.initialDuration,
-            isRunning: controller.isRunning,
-            isPomodoroMode: controller.isPomodoroMode,
-            pomodoroPhase: controller.pomodoroPhase,
-            pomodoroRound: controller.pomodoroRound,
-            onTogglePomodoroMode: controller.togglePomodoroMode,
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 20),
+        child: TimerControls(
+          key: const ValueKey('timer_controls'),
+          selectedSubject: controller.selectedSubject,
+          onToggleTimer: controller.toggleTimer,
+          onResetTimer: controller.resetTimer,
+          onDurationChanged: (m) => controller.setDuration(m),
+          currentDuration: controller.currentDuration,
+          initialDuration: controller.initialDuration,
+          isRunning: controller.isRunning,
+          isPomodoroMode: controller.isPomodoroMode,
+          pomodoroPhase: controller.pomodoroPhase,
+          pomodoroRound: controller.pomodoroRound,
+          onTogglePomodoroMode: controller.togglePomodoroMode,
+        ),
       ),
     );
   }

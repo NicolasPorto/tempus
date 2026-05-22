@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tempus_app/widgets/animated_background.dart';
 import 'package:tempus_app/libraries/globals.dart';
@@ -9,11 +10,19 @@ import 'package:tempus_app/screens/auth_wrapper.dart';
 import 'package:tempus_app/services/supabase_service.dart';
 import 'package:tempus_app/core/supabase/supabase_client.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:tempus_app/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.black,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
   await SupabaseClientConfig.initialize();
-  await MobileAds.instance.initialize();
+  // Não bloqueia o startup: a inicialização dos ads roda em background.
+  MobileAds.instance.initialize();
 
   runApp(
     MultiProvider(
@@ -34,11 +43,8 @@ class TempusApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tempus',
-      theme: ThemeData.dark().copyWith(
+      theme: AppTheme.darkTheme.copyWith(
         scaffoldBackgroundColor: Colors.transparent,
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.indigo,
-        ).copyWith(background: Colors.transparent),
       ),
       debugShowCheckedModeBanner: false,
       home: Stack(

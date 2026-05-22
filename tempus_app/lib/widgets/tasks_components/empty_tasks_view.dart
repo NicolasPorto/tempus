@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+import '../../theme/app_theme.dart';
 
 class EmptyTasksView extends StatelessWidget {
   final bool hasSubjects;
@@ -9,53 +8,48 @@ class EmptyTasksView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 10),
-          const SizedBox(height: 20),
           Container(
-            width: 80,
-            height: 80,
-            decoration: ShapeDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment(0.00, 0.00),
-                end: Alignment(1.00, 1.00),
-                colors: [Color(0x19AC46FF), Color(0x192B7FFF)],
-              ),
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-                borderRadius: BorderRadius.circular(33554400),
-              ),
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: TempusColors.accent.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: TempusColors.accent.withOpacity(0.2)),
             ),
-            child: Center(
-              child: SizedBox(
-                child: SvgPicture.asset(
-                  'lib/assets/icons/icon_tasks.svg',
-                  width: 50,
-                  height: 50,
-                ),
+            child: const Center(
+              child: Icon(
+                Icons.task_alt_rounded,
+                color: TempusColors.accent,
+                size: 28,
               ),
             ),
           ),
           const SizedBox(height: 16),
-          AutoSizeText(
-            hasSubjects ? 'Sem tarefas.' : 'Adicione matérias primeiro',
-            maxLines: 1,
-            minFontSize: 12,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF737373), fontSize: 16),
+          Text(
+            hasSubjects ? 'Sem tarefas' : 'Adicione matérias primeiro',
+            style: const TextStyle(
+              color: TempusColors.textSub,
+              fontSize: 15,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
-          AutoSizeText(
+          Text(
             hasSubjects
                 ? 'Adicione tarefas no cartão acima.'
-                : 'Você precisa ter pelo menos uma matéria ativa para adicionar tarefas.',
-            maxLines: 2,
-            minFontSize: 10,
+                : 'Você precisa de uma matéria ativa para criar tarefas.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF525252), fontSize: 14),
+            style: TextStyle(
+              color: TempusColors.textMuted,
+              fontSize: 13,
+              fontFamily: 'Arimo',
+            ),
           ),
         ],
       ),

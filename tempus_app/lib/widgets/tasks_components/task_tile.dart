@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tempus_app/models/subject.dart';
 import 'package:tempus_app/models/task.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+import '../../theme/app_theme.dart';
 
 class TaskTile extends StatelessWidget {
   final TaskItem task;
@@ -19,41 +19,127 @@ class TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0x7F171717),
+    final subjectColor = Color(subject.colorValue);
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: TempusColors.border),
       ),
-      child: ListTile(
-        leading: Checkbox(
-          value: task.done,
-          onChanged: onToggle,
-          activeColor: Color(subject.colorValue),
-          checkColor: Colors.white,
-        ),
-        title: AutoSizeText( 
-          task.title,
-          maxLines: 2, 
-          minFontSize: 14,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            decoration: task.done ? TextDecoration.lineThrough : null,
-            color: Colors.white,
-            fontSize: 16,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Left color accent stripe
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 4,
+                color: task.done
+                    ? subjectColor.withOpacity(0.3)
+                    : subjectColor,
+              ),
+
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      // Checkbox
+                      GestureDetector(
+                        onTap: () => onToggle(!task.done),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: task.done
+                                ? subjectColor
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: task.done
+                                  ? subjectColor
+                                  : TempusColors.border,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: task.done
+                              ? const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                )
+                              : null,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Text
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 180),
+                              style: TextStyle(
+                                color: task.done
+                                    ? TempusColors.textSub
+                                    : TempusColors.text,
+                                fontSize: 14,
+                                fontFamily: 'Arimo',
+                                fontWeight: FontWeight.w500,
+                                decoration: task.done
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                                decorationColor: TempusColors.textSub,
+                              ),
+                              child: Text(
+                                task.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              subject.name,
+                              style: TextStyle(
+                                color: subjectColor.withOpacity(0.8),
+                                fontSize: 11,
+                                fontFamily: 'Arimo',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Delete
+                      GestureDetector(
+                        onTap: onDelete,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            color: TempusColors.textMuted,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        subtitle: AutoSizeText( 
-          subject.name,
-          maxLines: 1,
-          minFontSize: 10,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: Color(subject.colorValue), fontSize: 12),
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Color(0xFFD4D4D4)),
-          onPressed: onDelete,
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/supabase_service.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await context.read<SupabaseService>().signInWithGoogle();
-      // A navegação é gerenciada pelo AuthWrapper via onAuthStateChange
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -33,179 +33,137 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth > 400 ? 370.31 : screenWidth * 0.9;
-    const cardHeight = 567.12;
+    final cardWidth = screenWidth > 420 ? 360.0 : screenWidth * 0.88;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
         child: Container(
           width: cardWidth,
-          height: cardHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 33.14),
-          decoration: ShapeDecoration(
-            color: const Color(0x66171717),
-            shape: RoundedRectangleBorder(
-              side: const BorderSide(width: 1.16, color: Color(0x19FFFEFE)),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            shadows: const [
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: TempusColors.surface.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: TempusColors.border),
+            boxShadow: const [
               BoxShadow(
-                color: Color(0x3F000000),
-                blurRadius: 50,
-                offset: Offset(0, 25),
-                spreadRadius: -12,
+                color: Color(0x50000000),
+                blurRadius: 60,
+                offset: Offset(0, 24),
+                spreadRadius: -8,
               ),
             ],
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: ShapeDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment(0.00, 0.00),
-                        end: Alignment(1.00, 1.00),
-                        colors: [Color(0x33AC46FF), Color(0x332B7FFF)],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        side: const BorderSide(
-                          width: 2,
-                          color: Color(0x33FFFEFE),
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+              // Logo
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0x33A855F7), Color(0x1560A5FA)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        'lib/assets/icons/icon_login.svg',
-                        width: 50,
-                        height: 50,
-                      ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: TempusColors.accent.withOpacity(0.3),
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  ShaderMask(
-                    blendMode: BlendMode.srcIn,
-                    shaderCallback: (bounds) {
-                      return const LinearGradient(
-                        colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ).createShader(bounds);
-                    },
-                    child: const Text(
-                      'Tempus',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontFamily: 'Arimo',
-                        fontWeight: FontWeight.w700,
-                      ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'lib/assets/icons/icon_login.svg',
+                      width: 40,
+                      height: 40,
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  const Text(
-                    'Entre para continuar estudando',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFA0A0A0),
-                      fontSize: 16,
-                      fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
+                ),
               ),
 
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    height: 47.99,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        shadowColor: Colors.transparent,
-                      ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: ShapeDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment(0.00, 0.50),
-                            end: Alignment(1.00, 0.50),
-                            colors: [Color(0xFFAC46FF), Color(0xFF2B7FFF)],
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          shadows: const [
-                            BoxShadow(
-                              color: Color(0x3FAC46FF),
-                              blurRadius: 6,
-                              offset: Offset(0, 4),
-                              spreadRadius: -4,
-                            ),
-                            BoxShadow(
-                              color: Color(0x3FAC46FF),
-                              blurRadius: 15,
-                              offset: Offset(0, 10),
-                              spreadRadius: -3,
-                            ),
-                          ],
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 3,
-                                ),
-                              )
-                            : const Text(
-                                'Login / Sign Up',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontFamily: 'Arimo',
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ),
+              const SizedBox(height: 20),
+
+              const Center(
+                child: Text(
+                  'Tempus',
+                  style: TextStyle(
+                    color: TempusColors.text,
+                    fontSize: 28,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
                   ),
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
+
+              const SizedBox(height: 6),
+
+              const Center(
+                child: Text(
+                  'Entre para continuar estudando',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: TempusColors.textSub,
+                    fontSize: 14,
+                    fontFamily: 'Arimo',
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Login button
+              GestureDetector(
+                onTap: _isLoading ? null : _handleLogin,
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: TempusColors.gradient,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: TempusColors.accent.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'Login / Sign Up',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontFamily: 'Arimo',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
 
               const Text(
                 'Seus dados são sincronizados com segurança na nuvem',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF737373),
-                  fontSize: 12,
+                  color: TempusColors.textMuted,
+                  fontSize: 11,
                   fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w400,
-                  height: 1.33,
+                  height: 1.4,
                 ),
               ),
             ],

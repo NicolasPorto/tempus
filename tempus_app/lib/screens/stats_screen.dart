@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/supabase_service.dart';
 import '../models/task.dart';
-import '../screens/auth_wrapper.dart';
-
+import '../theme/app_theme.dart';
 import '../widgets/stats_components/time_stat_card.dart';
 import '../widgets/stats_components/summary_stat_card.dart';
 
@@ -48,7 +47,7 @@ class _StatsScreenState extends State<StatsScreen> {
         });
       }
     } catch (e) {
-      print('Erro ao carregar estatísticas: $e');
+      debugPrint('Erro ao carregar estatísticas: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -61,18 +60,123 @@ class _StatsScreenState extends State<StatsScreen> {
     return m > 0 ? '${h}h ${m}min' : '${h}h';
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final int apiTotal = _sessionStats?['totalTimeStudied'] as int? ?? 0;
+    final int apiSupposed = _sessionStats?['supposedTotalTimeStudied'] as int? ?? 0;
+    final int apiAvg = _sessionStats?['avgTimeStudied'] as int? ?? 0;
+    final int finishedSessions =
+        (_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0;
+
+    final displayTotal = _isLoading ? '...' : _formatMinutes(apiTotal);
+    final displaySupposed = _isLoading ? '...' : _formatMinutes(apiSupposed);
+    final displayAvg = _isLoading ? '...' : _formatMinutes(apiAvg);
+
+    return RefreshIndicator(
+      onRefresh: _fetchData,
+      color: TempusColors.accent,
+      backgroundColor: TempusColors.surface,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Padding(
+              padding: EdgeInsets.only(top: 8, bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Estatísticas',
+                    style: TextStyle(
+                      color: TempusColors.text,
+                      fontSize: 30,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Seu desempenho de estudos',
+                    style: TextStyle(
+                      color: TempusColors.textSub,
+                      fontSize: 13,
+                      fontFamily: 'Arimo',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            TimeStatCard(
+              realTime: displayTotal,
+              plannedTime: displaySupposed,
+              avgTime: displayAvg,
+              iconColors: const [Color(0x1A60A5FA), Color(0x0D3B82F6)],
+              barColors: const [Color(0xFF60A5FA), Color(0xFF3B82F6)],
+              icon: Icons.av_timer_rounded,
+            ),
+
+            const SizedBox(height: 16),
+
+            // 2-column row: Sessions + Tasks
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: SummaryStatCard(
+                      title: 'Sessões Finalizadas',
+                      value: _isLoading ? '...' : '$finishedSessions',
+                      iconColors: const [Color(0x1AA855F7), Color(0x0D7C3AED)],
+                      barColors: const [Color(0xFFA855F7), Color(0xFF7C3AED)],
+                      icon: Icons.check_circle_outline_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SummaryStatCard(
+                      title: 'Tarefas Concluídas',
+                      value: '$_completedTasks/$_totalTasks',
+                      iconColors: const [Color(0x1A34D399), Color(0x0D059669)],
+                      barColors: const [Color(0xFF34D399), Color(0xFF059669)],
+                      icon: Icons.task_alt_rounded,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SummaryStatCard(
+              title: 'Sequência de sessões',
+              value: _isLoading ? '...' : '$_sessionStreak',
+              iconColors: const [Color(0x1AF59E0B), Color(0x0DD97706)],
+              barColors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
+              icon: Icons.local_fire_department_rounded,
+            ),
+
+            const SizedBox(height: 32),
+
+            _buildLogoutButton(context),
+
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildLogoutButton(BuildContext context) {
     return GestureDetector(
       onTap: () async {
         final svc = context.read<SupabaseService>();
         try {
           await svc.signOut();
-          if (context.mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const AuthWrapper()),
-              (route) => false,
-            );
-          }
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -83,114 +187,29 @@ class _StatsScreenState extends State<StatsScreen> {
       },
       child: Container(
         width: double.infinity,
-        height: 56,
-        decoration: ShapeDecoration(
-          color: const Color(0x1AFF3B30),
-          shape: RoundedRectangleBorder(
-            side: const BorderSide(width: 1, color: Color(0xFFFF3B30)),
-            borderRadius: BorderRadius.circular(16),
+        height: 52,
+        decoration: BoxDecoration(
+          color: TempusColors.red.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: TempusColors.red.withOpacity(0.4),
           ),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.logout, color: Color(0xFFFF3B30), size: 20),
-            SizedBox(width: 10),
+            Icon(Icons.logout_rounded, color: TempusColors.red, size: 18),
+            SizedBox(width: 8),
             Text(
               'Sair da Conta',
               style: TextStyle(
-                color: Color(0xFFFF3B30),
-                fontSize: 16,
+                color: TempusColors.red,
+                fontSize: 14,
                 fontFamily: 'Arimo',
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final int apiTotalMinutes = _sessionStats?['totalTimeStudied'] as int? ?? 0;
-    final int apiSupposedMinutes =
-        _sessionStats?['supposedTotalTimeStudied'] as int? ?? 0;
-    final int apiAvgMinutes = _sessionStats?['avgTimeStudied'] as int? ?? 0;
-    final int finishedSessions =
-        (_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0;
-
-    final String displayTotal =
-        _isLoading ? '...' : _formatMinutes(apiTotalMinutes);
-    final String displaySupposed =
-        _isLoading ? '...' : _formatMinutes(apiSupposedMinutes);
-    final String displayAvg =
-        _isLoading ? '...' : _formatMinutes(apiAvgMinutes);
-
-    return RefreshIndicator(
-      onRefresh: _fetchData,
-      color: const Color(0xFFAC46FF),
-      backgroundColor: const Color(0xFF1E1E1E),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TimeStatCard(
-                realTime: displayTotal,
-                plannedTime: displaySupposed,
-                avgTime: displayAvg,
-                iconColors: const [
-                  Color.fromARGB(24, 70, 203, 255),
-                  Color.fromARGB(24, 50, 168, 246)
-                ],
-                barColors: const [
-                  Color.fromARGB(255, 70, 172, 255),
-                  Color.fromARGB(255, 50, 168, 246)
-                ],
-                icon: Icons.av_timer,
-              ),
-
-              const SizedBox(height: 32),
-
-              SummaryStatCard(
-                title: 'Sessões Finalizadas',
-                value: _isLoading ? '...' : '$finishedSessions',
-                iconColors: const [Color(0x19AC46FF), Color(0x19F6329A)],
-                barColors: const [Color(0xFFAC46FF), Color(0xFFF6329A)],
-                icon: Icons.check_circle_outline,
-              ),
-
-              const SizedBox(height: 32),
-
-              SummaryStatCard(
-                title: 'Tarefas Concluídas',
-                value: '$_completedTasks/$_totalTasks',
-                iconColors: const [Color(0x1900C850), Color(0x1900BC7C)],
-                barColors: const [Color(0xFF00C850), Color(0xFF00BC7C)],
-                icon: Icons.task_alt,
-              ),
-
-              const SizedBox(height: 32),
-
-              SummaryStatCard(
-                title: 'Sequência de sessões',
-                value: _isLoading ? '...' : '$_sessionStreak',
-                iconColors: const [Color(0x19FF6800), Color(0x19FD9900)],
-                barColors: const [Color(0xFFFF6800), Color(0xFFFD9900)],
-                icon: Icons.local_fire_department,
-              ),
-
-              const SizedBox(height: 48.0),
-
-              _buildLogoutButton(context),
-
-              const SizedBox(height: 32.0),
-            ],
-          ),
         ),
       ),
     );

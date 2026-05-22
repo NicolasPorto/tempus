@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+import '../../theme/app_theme.dart';
 
 class TimeStatCard extends StatelessWidget {
   final String realTime;
   final String plannedTime;
   final String avgTime;
-
   final List<Color> iconColors;
   final List<Color> barColors;
   final IconData icon;
@@ -22,108 +21,92 @@ class TimeStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = barColors.first;
+
     return Container(
       width: double.infinity,
-      clipBehavior: Clip.antiAlias,
-      decoration: ShapeDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(0.00, 0.00),
-          end: Alignment(1.00, 1.00),
-          colors: [Color(0xCC171717), Color(0xCC0A0A0A)],
-        ),
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x19000000),
-            blurRadius: 15,
-            offset: Offset(0, 10),
-            spreadRadius: -3,
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: TempusColors.border),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. A BARRA COLORIDA
-          Container(
-            width: double.infinity,
-            height: 4,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment(0.00, 0.50),
-                end: Alignment(1.00, 0.50),
-                colors: barColors,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top accent bar
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: barColors),
               ),
             ),
-          ),
 
-          // 2. O CONTEÚDO
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      padding: const EdgeInsets.all(12),
-                      decoration: ShapeDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment(0.00, 0.00),
-                          end: Alignment(1.00, 1.00),
-                          colors: iconColors,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          icon,
-                          color: barColors.last.withOpacity(0.8),
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 12.0),
-                        child: AutoSizeText(
-                          "Visão Geral de Tempo",
-                          textAlign: TextAlign.end,
-                          maxLines: 1,
-                          minFontSize: 10,
-                          style: TextStyle(
-                            color: Color(0xFFA0A0A0),
-                            fontSize: 14,
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: iconColors,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: accentColor.withOpacity(0.2),
                           ),
                         ),
+                        child: Center(
+                          child: Icon(icon, color: accentColor, size: 18),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Visão Geral de Tempo',
+                        style: TextStyle(
+                          color: TempusColors.textSub,
+                          fontSize: 13,
+                          fontFamily: 'Arimo',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildStatColumn("Tempo Real", realTime),
-                    const SizedBox(width: 8), // Espaço entre colunas
-                    _buildStatColumn("Planejado", plannedTime),
-                    const SizedBox(width: 8), // Espaço entre colunas
-                    _buildStatColumn("Média/Sessão", avgTime),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 24),
+
+                  Row(
+                    children: [
+                      _buildStatColumn('Tempo Real', realTime),
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: TempusColors.border,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      _buildStatColumn('Planejado', plannedTime),
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: TempusColors.border,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      _buildStatColumn('Média/Sessão', avgTime),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -133,31 +116,27 @@ class TimeStatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AutoSizeText(
+          Text(
             label,
             maxLines: 1,
-            minFontSize: 9,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFFA0A0A0),
-              fontSize: 12,
+              color: TempusColors.textSub,
+              fontSize: 11,
               fontFamily: 'Arimo',
               fontWeight: FontWeight.w400,
-              height: 1.50,
             ),
           ),
-          const SizedBox(height: 8),
-          AutoSizeText(
+          const SizedBox(height: 4),
+          Text(
             value,
             maxLines: 1,
-            minFontSize: 12,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFFF4F4F4),
-              fontSize: 18,
+              color: TempusColors.text,
+              fontSize: 20,
               fontFamily: 'Arimo',
-              fontWeight: FontWeight.w600,
-              height: 1.50,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

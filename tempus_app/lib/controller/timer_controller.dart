@@ -62,28 +62,47 @@ class TimerController extends ChangeNotifier {
   }
 
   void loadAd() {
-    InterstitialAd.load(
-      adUnitId: 'ca-app-pub-4001641241004927/2089137240',
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-        },
-        onAdFailedToLoad: (error) {
-          _interstitialAd = null;
-        },
-      ),
-    );
+    // Wait for MobileAds SDK to be ready before attempting to load.
+    MobileAds.instance.initialize().then((_) {
+      if (_disposed) return;
+      try {
+        InterstitialAd.load(
+          adUnitId: 'ca-app-pub-4001641241004927/2089137240',
+          request: const AdRequest(),
+          adLoadCallback: InterstitialAdLoadCallback(
+            onAdLoaded: (ad) {
+              if (!_disposed) {
+                _interstitialAd = ad;
+              } else {
+                ad.dispose();
+              }
+            },
+            onAdFailedToLoad: (error) {
+              _interstitialAd = null;
+            },
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error loading ad: $e');
+      }
+    }).catchError((e) {
+      debugPrint('Error initializing MobileAds: $e');
+    });
   }
 
   void _showAdWithProbability() {
+    if (_interstitialAd == null) {
+      loadAd();
+      return;
+    }
     if (_random.nextInt(3) == 0) {
-      if (_interstitialAd != null) {
+      try {
         _interstitialAd!.show();
         _interstitialAd = null;
         loadAd();
-      } else {
-        loadAd();
+      } catch (e) {
+        debugPrint('Error showing ad: $e');
+        _interstitialAd = null;
       }
     }
   }
@@ -113,11 +132,11 @@ class TimerController extends ChangeNotifier {
       await _player.openPlayer();
       _isPlayerReady = true;
       await _loadBeepSound();
-      screenDimmer.onReveal = _resetAutoDimmingTimer;
-      await loadSubjects();
     } catch (e) {
-      print('Erro na inicialização do TimerController: $e');
+      debugPrint('Error initializing audio: $e');
     }
+    screenDimmer.onReveal = _resetAutoDimmingTimer;
+    await loadSubjects();
   }
 
   @override
@@ -126,7 +145,13 @@ class TimerController extends ChangeNotifier {
     _timer?.cancel();
     _autoDimmingTimer?.cancel();
     screenDimmer.onReveal = null;
-    _player.closePlayer();
+    isFocusModeGlobalNotifier.value = false;
+    _interstitialAd?.dispose();
+    if (_isPlayerReady) {
+      _player
+          .closePlayer()
+          .catchError((e) => debugPrint('Error closing player: $e'));
+    }
     super.dispose();
   }
 
@@ -201,14 +226,16 @@ class TimerController extends ChangeNotifier {
       if (!_isPomodoroMode || _pomodoroPhase == PomodoroPhase.work) {
         _initiateFocusSession();
       }
-    } catch (e) {
-      print('Error starting timer: $e');
-    }
 
-    _isRunning = true;
-    _isFocusMode = true;
-    isFocusModeGlobalNotifier.value = true;
-    _resetAutoDimmingTimer();
+      _isRunning = true;
+      _isFocusMode = true;
+      isFocusModeGlobalNotifier.value = true;
+      _resetAutoDimmingTimer();
+    } catch (e) {
+      debugPrint('Error starting timer: $e');
+      _timer?.cancel();
+      _timer = null;
+    }
     notifyListeners();
   }
 
@@ -322,7 +349,7 @@ class TimerController extends ChangeNotifier {
     await _playBeep();
     await Future.delayed(const Duration(milliseconds: 400));
     await _playBeep();
-    if (await Vibration.hasVibrator() ?? false) {
+    if (await Vibration.hasVibrator()) {
       Vibration.vibrate(pattern: [0, 500, 200, 500, 200, 500]);
     }
   }
@@ -340,14 +367,14 @@ class TimerController extends ChangeNotifier {
 
   Future<void> _triggerFiveMinuteAlert() async {
     _playBeep();
-    if (await Vibration.hasVibrator() ?? false) {
+    if (await Vibration.hasVibrator()) {
       Vibration.vibrate(duration: 100);
     }
   }
 
   Future<void> _triggerTenMinuteAlert() async {
     await _playBeep();
-    if (await Vibration.hasVibrator() ?? false) {
+    if (await Vibration.hasVibrator()) {
       Vibration.vibrate(duration: 500);
     }
     await Future.delayed(const Duration(milliseconds: 600));

@@ -1,11 +1,32 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import '../screens/timer_screen.dart';
 import '../screens/tasks_screen.dart';
 import '../screens/stats_screen.dart';
 import '../controller/timer_controller.dart';
+import '../theme/app_theme.dart';
+
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+  const _KeepAlivePage({required this.child});
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
 
 class NavigationContainer extends StatefulWidget {
   const NavigationContainer({super.key});
@@ -18,30 +39,16 @@ class _NavigationContainerState extends State<NavigationContainer> {
   int _current = 0;
   final PageController _pageController = PageController(initialPage: 0);
 
-  static const double _containerHeight = 36.0;
-  static const double _indicatorHeight = 29.0;
-
-  static const double _originalWidth = 346.0;
-  static const double _originalButtonWidth = 110.66;
-
-  final pages = const [TimerScreen(), TasksScreen(), StatsScreen()];
+  final pages = const [
+    _KeepAlivePage(child: TimerScreen()),
+    TasksScreen(),
+    StatsScreen(),
+  ];
 
   final items = const [
-    {
-      'label': 'Timer',
-      'asset': 'lib/assets/icons/icon_bar_timer.svg',
-      'index': 0,
-    },
-    {
-      'label': 'Tarefas',
-      'asset': 'lib/assets/icons/icon_bar_tasks.svg',
-      'index': 1,
-    },
-    {
-      'label': 'Estatísticas',
-      'asset': 'lib/assets/icons/icon_bar_stats.svg',
-      'index': 2,
-    },
+    {'label': 'Timer', 'asset': 'lib/assets/icons/icon_bar_timer.svg', 'index': 0},
+    {'label': 'Tarefas', 'asset': 'lib/assets/icons/icon_bar_tasks.svg', 'index': 1},
+    {'label': 'Stats', 'asset': 'lib/assets/icons/icon_bar_stats.svg', 'index': 2},
   ];
 
   @override
@@ -52,80 +59,48 @@ class _NavigationContainerState extends State<NavigationContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final double screenAvailable = MediaQuery.of(context).size.width - 44.0;
-
-    final double containerWidth = min(screenAvailable, _originalWidth);
-
-    final double stepSize = containerWidth / 3.0;
-
-    final double scaleRatio = containerWidth / _originalWidth;
-    final double indicatorButtonWidth = _originalButtonWidth * scaleRatio;
-
-    final double initialOffset = (stepSize - indicatorButtonWidth) / 2.0;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double pillWidth = min(screenWidth - 48.0, 300.0);
 
     return Column(
       children: [
+        Expanded(
+          child: PageView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            controller: _pageController,
+            onPageChanged: (index) => setState(() => _current = index),
+            children: pages,
+          ),
+        ),
         ValueListenableBuilder<bool>(
           valueListenable: isFocusModeGlobalNotifier,
           builder: (context, isFocusMode, child) {
-            if (isFocusMode) {
-              return const SizedBox.shrink();
-            }
+            if (isFocusMode) return const SizedBox.shrink();
             return child!;
           },
-          child: Container(
-            width: containerWidth,
-            height: _containerHeight,
-            margin: const EdgeInsets.only(top: 32, left: 22, right: 22),
-            decoration: ShapeDecoration(
-              color: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(width: 1, color: Color(0x19FFFEFE)),
-                borderRadius: BorderRadius.circular(16),
-              ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: bottomInset + 12,
+              top: 8,
             ),
-            child: Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  left: initialOffset + (_current * stepSize),
-                  top: (_containerHeight - _indicatorHeight) / 3.0,
-                  child: Container(
-                    width: indicatorButtonWidth,
-                    height: _indicatorHeight,
-                    decoration: ShapeDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment(0.00, 0.00),
-                        end: Alignment(1.00, 1.00),
-                        colors: [Color(0x33AC46FF), Color(0x332B7FFF)],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        side: const BorderSide(
-                          width: 1,
-                          color: Color(0x33FFFEFE),
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      shadows: const [
-                        BoxShadow(
-                          color: Color(0x19000000),
-                          blurRadius: 6,
-                          offset: Offset(0, 4),
-                          spreadRadius: -4,
-                        ),
-                        BoxShadow(
-                          color: Color(0x19000000),
-                          blurRadius: 15,
-                          offset: Offset(0, 10),
-                          spreadRadius: -3,
-                        ),
-                      ],
+            child: Center(
+              child: Container(
+                width: pillWidth,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: TempusColors.surface,
+                  borderRadius: BorderRadius.circular(27),
+                  border: Border.all(color: TempusColors.border),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x50000000),
+                      blurRadius: 24,
+                      offset: Offset(0, 8),
                     ),
-                  ),
+                  ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                child: Row(
                   children: items.map((item) {
                     final index = item['index'] as int;
                     final label = item['label'] as String;
@@ -134,90 +109,62 @@ class _NavigationContainerState extends State<NavigationContainer> {
 
                     return Expanded(
                       child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: () {
+                          HapticFeedback.selectionClick();
                           _pageController.animateToPage(
                             index,
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,
                           );
-                          setState(() {
-                            _current = index;
-                          });
+                          setState(() => _current = index);
                         },
-                        child: Center(
-                          child: ShaderMask(
-                            blendMode: BlendMode.srcIn,
-                            shaderCallback: (bounds) {
-                              return const LinearGradient(
-                                colors: [
-                                  Color(0xFFAC46FF),
-                                  Color(0xFF2B7FFF),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ).createShader(bounds);
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 2.0),
-                                  child: SvgPicture.asset(
-                                    asset,
-                                    width: 14,
-                                    height: 14,
-                                    colorFilter: ColorFilter.mode(
-                                      selected
-                                          ? Colors.white
-                                          : const Color(0xFFA0A0A0),
-                                      BlendMode.srcIn,
-                                    ),
-                                  ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? TempusColors.accent.withOpacity(0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          margin: const EdgeInsets.all(5),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                asset,
+                                width: 16,
+                                height: 16,
+                                colorFilter: ColorFilter.mode(
+                                  selected
+                                      ? TempusColors.accent
+                                      : TempusColors.textSub,
+                                  BlendMode.srcIn,
                                 ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: AutoSizeText(
-                                      label,
-                                      maxLines: 1,
-                                      minFontSize: 8,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: selected
-                                            ? Colors.white
-                                            : const Color(0xFFA0A0A0),
-                                        fontSize: 13,
-                                        fontFamily: 'Arimo',
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  color: selected
+                                      ? TempusColors.text
+                                      : TempusColors.textSub,
+                                  fontSize: 11,
+                                  fontFamily: 'Arimo',
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     );
                   }).toList(),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-        Expanded(
-          child: PageView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _current = index;
-              });
-            },
-            children: pages,
           ),
         ),
       ],

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:tempus_app/services/supabase_service.dart';
 import '../models/task.dart';
 import '../models/subject.dart';
+import '../theme/app_theme.dart';
 import '../widgets/tasks_components/tasks_header.dart';
 import '../widgets/tasks_components/new_task_card.dart';
 import '../widgets/tasks_components/empty_tasks_view.dart';
@@ -33,23 +34,23 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   int _selectedHours = 0;
   bool _isLoading = false;
 
-  // Undo delete state: tracks which task is pending deletion
   TaskItem? _pendingDeleteTask;
+  late SupabaseService _svc;
 
   @override
   void initState() {
     super.initState();
+    _svc = context.read<SupabaseService>();
     _loadData();
   }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final svc = context.read<SupabaseService>();
 
     try {
       final results = await Future.wait([
-        svc.listCategories(),
-        svc.listTasks(),
+        _svc.listCategories(),
+        _svc.listTasks(),
       ]);
 
       final categories = results[0] as List<dynamic>;
@@ -67,7 +68,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         });
       }
     } catch (e) {
-      print('Error loading data: $e');
+      debugPrint('Error loading data: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -76,9 +77,8 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   @override
   void dispose() {
     _ctrl.dispose();
-    // Commit any pending delete when leaving the screen
     if (_pendingDeleteTask != null) {
-      context.read<SupabaseService>().deleteTask(_pendingDeleteTask!.id);
+      _svc.deleteTask(_pendingDeleteTask!.id);
     }
     super.dispose();
   }
@@ -94,11 +94,10 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     }
 
     setState(() => _isLoading = true);
-    final svc = context.read<SupabaseService>();
     int minutesToSave = _selectedHours * 60;
     if (minutesToSave == 0) minutesToSave = 25;
 
-    final success = await svc.createTask(
+    final success = await _svc.createTask(
       text,
       subjectIdToUse,
       minutesMeta: minutesToSave,
@@ -116,8 +115,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   Future<void> _toggleTask(TaskItem task) async {
     setState(() => task.done = !task.done);
 
-    final svc = context.read<SupabaseService>();
-    final success = await svc.toggleTask(task.id, task.done);
+    final success = await _svc.toggleTask(task.id, task.done);
 
     if (!success) {
       setState(() => task.done = !task.done);
@@ -130,16 +128,11 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   }
 
   void _deleteTask(TaskItem task) {
-    // Capture service before going async
-    final svc = context.read<SupabaseService>();
-
-    // If a different task is already pending deletion, commit it now
     if (_pendingDeleteTask != null && _pendingDeleteTask!.id != task.id) {
-      svc.deleteTask(_pendingDeleteTask!.id);
+      _svc.deleteTask(_pendingDeleteTask!.id);
       _pendingDeleteTask = null;
     }
 
-    // Optimistic removal from list
     setState(() {
       _tasks.removeWhere((t) => t.id == task.id);
       _pendingDeleteTask = task;
@@ -154,12 +147,11 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           style: const TextStyle(fontFamily: 'Arimo'),
         ),
         duration: const Duration(seconds: 4),
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: TempusColors.surface,
         action: SnackBarAction(
           label: 'Desfazer',
-          textColor: const Color(0xFFAC46FF),
+          textColor: TempusColors.accent,
           onPressed: () {
-            // Only undo if this task is still the pending one
             if (mounted && _pendingDeleteTask?.id == task.id) {
               setState(() {
                 _tasks.add(task);
@@ -171,11 +163,10 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         ),
       ),
     ).closed.then((reason) {
-      // Commit delete only if not undone and still pending
       if (reason != SnackBarClosedReason.action &&
           _pendingDeleteTask?.id == task.id) {
         _pendingDeleteTask = null;
-        svc.deleteTask(task.id);
+        _svc.deleteTask(task.id);
       }
     });
   }
@@ -189,38 +180,39 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: const Color(0xFFAC46FF),
-      backgroundColor: const Color(0xFF1E1E1E),
+      color: TempusColors.accent,
+      backgroundColor: TempusColors.surface,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              const TasksHeader(),
-              const SizedBox(height: 20),
-              NewTaskCard(
-                controller: _ctrl,
-                subjects: _subjects,
-                selectedSubjectId: selectedSubjectId,
-                selectedHours: _selectedHours,
-                onSubjectChanged: (newValue) {
-                  setState(() => selectedSubjectId = newValue ?? '');
-                },
-                onHoursChanged: (val) {
-                  setState(() => _selectedHours = val);
-                },
-                onAddTask: _addTask,
-              ),
-              const SizedBox(height: 20),
-              if (_isLoading && _tasks.isEmpty)
-                const Center(child: CircularProgressIndicator())
-              else
-                _buildTaskList(),
-              const SizedBox(height: 64.0),
-            ],
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const TasksHeader(),
+            const SizedBox(height: 20),
+            NewTaskCard(
+              controller: _ctrl,
+              subjects: _subjects,
+              selectedSubjectId: selectedSubjectId,
+              selectedHours: _selectedHours,
+              onSubjectChanged: (v) => setState(() => selectedSubjectId = v ?? ''),
+              onHoursChanged: (v) => setState(() => _selectedHours = v),
+              onAddTask: _addTask,
+            ),
+            const SizedBox(height: 20),
+            if (_isLoading && _tasks.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(
+                    color: TempusColors.accent,
+                  ),
+                ),
+              )
+            else
+              _buildTaskList(),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
@@ -228,7 +220,11 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
   Widget _buildTaskList() {
     if (_tasks.isEmpty || _subjects.isEmpty) {
-      return EmptyTasksView(hasSubjects: _subjects.isNotEmpty);
+      return Container(
+        height: MediaQuery.of(context).size.height * 0.35,
+        alignment: Alignment.center,
+        child: EmptyTasksView(hasSubjects: _subjects.isNotEmpty),
+      );
     }
 
     return ListView.builder(
