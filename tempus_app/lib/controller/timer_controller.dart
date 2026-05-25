@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -496,7 +495,7 @@ class TimerController extends ChangeNotifier {
   void _resetAutoDimmingTimer() {
     _autoDimmingTimer?.cancel();
     _autoDimmingTimer = Timer(const Duration(seconds: 5), () {
-      if (_isRunning && kReleaseMode) {
+      if (_isRunning) {
         screenDimmer.startBlackout();
       }
     });

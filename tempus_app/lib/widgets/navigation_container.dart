@@ -93,11 +93,16 @@ class _NavigationContainerState extends State<NavigationContainer> {
 
     return Stack(
       children: [
-        PageView(
-          physics: const BouncingScrollPhysics(),
-          controller: _pageController,
-          onPageChanged: (i) => setState(() => _current = i),
-          children: pages,
+        ValueListenableBuilder<bool>(
+          valueListenable: isFocusModeGlobalNotifier,
+          builder: (context, isFocusMode, child) => PageView(
+            physics: isFocusMode
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(),
+            controller: _pageController,
+            onPageChanged: (i) => setState(() => _current = i),
+            children: pages,
+          ),
         ),
         Positioned(
           bottom: bottomInset + 18,

@@ -2,8 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
+import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
+
+Shader _gradientShader(Rect bounds) =>
+    TempusColors.gradient.createShader(bounds);
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -68,8 +72,36 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color(0xFF06040A),
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ShaderMask(
+                shaderCallback: _gradientShader,
+                child: Text(
+                  'Tempus',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 42,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -1,
+                  ),
+                ),
+              ),
+              SizedBox(height: 32),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Color(0xFFA855F7),
+                  strokeWidth: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

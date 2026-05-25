@@ -550,12 +550,14 @@ class _GyroTilt3DState extends State<_GyroTilt3D>
       ..addListener(_onFrame);
 
     try {
-      // accelerometerEvents: gravity-inclusive stream, always available in
-      // sensors_plus 3.x. x/y components encode device tilt vs gravity.
-      _accelSub = accelerometerEvents.listen((AccelerometerEvent e) {
-        _targetY = (-e.x / 9.8 * _maxTilt).clamp(-_maxTilt, _maxTilt);
-        _targetX = (e.y / 9.8 * _maxTilt * 0.6).clamp(-_maxTilt, _maxTilt);
-      });
+      _accelSub = accelerometerEvents.listen(
+        (AccelerometerEvent e) {
+          _targetY = (-e.x / 9.8 * _maxTilt).clamp(-_maxTilt, _maxTilt);
+          _targetX = (e.y / 9.8 * _maxTilt * 0.6).clamp(-_maxTilt, _maxTilt);
+        },
+        onError: (_) {},
+        cancelOnError: true,
+      );
     } catch (_) {
       // Sensor unavailable (emulator) — widget renders without tilt.
     }

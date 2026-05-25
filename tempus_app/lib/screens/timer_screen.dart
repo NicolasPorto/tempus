@@ -205,6 +205,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent>
   Widget _buildFocusView(BuildContext context, TimerController controller) {
     return Stack(
       children: [
+        Container(color: Colors.black),
         FadeTransition(
           opacity: _focusFadeAnimation,
           child: SlideTransition(
