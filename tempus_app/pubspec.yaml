@@ -27,12 +27,25 @@ dependencies:
   shared_preferences: ^2.3.0
   flutter_local_notifications: ^18.0.0
   timezone: ^0.9.4
+  share_plus: ^10.1.4
+  screenshot: ^3.0.0
+  home_widget: ^0.9.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.4.3
+
+flutter_native_splash:
+  color: "#06040A"
+  color_dark: "#06040A"
+  android_12:
+    color: "#06040A"
+    icon_background_color: "#06040A"
+    color_dark: "#06040A"
+    icon_background_color_dark: "#06040A"
 
 flutter:
   uses-material-design: true

@@ -10,6 +10,7 @@ import 'package:tempus_app/services/supabase_service.dart';
 import 'dart:math';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:tempus_app/services/notification_service.dart';
+import 'package:home_widget/home_widget.dart';
 
 final ValueNotifier<bool> isFocusModeGlobalNotifier = ValueNotifier(false);
 
@@ -71,6 +72,9 @@ class TimerController extends ChangeNotifier {
 
   static const String _durationPrefKey = 'last_timer_duration_minutes';
   static const String _goalPrefKey = 'daily_goal_minutes';
+  static const String _soundStylePrefKey = 'timer_sound_style';
+
+  String _soundStyle = 'triple';
 
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isPlayerReady = false;
@@ -79,6 +83,7 @@ class TimerController extends ChangeNotifier {
   List<Subject> get subjects => _subjects;
   Subject? get selectedSubject => _selectedSubject;
   bool get isLoading => _isLoading;
+  String get soundStyle => _soundStyle;
   bool get isFocusMode => _isFocusMode;
   int get currentDuration => _currentDuration;
   int get initialDuration => _initialDuration;
@@ -159,6 +164,26 @@ class TimerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _updateHomeWidget() {
+    try {
+      HomeWidget.saveWidgetData<int>('daily_minutes', _dailyMinutes);
+      HomeWidget.saveWidgetData<int>('goal_minutes', _dailyGoalMinutes);
+      HomeWidget.updateWidget(
+        androidName: 'TempusWidget',
+        qualifiedAndroidName: 'com.dev.tempusapp.TempusWidget',
+      );
+    } catch (e) {
+      debugPrint('HomeWidget update error: $e');
+    }
+  }
+
+  Future<void> setSoundStyle(String style) async {
+    _soundStyle = style;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_soundStylePrefKey, style);
+    notifyListeners();
+  }
+
   void togglePomodoroMode() {
     if (_isRunning) return;
     _pomodoroTransitionToken++;
@@ -190,6 +215,7 @@ class TimerController extends ChangeNotifier {
         _currentDuration = _initialDuration;
       }
       _dailyGoalMinutes = prefs.getInt(_goalPrefKey) ?? 0;
+      _soundStyle = prefs.getString(_soundStylePrefKey) ?? 'triple';
     } catch (e) {
       debugPrint('Error loading prefs: $e');
     }
@@ -197,6 +223,7 @@ class TimerController extends ChangeNotifier {
     // Load today's study minutes
     try {
       _dailyMinutes = await supabaseService.getDailyMinutes();
+      _updateHomeWidget();
     } catch (e) {
       debugPrint('Error loading daily minutes: $e');
     }
@@ -256,7 +283,7 @@ class TimerController extends ChangeNotifier {
       HapticFeedback.mediumImpact();
       _pauseTimer();
     } else {
-      HapticFeedback.lightImpact();
+      HapticFeedback.heavyImpact();
       _startTimer();
     }
   }
@@ -365,6 +392,7 @@ class TimerController extends ChangeNotifier {
           _dailyMinutes < _dailyGoalMinutes &&
           (_dailyMinutes + minutesStudied) >= _dailyGoalMinutes;
       _dailyMinutes += minutesStudied;
+      _updateHomeWidget();
       if (goalJustReached) {
         NotificationService().showGoalReachedNotification();
       }
@@ -455,13 +483,25 @@ class TimerController extends ChangeNotifier {
   }
 
   Future<void> _playCompletionAlert() async {
-    await _playBeep();
-    await Future.delayed(const Duration(milliseconds: 400));
-    await _playBeep();
-    await Future.delayed(const Duration(milliseconds: 400));
-    await _playBeep();
-    if (await Vibration.hasVibrator()) {
-      Vibration.vibrate(pattern: [0, 500, 200, 500, 200, 500]);
+    switch (_soundStyle) {
+      case 'single':
+        await _playBeep();
+        if (await Vibration.hasVibrator()) {
+          Vibration.vibrate(duration: 300);
+        }
+      case 'vibration_only':
+        if (await Vibration.hasVibrator()) {
+          Vibration.vibrate(pattern: [0, 400, 200, 400, 200, 400]);
+        }
+      default: // 'triple'
+        await _playBeep();
+        await Future.delayed(const Duration(milliseconds: 400));
+        await _playBeep();
+        await Future.delayed(const Duration(milliseconds: 400));
+        await _playBeep();
+        if (await Vibration.hasVibrator()) {
+          Vibration.vibrate(pattern: [0, 500, 200, 500, 200, 500]);
+        }
     }
   }
 

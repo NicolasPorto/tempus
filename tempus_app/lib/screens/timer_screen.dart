@@ -39,6 +39,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent>
   late AnimationController _focusSlideController;
   late Animation<Offset> _focusSlideAnimation;
   late Animation<double> _focusFadeAnimation;
+  Animation<double>? _focusZoomAnimation;
   bool _wasFocusMode = false;
   TimerController? _timerController;
 
@@ -56,7 +57,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent>
 
     _focusSlideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 650),
     );
     _focusSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.06),
@@ -67,6 +68,9 @@ class _TimerScreenContentState extends State<_TimerScreenContent>
     );
     _focusFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _focusSlideController, curve: Curves.easeOut),
+    );
+    _focusZoomAnimation = Tween<double>(begin: 0.82, end: 1.0).animate(
+      CurvedAnimation(parent: _focusSlideController, curve: Curves.easeOutBack),
     );
   }
 
@@ -218,6 +222,8 @@ class _TimerScreenContentState extends State<_TimerScreenContent>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ScaleTransition(
+                      scale: _focusZoomAnimation ?? const AlwaysStoppedAnimation(1.0),
+                      child: ScaleTransition(
                       scale: _pulseAnimation,
                       child: TimerControls(
                         key: const ValueKey('timer_controls_focus'),
@@ -232,6 +238,7 @@ class _TimerScreenContentState extends State<_TimerScreenContent>
                         pomodoroPhase: controller.pomodoroPhase,
                         pomodoroRound: controller.pomodoroRound,
                         onTogglePomodoroMode: controller.togglePomodoroMode,
+                      ),
                       ),
                     ),
                     if (controller.focusQuote.isNotEmpty) ...[

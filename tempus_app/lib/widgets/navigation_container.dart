@@ -154,9 +154,9 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      height: 68,
+      height: 62,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(31),
         boxShadow: [
           // Profundidade
           BoxShadow(
@@ -174,7 +174,7 @@ class _Pill extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(31),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
           child: Container(
@@ -189,7 +189,7 @@ class _Pill extends StatelessWidget {
                   const Color(0xFF0C0912).withValues(alpha: 0.88),
                 ],
               ),
-              borderRadius: BorderRadius.circular(34),
+              borderRadius: BorderRadius.circular(31),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.10),
                 width: 1.0,
@@ -288,77 +288,57 @@ class _NavItemState extends State<_NavItem>
       child: ScaleTransition(
         scale: _scale,
         child: SizedBox(
-          height: 68,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Bubble + ícone
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                width: 48,
-                height: 36,
-                decoration: widget.selected
-                    ? BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            TempusColors.accent.withValues(alpha: 0.25),
-                            TempusColors.accent.withValues(alpha: 0.10),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: TempusColors.accent.withValues(alpha: 0.40),
-                          width: 0.8,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: TempusColors.accent.withValues(alpha: 0.22),
-                            blurRadius: 12,
-                            spreadRadius: -2,
-                            offset: const Offset(0, 3),
-                          ),
+          height: 62,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              width: 46,
+              height: 40,
+              decoration: widget.selected
+                  ? BoxDecoration(
+                      borderRadius: BorderRadius.circular(13),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          TempusColors.accent.withValues(alpha: 0.28),
+                          TempusColors.accent.withValues(alpha: 0.12),
                         ],
-                      )
-                    : const BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
-                child: Center(
-                  child: AnimatedScale(
-                    scale: widget.selected ? 1.06 : 1.0,
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutBack,
-                    child: widget.data.asset != null
-                        ? SvgPicture.asset(
-                            widget.data.asset!,
-                            width: 20,
-                            height: 20,
-                            colorFilter:
-                                ColorFilter.mode(_iconColor, BlendMode.srcIn),
-                          )
-                        : Icon(widget.data.iconData, size: 20, color: _iconColor),
-                  ),
+                      border: Border.all(
+                        color: TempusColors.accent.withValues(alpha: 0.45),
+                        width: 0.8,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: TempusColors.accent.withValues(alpha: 0.28),
+                          blurRadius: 16,
+                          spreadRadius: -2,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    )
+                  : const BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(13)),
+                    ),
+              child: Center(
+                child: AnimatedScale(
+                  scale: widget.selected ? 1.10 : 1.0,
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutBack,
+                  child: widget.data.asset != null
+                      ? SvgPicture.asset(
+                          widget.data.asset!,
+                          width: 21,
+                          height: 21,
+                          colorFilter:
+                              ColorFilter.mode(_iconColor, BlendMode.srcIn),
+                        )
+                      : Icon(widget.data.iconData, size: 21, color: _iconColor),
                 ),
               ),
-              const SizedBox(height: 4),
-              // Label
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: TextStyle(
-                  color: widget.selected
-                      ? TempusColors.accent
-                      : Colors.white.withValues(alpha: 0.30),
-                  fontSize: 9.5,
-                  fontFamily: 'Arimo',
-                  fontWeight:
-                      widget.selected ? FontWeight.w600 : FontWeight.w400,
-                  letterSpacing: 0.1,
-                ),
-                child: Text(widget.data.label),
-              ),
-            ],
+            ),
           ),
         ),
       ),

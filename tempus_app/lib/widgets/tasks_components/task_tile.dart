@@ -37,7 +37,10 @@ class TaskTile extends StatelessWidget {
         }
         return true;
       },
-      onDismissed: (_) => onDelete(),
+      onDismissed: (_) {
+        HapticFeedback.mediumImpact();
+        onDelete();
+      },
       background: Container(
         margin: const EdgeInsets.only(bottom: 10),
         alignment: Alignment.centerLeft,

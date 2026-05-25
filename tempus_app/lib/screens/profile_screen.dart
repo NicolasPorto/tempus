@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/supabase_service.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
+import '../controller/timer_controller.dart';
 import '../widgets/common/skeleton_widget.dart';
 import '../widgets/subject_manager_modal.dart';
 
@@ -25,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _notifEnabled = false;
   int _notifHour = 20;
   int _notifMinute = 0;
+  String _soundStyle = 'triple';
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       _dailyGoalMinutes = prefs.getInt('daily_goal_minutes') ?? 0;
+      _soundStyle = prefs.getString('timer_sound_style') ?? 'triple';
 
       final notifSettings = await NotificationService().getSettings();
       _notifEnabled = notifSettings['enabled'] as bool;
@@ -323,6 +326,131 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  String _soundStyleLabel(String style) {
+    switch (style) {
+      case 'single':
+        return 'Único';
+      case 'vibration_only':
+        return 'Só vibração';
+      default:
+        return 'Triplo';
+    }
+  }
+
+  void _showSoundDialog() {
+    String selected = _soundStyle;
+    HapticFeedback.selectionClick();
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          backgroundColor: TempusColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: TempusColors.border),
+          ),
+          title: const Text(
+            'Som do Timer',
+            style: TextStyle(
+              color: TempusColors.text,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Escolha o alerta ao fim de cada sessão.',
+                style: TextStyle(
+                  color: TempusColors.textSub,
+                  fontFamily: 'Arimo',
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...{
+                'triple': ('Triplo (padrão)', Icons.queue_music_rounded),
+                'single': ('Único', Icons.music_note_rounded),
+                'vibration_only': ('Só vibração', Icons.vibration_rounded),
+              }.entries.map((e) {
+                final isSelected = selected == e.key;
+                return GestureDetector(
+                  onTap: () => setDialog(() => selected = e.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? TempusColors.accent.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? TempusColors.accent.withValues(alpha: 0.5)
+                            : TempusColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(e.value.$2,
+                            color: isSelected
+                                ? TempusColors.accent
+                                : TempusColors.textSub,
+                            size: 18),
+                        const SizedBox(width: 12),
+                        Text(
+                          e.value.$1,
+                          style: TextStyle(
+                            color: isSelected
+                                ? TempusColors.text
+                                : TempusColors.textSub,
+                            fontFamily: 'Arimo',
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (isSelected)
+                          const Icon(Icons.check_rounded,
+                              color: TempusColors.accent, size: 16),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar',
+                  style: TextStyle(
+                      color: TempusColors.textSub, fontFamily: 'Arimo')),
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<TimerController>().setSoundStyle(selected);
+                setState(() => _soundStyle = selected);
+                Navigator.pop(ctx);
+              },
+              child: const Text('Salvar',
+                  style: TextStyle(
+                      color: TempusColors.accent,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final svc = context.read<SupabaseService>();
@@ -524,6 +652,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? _fmtTime(_notifHour, _notifMinute)
                         : 'Desativado',
                     onTap: _showNotifDialog,
+                    showDivider: true,
+                  ),
+                  _SettingsRow(
+                    icon: Icons.music_note_rounded,
+                    iconColor: const Color(0xFF34D399),
+                    title: 'Som do timer',
+                    value: _soundStyleLabel(_soundStyle),
+                    onTap: _showSoundDialog,
                     showDivider: true,
                   ),
                   _SettingsRow(

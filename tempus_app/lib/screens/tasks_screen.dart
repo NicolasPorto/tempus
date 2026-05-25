@@ -257,6 +257,8 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           onRefresh: _loadData,
           color: TempusColors.accent,
           backgroundColor: TempusColors.surface,
+          strokeWidth: 2.5,
+          displacement: 60,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(20, topPadding + 8, 20, 0),

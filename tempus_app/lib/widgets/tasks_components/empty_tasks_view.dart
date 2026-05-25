@@ -16,10 +16,13 @@ class EmptyTasksView extends StatefulWidget {
 }
 
 class _EmptyTasksViewState extends State<EmptyTasksView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _pulseCtrl;
   late Animation<double> _fade;
   late Animation<Offset> _slide;
+  late Animation<double> _pulseScale;
+  late Animation<double> _pulseGlow;
 
   @override
   void initState() {
@@ -33,12 +36,25 @@ class _EmptyTasksViewState extends State<EmptyTasksView>
       begin: const Offset(0, 0.06),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _pulseScale = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+    _pulseGlow = Tween<double>(begin: 0.12, end: 0.28).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+
     Future.microtask(() => _controller.forward());
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -53,21 +69,36 @@ class _EmptyTasksViewState extends State<EmptyTasksView>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      TempusColors.accent.withValues(alpha: 0.12),
-                      TempusColors.accentBlue.withValues(alpha: 0.07),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: TempusColors.accent.withValues(alpha: 0.25),
+              AnimatedBuilder(
+                animation: _pulseCtrl,
+                builder: (context, child) => Transform.scale(
+                  scale: _pulseScale.value,
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          TempusColors.accent.withValues(alpha: 0.12),
+                          TempusColors.accentBlue.withValues(alpha: 0.07),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: TempusColors.accent.withValues(alpha: 0.25),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: TempusColors.accent
+                              .withValues(alpha: _pulseGlow.value),
+                          blurRadius: 24,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: child,
                   ),
                 ),
                 child: Center(

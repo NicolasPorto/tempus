@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 270° arc: clockwise from 12 o'clock to 9 o'clock -->
+    <!-- Center (54,54), radius 33 → top=(54,21), left=(21,54) -->
+    <path
+        android:pathData="M 54 21 A 33 33 0 1 1 21 54"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="21"
+                android:endX="87"
+                android:endY="54"
+                android:startColor="#A855F7"
+                android:endColor="#60A5FA"/>
+        </aapt:attr>
+    </path>
+
+    <!-- Dot at arc tip (left end) -->
+    <path
+        android:pathData="M 21 50 A 4 4 0 0 0 21 58 A 4 4 0 0 0 21 50"
+        android:fillColor="#60A5FA"/>
+
+    <!-- T letter with gradient fill (safe zone: 21–87 each axis) -->
+    <!-- Horizontal bar: x 35–73, y 36–45 | Vertical bar: x 50–58, y 36–74 -->
+    <path
+        android:pathData="M 35 36 L 73 36 L 73 45 L 62 45 L 62 74 L 46 74 L 46 45 L 35 45 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="35"
+                android:startY="54"
+                android:endX="73"
+                android:endY="54"
+                android:startColor="#A855F7"
+                android:endColor="#60A5FA"/>
+        </aapt:attr>
+    </path>
+
+</vector>

@@ -15,10 +15,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
   bool _isLoading = false;
+  bool _loginPressed = false;
 
   late final AnimationController _heroCtrl;
   late final AnimationController _featuresCtrl;
   late final AnimationController _bottomCtrl;
+  late final AnimationController _pulseCtrl;
 
   late final Animation<double> _heroFade;
   late final Animation<Offset> _heroSlide;
@@ -26,6 +28,8 @@ class _LoginScreenState extends State<LoginScreen>
   late final Animation<Offset> _featuresSlide;
   late final Animation<double> _bottomFade;
   late final Animation<Offset> _bottomSlide;
+  late final Animation<double> _logoGlow;
+  late final Animation<double> _logoScale;
 
   @override
   void initState() {
@@ -61,6 +65,17 @@ class _LoginScreenState extends State<LoginScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _bottomCtrl, curve: Curves.easeOutCubic));
 
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat(reverse: true);
+    _logoGlow = Tween<double>(begin: 0.15, end: 0.32).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+    _logoScale = Tween<double>(begin: 1.0, end: 1.045).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+
     _heroCtrl.forward();
     Future.delayed(const Duration(milliseconds: 280), () {
       if (mounted) _featuresCtrl.forward();
@@ -75,6 +90,7 @@ class _LoginScreenState extends State<LoginScreen>
     _heroCtrl.dispose();
     _featuresCtrl.dispose();
     _bottomCtrl.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -116,31 +132,40 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Logo container
-                        Container(
-                          width: 92,
-                          height: 92,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                TempusColors.accent.withValues(alpha: 0.18),
-                                TempusColors.accentBlue.withValues(alpha: 0.10),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: TempusColors.accent.withValues(alpha: 0.30),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: TempusColors.accent.withValues(alpha: 0.15),
-                                blurRadius: 40,
-                                offset: const Offset(0, 10),
+                        // Logo container — animated pulse
+                        AnimatedBuilder(
+                          animation: _pulseCtrl,
+                          builder: (context, child) => Transform.scale(
+                            scale: _logoScale.value,
+                            child: Container(
+                              width: 92,
+                              height: 92,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    TempusColors.accent.withValues(alpha: 0.18),
+                                    TempusColors.accentBlue.withValues(alpha: 0.10),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(
+                                  color: TempusColors.accent.withValues(alpha: 0.30),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: TempusColors.accent.withValues(
+                                        alpha: _logoGlow.value),
+                                    blurRadius: 48,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: child,
+                            ),
                           ),
                           child: Center(
                             child: SvgPicture.asset(
@@ -230,8 +255,17 @@ class _LoginScreenState extends State<LoginScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       GestureDetector(
-                        onTap: _isLoading ? null : _handleLogin,
-                        child: AnimatedOpacity(
+                        onTapDown: _isLoading ? null : (_) => setState(() => _loginPressed = true),
+                        onTapUp: _isLoading ? null : (_) {
+                          setState(() => _loginPressed = false);
+                          _handleLogin();
+                        },
+                        onTapCancel: () => setState(() => _loginPressed = false),
+                        child: AnimatedScale(
+                          scale: _loginPressed ? 0.96 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          curve: Curves.easeOutBack,
+                          child: AnimatedOpacity(
                           opacity: _isLoading ? 0.75 : 1.0,
                           duration: const Duration(milliseconds: 200),
                           child: Container(
@@ -279,6 +313,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                             ),
                           ),
+                        ),
                         ),
                       ),
                       const SizedBox(height: 16),

@@ -19,54 +19,68 @@ class TimerPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = (size.width / 2) - 6;
 
-    // Track ring
+    // Track ring — subtle purple tint so o track "respira" junto com o tema
     canvas.drawCircle(
       center,
       radius,
       Paint()
-        ..color = const Color(0xFF1C1C1C)
+        ..color = const Color(0xFF1E1428)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 6.0,
+        ..strokeWidth = 7.0,
     );
 
     if (progress > 0) {
       final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
       final arcRect = Rect.fromCircle(center: center, radius: radius);
 
-      // Outer diffuse glow
       if (glowEnabled) {
+        // Outer diffuse glow — mais amplo e intenso
         canvas.drawArc(
           arcRect,
           -math.pi / 2,
           sweepAngle,
           false,
           Paint()
-            ..color = progressColor.withOpacity(0.12)
+            ..color = progressColor.withValues(alpha:0.22)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 28.0
+            ..strokeWidth = 38.0
             ..strokeCap = StrokeCap.round
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28),
         );
 
-        // Inner glow
+        // Mid glow
         canvas.drawArc(
           arcRect,
           -math.pi / 2,
           sweepAngle,
           false,
           Paint()
-            ..color = progressColor.withOpacity(0.30)
+            ..color = progressColor.withValues(alpha:0.42)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 12.0
+            ..strokeWidth = 16.0
             ..strokeCap = StrokeCap.round
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+        );
+
+        // Inner sharp glow — define o brilho "neon"
+        canvas.drawArc(
+          arcRect,
+          -math.pi / 2,
+          sweepAngle,
+          false,
+          Paint()
+            ..color = progressColor.withValues(alpha:0.60)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 8.0
+            ..strokeCap = StrokeCap.round
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
         );
       }
 
-      // Gradient arc using shader
+      // Gradient arc — arco principal mais espesso
       final gradientPaint = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 6.0
+        ..strokeWidth = 8.0
         ..strokeCap = StrokeCap.round
         ..shader = const LinearGradient(
           colors: [Color(0xFFA855F7), Color(0xFF60A5FA)],
