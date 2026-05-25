@@ -10,6 +10,7 @@ import 'package:tempus_app/screens/auth_wrapper.dart';
 import 'package:tempus_app/services/supabase_service.dart';
 import 'package:tempus_app/core/supabase/supabase_client.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:tempus_app/services/notification_service.dart';
 import 'package:tempus_app/theme/app_theme.dart';
 
 void main() async {
@@ -23,6 +24,7 @@ void main() async {
   await SupabaseClientConfig.initialize();
   // Não bloqueia o startup: a inicialização dos ads roda em background.
   MobileAds.instance.initialize();
+  await NotificationService().init();
 
   runApp(
     MultiProvider(

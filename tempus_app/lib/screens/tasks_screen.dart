@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tempus_app/services/supabase_service.dart';
 import '../models/task.dart';
 import '../models/subject.dart';
@@ -10,7 +11,9 @@ import '../widgets/tasks_components/empty_tasks_view.dart';
 import '../widgets/tasks_components/task_tile.dart';
 import '../widgets/tasks_components/subject_filter_chips.dart';
 import '../widgets/tasks_components/add_task_sheet.dart';
+import '../widgets/tasks_components/edit_task_sheet.dart';
 import '../widgets/subject_manager_modal.dart';
+import '../widgets/common/skeleton_widget.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -31,16 +34,21 @@ class _TasksScreenContent extends StatefulWidget {
 class _TasksScreenContentState extends State<_TasksScreenContent> {
   List<TaskItem> _tasks = [];
   List<Subject> _subjects = [];
+  Map<String, Subject> _subjectMap = {};
   String? _selectedSubjectId;
   bool _isLoading = false;
   bool _showCompleted = false;
+  List<String> _taskOrder = [];
 
   TaskItem? _pendingDeleteTask;
   late SupabaseService _svc;
 
-  List<TaskItem> get _filteredTasks => _selectedSubjectId == null
-      ? _tasks
-      : _tasks.where((t) => t.subjectId == _selectedSubjectId).toList();
+  List<TaskItem> get _filteredTasks {
+    final all = _selectedSubjectId == null
+        ? _tasks
+        : _tasks.where((t) => t.subjectId == _selectedSubjectId).toList();
+    return all;
+  }
 
   List<TaskItem> get _pendingTasks =>
       _filteredTasks.where((t) => !t.done).toList();
@@ -59,6 +67,9 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     setState(() => _isLoading = true);
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      _taskOrder = prefs.getStringList('task_order') ?? [];
+
       final results = await Future.wait([
         _svc.listCategories(),
         _svc.listTasks(),
@@ -71,7 +82,9 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         setState(() {
           _subjects =
               categories.map((c) => c.toSubject()).toList().cast<Subject>();
-          _tasks = tasks.cast<TaskItem>();
+          _subjectMap = {for (final s in _subjects) s.id: s};
+          final rawTasks = tasks.cast<TaskItem>();
+          _tasks = _sortByOrder(rawTasks);
 
           if (_selectedSubjectId != null &&
               !_subjects.any((s) => s.id == _selectedSubjectId)) {
@@ -84,6 +97,42 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  List<TaskItem> _sortByOrder(List<TaskItem> tasks) {
+    if (_taskOrder.isEmpty) return tasks;
+    return [
+      ..._taskOrder
+          .where((id) => tasks.any((t) => t.id == id))
+          .map((id) => tasks.firstWhere((t) => t.id == id)),
+      ...tasks.where((t) => !_taskOrder.contains(t.id)),
+    ];
+  }
+
+  Future<void> _saveTaskOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('task_order', _taskOrder);
+  }
+
+  void _reorder(int oldIndex, int newIndex) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (newIndex > oldIndex) newIndex--;
+      final pending = [..._pendingTasks];
+      final item = pending.removeAt(oldIndex);
+      pending.insert(newIndex, item);
+
+      // Rebuild _tasks preserving pending order, keeping completed at end
+      final reordered = <TaskItem>[...pending];
+      for (final t in _tasks) {
+        if (!reordered.any((r) => r.id == t.id)) {
+          reordered.add(t);
+        }
+      }
+      _tasks = reordered;
+      _taskOrder = _tasks.map((t) => t.id).toList();
+    });
+    _saveTaskOrder();
   }
 
   @override
@@ -101,7 +150,25 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     return success;
   }
 
+  Future<bool> _editTask(
+      TaskItem task, String title, String subjectId, int minutes) async {
+    final success = await _svc.updateTask(task.id, title, subjectId, minutes);
+    if (success) await _loadData();
+    return success;
+  }
+
+  void _openEditTaskSheet(TaskItem task) {
+    EditTaskSheet.show(
+      context,
+      task: task,
+      subjects: _subjects,
+      onSave: (title, subjectId, minutes) =>
+          _editTask(task, title, subjectId, minutes),
+    );
+  }
+
   Future<void> _toggleTask(TaskItem task) async {
+    HapticFeedback.mediumImpact();
     setState(() => task.done = !task.done);
 
     final success = await _svc.toggleTask(task.id, task.done);
@@ -124,6 +191,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
     setState(() {
       _tasks.removeWhere((t) => t.id == task.id);
+      _taskOrder.remove(task.id);
       _pendingDeleteTask = task;
     });
 
@@ -144,6 +212,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
             if (mounted && _pendingDeleteTask?.id == task.id) {
               setState(() {
                 _tasks.insert(0, task);
+                _taskOrder.insert(0, task.id);
                 _pendingDeleteTask = null;
               });
             }
@@ -179,6 +248,8 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   @override
   Widget build(BuildContext context) {
     final pendingCount = _tasks.where((t) => !t.done).length;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Stack(
       children: [
@@ -188,7 +259,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           backgroundColor: TempusColors.surface,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.fromLTRB(20, topPadding + 8, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -207,27 +278,32 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
                   const SizedBox(height: 20),
                 ],
                 if (_isLoading && _tasks.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(
-                          color: TempusColors.accent),
-                    ),
-                  )
+                  _buildSkeletonList()
                 else
                   _buildTaskList(),
-                const SizedBox(height: 100),
+                SizedBox(height: bottomPadding + 160),
               ],
             ),
           ),
         ),
         Positioned(
-          bottom: 24,
-          left: 20,
-          right: 20,
-          child: Center(child: _buildFab()),
+          bottom: bottomPadding + 100,
+          right: 24,
+          child: _buildFab(),
         ),
       ],
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return Column(
+      children: List.generate(
+        4,
+        (i) => Padding(
+          padding: EdgeInsets.only(bottom: i == 3 ? 0 : 0),
+          child: const SkeletonTaskTile(),
+        ),
+      ),
     );
   }
 
@@ -238,17 +314,17 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
+          shape: BoxShape.circle,
           gradient: TempusColors.gradient,
-          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: TempusColors.accent.withOpacity(0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
+              color: TempusColors.accent.withValues(alpha: 0.40),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 26),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
     );
   }
@@ -283,7 +359,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'Tudo concluído nesta matéria!',
+                'Tudo concluído! 🎉',
                 style: const TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 13,
@@ -292,23 +368,25 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
               ),
             )
           else
-            ListView.builder(
+            ReorderableListView.builder(
+              buildDefaultDragHandles: false,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _pendingTasks.length,
               itemBuilder: (context, i) {
                 final t = _pendingTasks[i];
-                final subj = _subjects.firstWhere(
-                  (s) => s.id == t.subjectId,
-                  orElse: () => _subjects.first,
-                );
+                final subj = _subjectMap[t.subjectId] ?? _subjects.first;
                 return TaskTile(
+                  key: ValueKey('tile_${t.id}'),
                   task: t,
                   subject: subj,
                   onToggle: (_) => _toggleTask(t),
                   onDelete: () => _deleteTask(t),
+                  onEdit: () => _openEditTaskSheet(t),
+                  dragIndex: i,
                 );
               },
+              onReorder: _reorder,
             ),
           if (_completedTasks.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -364,15 +442,14 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
                     itemCount: _completedTasks.length,
                     itemBuilder: (context, i) {
                       final t = _completedTasks[i];
-                      final subj = _subjects.firstWhere(
-                        (s) => s.id == t.subjectId,
-                        orElse: () => _subjects.first,
-                      );
+                      final subj = _subjectMap[t.subjectId] ?? _subjects.first;
                       return TaskTile(
+                        key: ValueKey('done_${t.id}'),
                         task: t,
                         subject: subj,
                         onToggle: (_) => _toggleTask(t),
                         onDelete: () => _deleteTask(t),
+                        onEdit: () => _openEditTaskSheet(t),
                       );
                     },
                   ),

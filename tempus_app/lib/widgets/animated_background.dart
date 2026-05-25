@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 
 class AnimatedBackground extends StatefulWidget {
@@ -13,11 +14,11 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
+  // 3 orbs instead of 4 — fewer blur draws per frame
   final List<_Orb> _orbs = [
     _Orb(color: Color(0x2D7C3AED), radius: 150, speed: 0.16, phase: 0.0),
     _Orb(color: Color(0x1F4338CA), radius: 110, speed: 0.27, phase: 2.1),
-    _Orb(color: Color(0x171E40AF), radius: 90, speed: 0.41, phase: 4.3),
-    _Orb(color: Color(0x126D28D9), radius: 70, speed: 0.58, phase: 1.05),
+    _Orb(color: Color(0x176D28D9), radius: 90, speed: 0.41, phase: 4.3),
   ];
 
   @override
@@ -50,6 +51,24 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
             ),
           ),
         ),
+        // Liquid glass layer — blurs the orbs, content sits sharp on top
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 64, sigmaY: 64),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0x1A0F0A1E), // roxo-escuro muito sutil, top
+                    Color(0x220A0812), // quase preto, bottom
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
         widget.child,
       ],
     );
@@ -76,18 +95,19 @@ class _OrbPainter extends CustomPainter {
 
   _OrbPainter(this.progress, this.orbs);
 
+  // Static: created once for the lifetime of the app. Blur radius 28 (was 48)
+  // — cost scales with r², so 28²/48² ≈ 34% of the original GPU cost.
+  static final _paint = Paint()
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 48);
-
     for (final orb in orbs) {
       final double angle = (progress * 2 * pi * orb.speed) + orb.phase;
       final double x = (size.width / 2) + cos(angle) * (size.width * 0.38);
       final double y = (size.height / 2) + sin(angle) * (size.height * 0.38);
-
-      paint.color = orb.color;
-      canvas.drawCircle(Offset(x, y), orb.radius, paint);
+      _paint.color = orb.color;
+      canvas.drawCircle(Offset(x, y), orb.radius, _paint);
     }
   }
 

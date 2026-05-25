@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tempus_app/models/category.dart';
 import 'package:tempus_app/models/task.dart';
@@ -87,6 +88,21 @@ class SupabaseService {
       return true;
     } catch (e) {
       print('Error toggling task: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateTask(
+      String id, String name, String categoryId, int minutes) async {
+    try {
+      await _supabase.from('tasks').update({
+        'name': name,
+        'category_id': categoryId,
+        'minutes_meta': minutes,
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating task: $e');
       return false;
     }
   }
@@ -187,6 +203,93 @@ class SupabaseService {
     } catch (e) {
       print('Error fetching streak: $e');
       return 0;
+    }
+  }
+
+  /// Returns the last [limit] completed sessions, newest first.
+  Future<List<Map<String, dynamic>>> getSessionHistory({int limit = 50}) async {
+    try {
+      final data = await _supabase
+          .from('session_focus')
+          .select('id, start_dt, finish_dt, studying_minutes, category_id')
+          .not('finish_dt', 'is', null)
+          .order('start_dt', ascending: false)
+          .limit(limit);
+      return (data as List).cast<Map<String, dynamic>>();
+    } catch (e) {
+      debugPrint('Error fetching session history: $e');
+      return [];
+    }
+  }
+
+  /// Returns total minutes studied today.
+  Future<int> getDailyMinutes() async {
+    try {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final data = await _supabase
+          .from('session_focus')
+          .select('studying_minutes')
+          .not('finish_dt', 'is', null)
+          .gte('start_dt', startOfDay.toIso8601String());
+      int total = 0;
+      for (final row in (data as List)) {
+        total += (row['studying_minutes'] as num?)?.toInt() ?? 0;
+      }
+      return total;
+    } catch (e) {
+      print('Error fetching daily minutes: $e');
+      return 0;
+    }
+  }
+
+  /// Returns total minutes studied per subject (subjectId → minutes).
+  Future<Map<String, int>> getSubjectBreakdown() async {
+    try {
+      final data = await _supabase
+          .from('session_focus')
+          .select('category_id, studying_minutes')
+          .not('finish_dt', 'is', null);
+      final Map<String, int> breakdown = {};
+      for (final row in (data as List)) {
+        final id = row['category_id'] as String?;
+        if (id != null) {
+          breakdown[id] =
+              (breakdown[id] ?? 0) + ((row['studying_minutes'] as num?)?.toInt() ?? 0);
+        }
+      }
+      return breakdown;
+    } catch (e) {
+      print('Error fetching subject breakdown: $e');
+      return {};
+    }
+  }
+
+  /// Returns minutes studied per day for the current week (Mon=0, Sun=6).
+  Future<List<int>> getWeeklyActivity() async {
+    try {
+      final now = DateTime.now();
+      final startOfWeek = DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: now.weekday - 1));
+
+      final data = await _supabase
+          .from('session_focus')
+          .select('start_dt, studying_minutes')
+          .not('finish_dt', 'is', null)
+          .gte('start_dt', startOfWeek.toIso8601String());
+
+      final List<int> minutes = List.filled(7, 0);
+      for (final row in (data as List)) {
+        final start = DateTime.tryParse(row['start_dt'] ?? '');
+        if (start != null) {
+          final dayIndex = start.weekday - 1;
+          minutes[dayIndex] += (row['studying_minutes'] as num?)?.toInt() ?? 0;
+        }
+      }
+      return minutes;
+    } catch (e) {
+      print('Error fetching weekly activity: $e');
+      return List.filled(7, 0);
     }
   }
 }

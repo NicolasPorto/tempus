@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/supabase_service.dart';
@@ -11,12 +12,75 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with TickerProviderStateMixin {
   bool _isLoading = false;
 
-  void _handleLogin() async {
-    setState(() => _isLoading = true);
+  late final AnimationController _heroCtrl;
+  late final AnimationController _featuresCtrl;
+  late final AnimationController _bottomCtrl;
 
+  late final Animation<double> _heroFade;
+  late final Animation<Offset> _heroSlide;
+  late final Animation<double> _featuresFade;
+  late final Animation<Offset> _featuresSlide;
+  late final Animation<double> _bottomFade;
+  late final Animation<Offset> _bottomSlide;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _heroCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _heroFade = CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOut);
+    _heroSlide = Tween<Offset>(
+      begin: const Offset(0, -0.04),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOutCubic));
+
+    _featuresCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _featuresFade = CurvedAnimation(parent: _featuresCtrl, curve: Curves.easeOut);
+    _featuresSlide = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _featuresCtrl, curve: Curves.easeOutCubic));
+
+    _bottomCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _bottomFade = CurvedAnimation(parent: _bottomCtrl, curve: Curves.easeOut);
+    _bottomSlide = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _bottomCtrl, curve: Curves.easeOutCubic));
+
+    _heroCtrl.forward();
+    Future.delayed(const Duration(milliseconds: 280), () {
+      if (mounted) _featuresCtrl.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 520), () {
+      if (mounted) _bottomCtrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _heroCtrl.dispose();
+    _featuresCtrl.dispose();
+    _bottomCtrl.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() async {
+    HapticFeedback.lightImpact();
+    setState(() => _isLoading = true);
     try {
       await context.read<SupabaseService>().signInWithGoogle();
     } catch (e) {
@@ -32,143 +96,286 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth > 420 ? 360.0 : screenWidth * 0.88;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Center(
-        child: Container(
-          width: cardWidth,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: TempusColors.surface.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: TempusColors.border),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x50000000),
-                blurRadius: 60,
-                offset: Offset(0, 24),
-                spreadRadius: -8,
-              ),
-            ],
-          ),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Logo
-              Center(
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0x33A855F7), Color(0x1560A5FA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: TempusColors.accent.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'lib/assets/icons/icon_login.svg',
-                      width: 40,
-                      height: 40,
+              // ── Hero ─────────────────────────────────────────
+              Expanded(
+                flex: 5,
+                child: FadeTransition(
+                  opacity: _heroFade,
+                  child: SlideTransition(
+                    position: _heroSlide,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Logo container
+                        Container(
+                          width: 92,
+                          height: 92,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                TempusColors.accent.withValues(alpha: 0.18),
+                                TempusColors.accentBlue.withValues(alpha: 0.10),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: TempusColors.accent.withValues(alpha: 0.30),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: TempusColors.accent.withValues(alpha: 0.15),
+                                blurRadius: 40,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'lib/assets/icons/icon_login.svg',
+                              width: 52,
+                              height: 52,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                        // App name — gradient text
+                        ShaderMask(
+                          shaderCallback: (bounds) =>
+                              TempusColors.gradient.createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          ),
+                          child: const Text(
+                            'Tempus',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 44,
+                              fontFamily: 'Arimo',
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -1.5,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Estude com foco.\nEvolua com dados.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: TempusColors.textSub,
+                            fontSize: 16,
+                            fontFamily: 'Arimo',
+                            fontWeight: FontWeight.w400,
+                            height: 1.55,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
-
-              const Center(
-                child: Text(
-                  'Tempus',
-                  style: TextStyle(
-                    color: TempusColors.text,
-                    fontSize: 28,
-                    fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              const Center(
-                child: Text(
-                  'Entre para continuar estudando',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: TempusColors.textSub,
-                    fontSize: 14,
-                    fontFamily: 'Arimo',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Login button
-              GestureDetector(
-                onTap: _isLoading ? null : _handleLogin,
-                child: Container(
-                  height: 52,
-                  decoration: BoxDecoration(
-                    gradient: TempusColors.gradient,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: TempusColors.accent.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
+              // ── Features ─────────────────────────────────────
+              FadeTransition(
+                opacity: _featuresFade,
+                child: SlideTransition(
+                  position: _featuresSlide,
+                  child: Column(
+                    children: [
+                      _FeatureRow(
+                        icon: Icons.timer_rounded,
+                        color: TempusColors.accent,
+                        title: 'Timer de Foco',
+                        subtitle: 'Sessões cronometradas com modo Pomodoro',
+                      ),
+                      const SizedBox(height: 10),
+                      _FeatureRow(
+                        icon: Icons.task_alt_rounded,
+                        color: TempusColors.accentBlue,
+                        title: 'Gestão de Tarefas',
+                        subtitle: 'Organize e priorize o que precisa estudar',
+                      ),
+                      const SizedBox(height: 10),
+                      _FeatureRow(
+                        icon: Icons.bar_chart_rounded,
+                        color: TempusColors.green,
+                        title: 'Estatísticas',
+                        subtitle: 'Acompanhe seu progresso e sequência de dias',
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : const Text(
-                            'Login / Sign Up',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontFamily: 'Arimo',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 28),
 
-              const Text(
-                'Seus dados são sincronizados com segurança na nuvem',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: TempusColors.textMuted,
-                  fontSize: 11,
-                  fontFamily: 'Arimo',
-                  height: 1.4,
+              // ── Login button ──────────────────────────────────
+              FadeTransition(
+                opacity: _bottomFade,
+                child: SlideTransition(
+                  position: _bottomSlide,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      GestureDetector(
+                        onTap: _isLoading ? null : _handleLogin,
+                        child: AnimatedOpacity(
+                          opacity: _isLoading ? 0.75 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: TempusColors.gradient,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: TempusColors.accent
+                                      .withValues(alpha: 0.38),
+                                  blurRadius: 28,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.login_rounded,
+                                            color: Colors.white, size: 20),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Entrar com Google',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontFamily: 'Arimo',
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            color: TempusColors.textMuted,
+                            size: 12,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Dados salvos com segurança na nuvem',
+                            style: TextStyle(
+                              color: TempusColors.textMuted,
+                              fontSize: 11,
+                              fontFamily: 'Arimo',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Feature row widget ────────────────────────────────────────────
+
+class _FeatureRow extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+
+  const _FeatureRow({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: TempusColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: color.withValues(alpha: 0.22)),
+            ),
+            child: Center(child: Icon(icon, color: color, size: 20)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: TempusColors.text,
+                    fontSize: 14,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: TempusColors.textSub,
+                    fontSize: 12,
+                    fontFamily: 'Arimo',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

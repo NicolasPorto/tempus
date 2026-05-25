@@ -4,7 +4,7 @@ import 'dart:math' as math;
 class TimerPainter extends CustomPainter {
   final Color backgroundColor;
   final Color progressColor;
-  final double progress; // 0.0 → 1.0, represents remaining time
+  final double progress;
   final bool glowEnabled;
 
   const TimerPainter({
@@ -17,23 +17,23 @@ class TimerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final radius = size.width / 2;
+    final radius = (size.width / 2) - 6;
 
     // Track ring
     canvas.drawCircle(
       center,
       radius,
       Paint()
-        ..color = backgroundColor
+        ..color = const Color(0xFF1C1C1C)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 8.0,
+        ..strokeWidth = 6.0,
     );
 
     if (progress > 0) {
       final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
       final arcRect = Rect.fromCircle(center: center, radius: radius);
 
-      // Glow layer
+      // Outer diffuse glow
       if (glowEnabled) {
         canvas.drawArc(
           arcRect,
@@ -41,25 +41,45 @@ class TimerPainter extends CustomPainter {
           sweepAngle,
           false,
           Paint()
-            ..color = progressColor.withOpacity(0.28)
+            ..color = progressColor.withOpacity(0.12)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 16.0
+            ..strokeWidth = 28.0
             ..strokeCap = StrokeCap.round
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+        );
+
+        // Inner glow
+        canvas.drawArc(
+          arcRect,
+          -math.pi / 2,
+          sweepAngle,
+          false,
+          Paint()
+            ..color = progressColor.withOpacity(0.30)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 12.0
+            ..strokeCap = StrokeCap.round
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
         );
       }
 
-      // Main arc
+      // Gradient arc using shader
+      final gradientPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6.0
+        ..strokeCap = StrokeCap.round
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFA855F7), Color(0xFF60A5FA)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromCircle(center: center, radius: radius));
+
       canvas.drawArc(
         arcRect,
         -math.pi / 2,
         sweepAngle,
         false,
-        Paint()
-          ..color = progressColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 8.0
-          ..strokeCap = StrokeCap.round,
+        gradientPaint,
       );
     }
   }

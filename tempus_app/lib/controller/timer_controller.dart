@@ -1,14 +1,16 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:vibration/vibration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tempus_app/libraries/screen_dimmer.dart';
 import 'package:tempus_app/models/subject.dart';
 import 'package:tempus_app/services/supabase_service.dart';
 import 'dart:math';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:tempus_app/services/notification_service.dart';
 
 final ValueNotifier<bool> isFocusModeGlobalNotifier = ValueNotifier(false);
 
@@ -29,20 +31,47 @@ class TimerController extends ChangeNotifier {
   int _currentDuration = 25 * 60;
   Timer? _timer;
 
-  /// Segundos reais de foco acumulados na sessão atual (exclui pausas).
   int _sessionElapsedSeconds = 0;
   Timer? _autoDimmingTimer;
   bool _isRunning = false;
   String? _sessionUuid;
 
+  // Daily tracking
+  int _dailyMinutes = 0;
+  int _dailyGoalMinutes = 0;
+
+  // Session summary
+  bool _showingSessionSummary = false;
+  Subject? _summarySubject;
+  int _summaryMinutes = 0;
+
+  // Focus mode quote (picked once per session start)
+  String _focusQuote = '';
+
   // Pomodoro
   bool _isPomodoroMode = false;
   PomodoroPhase _pomodoroPhase = PomodoroPhase.work;
   int _pomodoroRound = 0;
-  int _pomodoroTransitionToken = 0; // cancels auto-start on reset/toggle
+  int _pomodoroTransitionToken = 0;
   static const int _pomodoroWorkMinutes = 25;
   static const int _pomodoroShortBreakMinutes = 5;
   static const int _pomodoroLongBreakMinutes = 15;
+
+  static const _quotes = [
+    'Deep work gera resultados reais.',
+    'Cada minuto de foco conta.',
+    'Consistência supera talento.',
+    'Você está mais perto do que imagina.',
+    'O esforço de hoje é o sucesso de amanhã.',
+    'Um passo de cada vez.',
+    'Foco total. Sem distrações.',
+    'Estudar é investir em você mesmo.',
+    'A mente forte faz o que precisa ser feito.',
+    'Pequenos progressos todos os dias.',
+  ];
+
+  static const String _durationPrefKey = 'last_timer_duration_minutes';
+  static const String _goalPrefKey = 'daily_goal_minutes';
 
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isPlayerReady = false;
@@ -58,6 +87,12 @@ class TimerController extends ChangeNotifier {
   bool get isPomodoroMode => _isPomodoroMode;
   PomodoroPhase get pomodoroPhase => _pomodoroPhase;
   int get pomodoroRound => _pomodoroRound;
+  int get dailyMinutes => _dailyMinutes;
+  int get dailyGoalMinutes => _dailyGoalMinutes;
+  bool get showingSessionSummary => _showingSessionSummary;
+  Subject? get summarySubject => _summarySubject;
+  int get summaryMinutes => _summaryMinutes;
+  String get focusQuote => _focusQuote;
 
   TimerController({required this.supabaseService}) {
     Future.microtask(() => _init());
@@ -65,7 +100,6 @@ class TimerController extends ChangeNotifier {
   }
 
   void loadAd() {
-    // Wait for MobileAds SDK to be ready before attempting to load.
     MobileAds.instance.initialize().then((_) {
       if (_disposed) return;
       try {
@@ -114,6 +148,15 @@ class TimerController extends ChangeNotifier {
     if (_isRunning) return;
     _initialDuration = minutes * 60;
     _currentDuration = _initialDuration;
+    SharedPreferences.getInstance()
+        .then((prefs) => prefs.setInt(_durationPrefKey, minutes));
+    notifyListeners();
+  }
+
+  Future<void> setDailyGoal(int minutes) async {
+    _dailyGoalMinutes = minutes;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_goalPrefKey, minutes);
     notifyListeners();
   }
 
@@ -138,6 +181,27 @@ class TimerController extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error initializing audio: $e');
     }
+
+    // Load persisted settings
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedMinutes = prefs.getInt(_durationPrefKey);
+      if (savedMinutes != null) {
+        _initialDuration = savedMinutes * 60;
+        _currentDuration = _initialDuration;
+      }
+      _dailyGoalMinutes = prefs.getInt(_goalPrefKey) ?? 0;
+    } catch (e) {
+      debugPrint('Error loading prefs: $e');
+    }
+
+    // Load today's study minutes
+    try {
+      _dailyMinutes = await supabaseService.getDailyMinutes();
+    } catch (e) {
+      debugPrint('Error loading daily minutes: $e');
+    }
+
     screenDimmer.onReveal = _resetAutoDimmingTimer;
     await loadSubjects();
   }
@@ -170,13 +234,11 @@ class TimerController extends ChangeNotifier {
           !_subjects.any((s) => s.id == _selectedSubject!.id)) {
         _selectedSubject = _subjects.isNotEmpty ? _subjects.first : null;
       } else {
-        // Sempre atualizar a referência para o novo objeto da lista
-        // (sem isso, o DropdownButton não encontra o value e joga assertion)
         _selectedSubject =
             _subjects.firstWhere((s) => s.id == _selectedSubject!.id);
       }
     } catch (e) {
-      print('Erro ao carregar matérias: $e');
+      debugPrint('Erro ao carregar matérias: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -184,6 +246,7 @@ class TimerController extends ChangeNotifier {
   }
 
   void selectSubject(Subject? subject) {
+    HapticFeedback.selectionClick();
     _selectedSubject = subject;
     notifyListeners();
   }
@@ -191,14 +254,16 @@ class TimerController extends ChangeNotifier {
   void toggleTimer() {
     if (_selectedSubject == null) return;
     if (_isRunning) {
+      HapticFeedback.mediumImpact();
       _pauseTimer();
     } else {
+      HapticFeedback.lightImpact();
       _startTimer();
     }
   }
 
   void resetTimer() {
-    _pomodoroTransitionToken++; // cancel any pending auto-start
+    _pomodoroTransitionToken++;
     _timer?.cancel();
     _autoDimmingTimer?.cancel();
     screenDimmer.stopBlackout();
@@ -212,12 +277,34 @@ class TimerController extends ChangeNotifier {
     }
     _currentDuration = _initialDuration;
     _isFocusMode = false;
+    _showingSessionSummary = false;
+    isFocusModeGlobalNotifier.value = false;
+    notifyListeners();
+  }
+
+  void dismissSessionSummary() {
+    _showingSessionSummary = false;
+    _summarySubject = null;
+    _isFocusMode = false;
+    isFocusModeGlobalNotifier.value = false;
+    notifyListeners();
+    // Defer ad to after widget tree has settled to avoid rebuild crash
+    Future.delayed(const Duration(milliseconds: 400), _showAdWithProbability);
+  }
+
+  void continueAfterSummary() {
+    _showingSessionSummary = false;
+    _summarySubject = null;
+    _isFocusMode = false;
     isFocusModeGlobalNotifier.value = false;
     notifyListeners();
   }
 
   void _startTimer() {
     if (_selectedSubject == null || _isRunning) return;
+
+    // Pick a motivational quote for this session
+    _focusQuote = _quotes[_random.nextInt(_quotes.length)];
 
     try {
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -231,7 +318,6 @@ class TimerController extends ChangeNotifier {
         }
       });
 
-      // Only create a Supabase session for work phases
       if (!_isPomodoroMode || _pomodoroPhase == PomodoroPhase.work) {
         _initiateFocusSession();
       }
@@ -262,7 +348,11 @@ class TimerController extends ChangeNotifier {
     _timer?.cancel();
     _isRunning = false;
 
-    // Stop session only for work phases
+    // Compute elapsed BEFORE _stopFocusSession zeros the counter
+    final int minutesStudied = _sessionElapsedSeconds >= 60
+        ? _sessionElapsedSeconds ~/ 60
+        : (_sessionElapsedSeconds > 0 ? 1 : 0);
+
     if (!_isPomodoroMode || _pomodoroPhase == PomodoroPhase.work) {
       _stopFocusSession();
     }
@@ -272,10 +362,19 @@ class TimerController extends ChangeNotifier {
     if (_isPomodoroMode) {
       _handlePomodoroTransition();
     } else {
+      final bool goalJustReached = _dailyGoalMinutes > 0 &&
+          _dailyMinutes < _dailyGoalMinutes &&
+          (_dailyMinutes + minutesStudied) >= _dailyGoalMinutes;
+      _dailyMinutes += minutesStudied;
+      if (goalJustReached) {
+        NotificationService().showGoalReachedNotification();
+      }
       _currentDuration = _initialDuration;
-      _isFocusMode = false;
-      isFocusModeGlobalNotifier.value = false;
-      _showAdWithProbability();
+      // Show session summary instead of immediately exiting focus mode
+      _summarySubject = _selectedSubject;
+      _summaryMinutes = minutesStudied;
+      _showingSessionSummary = true;
+      HapticFeedback.heavyImpact();
       notifyListeners();
     }
   }
@@ -298,7 +397,6 @@ class TimerController extends ChangeNotifier {
     final int token = ++_pomodoroTransitionToken;
     notifyListeners();
 
-    // Auto-start next phase after a brief pause (cancelled if user resets/toggles)
     Future.delayed(const Duration(seconds: 2), () {
       if (!_disposed &&
           token == _pomodoroTransitionToken &&
@@ -311,7 +409,7 @@ class TimerController extends ChangeNotifier {
   }
 
   Future<void> _initiateFocusSession() async {
-    _sessionElapsedSeconds = 0; // zera o contador para a nova sessão
+    _sessionElapsedSeconds = 0;
     final int studyMinutes = _initialDuration ~/ 60;
     try {
       _sessionUuid = await supabaseService.startSession(
@@ -319,20 +417,19 @@ class TimerController extends ChangeNotifier {
         _selectedSubject!.id,
       );
     } catch (e) {
-      print('Error initiating session: $e');
+      debugPrint('Error initiating session: $e');
     }
   }
 
   Future<void> _stopFocusSession() async {
     if (_sessionUuid != null) {
-      // Converte segundos reais (sem pausas) para minutos — mínimo 1 min se algum tempo passou
       final int realMinutes = _sessionElapsedSeconds >= 60
           ? _sessionElapsedSeconds ~/ 60
           : (_sessionElapsedSeconds > 0 ? 1 : 0);
       try {
         await supabaseService.stopSession(_sessionUuid!, realMinutes: realMinutes);
       } catch (e) {
-        print('Error stopping focus: $e');
+        debugPrint('Error stopping focus: $e');
       } finally {
         _sessionUuid = null;
         _sessionElapsedSeconds = 0;
@@ -345,7 +442,7 @@ class TimerController extends ChangeNotifier {
       final data = await rootBundle.load('lib/assets/sounds/beep.mp3');
       _beepSound = data.buffer.asUint8List();
     } catch (e) {
-      print('Error loading beep sound: $e');
+      debugPrint('Error loading beep sound: $e');
     }
   }
 
@@ -354,7 +451,7 @@ class TimerController extends ChangeNotifier {
     try {
       await _player.startPlayer(fromDataBuffer: _beepSound);
     } catch (e) {
-      print('Error playing beep: $e');
+      debugPrint('Error playing beep: $e');
     }
   }
 
@@ -399,7 +496,7 @@ class TimerController extends ChangeNotifier {
   void _resetAutoDimmingTimer() {
     _autoDimmingTimer?.cancel();
     _autoDimmingTimer = Timer(const Duration(seconds: 5), () {
-      if (_isRunning) {
+      if (_isRunning && kReleaseMode) {
         screenDimmer.startBlackout();
       }
     });

@@ -16,42 +16,66 @@ class TasksHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Accent bar + title column
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  'Tarefas',
-                  style: TextStyle(
-                    color: TempusColors.text,
-                    fontSize: 30,
-                    fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
+                // Gradient left accent bar
+                Container(
+                  width: 3,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: TempusColors.gradientDiag,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 4),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: Text(
-                    key: ValueKey(pendingCount),
-                    pendingCount == 0
-                        ? 'Tudo em dia!'
-                        : '$pendingCount ${pendingCount == 1 ? 'tarefa pendente' : 'tarefas pendentes'}',
-                    style: const TextStyle(
-                      color: TempusColors.textSub,
-                      fontSize: 13,
-                      fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w400,
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) =>
+                          TempusColors.gradient.createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                      ),
+                      child: const Text(
+                        'Tarefas',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontFamily: 'Arimo',
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 3),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: Text(
+                        key: ValueKey(pendingCount),
+                        pendingCount == 0
+                            ? 'Tudo em dia!'
+                            : '$pendingCount ${pendingCount == 1 ? 'pendente' : 'pendentes'}',
+                        style: const TextStyle(
+                          color: TempusColors.textSub,
+                          fontSize: 13,
+                          fontFamily: 'Arimo',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+          // Manage subjects button
           GestureDetector(
             onTap: onManageSubjects,
             child: Container(

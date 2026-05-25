@@ -27,22 +27,20 @@ class TimeStatCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: TempusColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: TempusColors.border),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top accent bar
             Container(
               height: 3,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: barColors),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -61,7 +59,7 @@ class TimeStatCard extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: accentColor.withOpacity(0.2),
+                            color: accentColor.withValues(alpha: 0.25),
                           ),
                         ),
                         child: Center(
@@ -80,26 +78,14 @@ class TimeStatCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 24),
-
+                  const SizedBox(height: 20),
                   Row(
                     children: [
-                      _buildStatColumn('Tempo Real', realTime),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: TempusColors.border,
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                      _buildStatColumn('Planejado', plannedTime),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: TempusColors.border,
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                      _buildStatColumn('Média/Sessão', avgTime),
+                      _StatCol(label: 'Tempo Real', value: realTime),
+                      _Divider(),
+                      _StatCol(label: 'Planejado', value: plannedTime),
+                      _Divider(),
+                      _StatCol(label: 'Média/Sessão', value: avgTime),
                     ],
                   ),
                 ],
@@ -110,8 +96,28 @@ class TimeStatCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildStatColumn(String label, String value) {
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 36,
+      color: TempusColors.border,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+    );
+  }
+}
+
+class _StatCol extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatCol({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,15 +134,32 @@ class TimeStatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: TempusColors.text,
-              fontSize: 20,
-              fontFamily: 'Arimo',
-              fontWeight: FontWeight.w700,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.15),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            ),
+            child: Text(
+              key: ValueKey(value),
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: value == '...' ? TempusColors.textSub : TempusColors.text,
+                fontSize: 20,
+                fontFamily: 'Arimo',
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

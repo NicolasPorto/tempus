@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import '../models/subject.dart';
 import 'timer_painter.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../controller/timer_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -40,6 +41,8 @@ class TimerControls extends StatefulWidget {
 }
 
 class _TimerControlsState extends State<TimerControls> {
+  bool _playPressed = false;
+
   String get _formattedTime {
     final m = (widget.currentDuration ~/ 60).toString().padLeft(2, '0');
     final s = (widget.currentDuration % 60).toString().padLeft(2, '0');
@@ -60,118 +63,43 @@ class _TimerControlsState extends State<TimerControls> {
     }
   }
 
-  Widget _buildTimerCircle(String statusText) {
-    return Center(
-      child: Container(
-        width: 320,
-        height: 320,
-        decoration: BoxDecoration(
-          color: TempusColors.surface,
-          borderRadius: BorderRadius.circular(44),
-          border: Border.all(color: TempusColors.border, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: _phaseColor.withOpacity(0.06),
-              blurRadius: 40,
-              spreadRadius: 0,
-            ),
-            const BoxShadow(
-              color: Color(0x50000000),
-              blurRadius: 40,
-              offset: Offset(0, 16),
-              spreadRadius: -8,
-            ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              width: 268,
-              height: 268,
-              child: CustomPaint(
-                painter: TimerPainter(
-                  backgroundColor: TempusColors.border,
-                  progressColor: _phaseColor,
-                  progress: widget.currentDuration / widget.initialDuration,
-                  glowEnabled: widget.isRunning,
-                ),
+  Widget _buildTimerRing(double size) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // RepaintBoundary isolates the CustomPaint layer so the rest of the
+          // widget tree is not invalidated on every second tick.
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size(size, size),
+              painter: TimerPainter(
+                backgroundColor: TempusColors.border,
+                progressColor: _phaseColor,
+                progress: widget.initialDuration > 0
+                    ? widget.currentDuration / widget.initialDuration
+                    : 1.0,
+                glowEnabled: widget.isRunning,
               ),
             ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: widget.onToggleTimer,
-                  child: Text(
-                    _formattedTime,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: TempusColors.text,
-                      fontSize: 72,
-                      fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w700,
-                      height: 1.0,
-                      letterSpacing: -2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _phaseColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _phaseColor.withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    statusText,
-                    style: TextStyle(
-                      color: _phaseColor,
-                      fontSize: 12,
-                      fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeSelector() {
-    final bool canChange =
-        !widget.isRunning && widget.currentDuration == widget.initialDuration;
-
-    if (!canChange) return const SizedBox(height: 80);
-
-    if (widget.isPomodoroMode) return _buildPomodoroPhaseSelector();
-
-    final List<int> presets = [15, 20, 25, 30];
-    final int currentMinutes = widget.initialDuration ~/ 60;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          Text(
-            'Duração do Foco',
-            style: TextStyle(
-              color: TempusColors.textSub,
-              fontSize: 12,
-              fontFamily: 'Arimo',
-            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ...presets.map((m) => _buildPresetButton(m, currentMinutes == m)),
-              _buildPickerButton(),
+              Text(
+                _formattedTime,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: TempusColors.text,
+                  fontSize: 58,
+                  fontFamily: 'Arimo',
+                  fontWeight: FontWeight.w300,
+                  height: 1.0,
+                  letterSpacing: -2,
+                ),
+              ),
             ],
           ),
         ],
@@ -179,13 +107,167 @@ class _TimerControlsState extends State<TimerControls> {
     );
   }
 
-  Widget _buildPomodoroPhaseSelector() {
-    final phase = widget.pomodoroPhase;
-    final round = widget.pomodoroRound;
+  Widget _buildPlayButton() {
+    final isSubjectSelected = widget.selectedSubject != null;
+    final icon = widget.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded;
 
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _playPressed = true),
+      onTapUp: (_) {
+        setState(() => _playPressed = false);
+        if (isSubjectSelected) widget.onToggleTimer();
+      },
+      onTapCancel: () => setState(() => _playPressed = false),
+      child: AnimatedScale(
+        scale: _playPressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutBack,
+        child: AnimatedOpacity(
+          opacity: isSubjectSelected ? 1.0 : 0.35,
+          duration: const Duration(milliseconds: 200),
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [TempusColors.accent, TempusColors.accentBlue],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: TempusColors.accent.withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 36),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResetButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onResetTimer?.call();
+      },
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: TempusColors.surface,
+          border: Border.all(color: TempusColors.border),
+        ),
+        child: const Icon(
+          Icons.replay_rounded,
+          color: TempusColors.textSub,
+          size: 18,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String statusText) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: _phaseColor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _phaseColor.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: _phaseColor,
+          fontSize: 12,
+          fontFamily: 'Arimo',
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresets() {
+    final bool canChange =
+        !widget.isRunning && widget.currentDuration == widget.initialDuration;
+    if (!canChange) return const SizedBox.shrink();
+    if (widget.isPomodoroMode) return _buildPomodoroInfo();
+
+    const List<int> presets = [15, 20, 25, 30, 45, 60];
+    final int currentMinutes = widget.initialDuration ~/ 60;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          ...presets.map((m) {
+            final isSelected = currentMinutes == m;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onDurationChanged?.call(m);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? TempusColors.gradient : null,
+                    color: isSelected ? null : TempusColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.transparent
+                          : TempusColors.border,
+                    ),
+                  ),
+                  child: Text(
+                    '${m}min',
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : TempusColors.textSub,
+                      fontSize: 13,
+                      fontFamily: 'Arimo',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+          GestureDetector(
+            onTap: () => _showCupertinoTimePicker(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: TempusColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: TempusColors.accent.withValues(alpha: 0.4)),
+              ),
+              child: const Icon(
+                Icons.more_time_rounded,
+                color: TempusColors.accent,
+                size: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPomodoroInfo() {
+    final phase = widget.pomodoroPhase;
     String phaseLabel;
     String phaseDuration;
-
     switch (phase) {
       case PomodoroPhase.work:
         phaseLabel = 'Sessão de Foco';
@@ -200,70 +282,63 @@ class _TimerControlsState extends State<TimerControls> {
         phaseDuration = '15 min';
         break;
     }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: _phaseColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _phaseColor.withOpacity(0.35)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  phaseLabel,
-                  style: TextStyle(
-                    color: _phaseColor,
-                    fontSize: 13,
-                    fontFamily: 'Arimo',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '· $phaseDuration',
-                  style: TextStyle(
-                    color: _phaseColor.withOpacity(0.6),
-                    fontSize: 12,
-                    fontFamily: 'Arimo',
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: _phaseColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _phaseColor.withValues(alpha: 0.35)),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(4, (i) {
-              final done = i < (round % 4);
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: done ? 18 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: done
-                      ? TempusColors.accent
-                      : TempusColors.border,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                phaseLabel,
+                style: TextStyle(
+                  color: _phaseColor,
+                  fontSize: 13,
+                  fontFamily: 'Arimo',
+                  fontWeight: FontWeight.w600,
                 ),
-              );
-            }),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '· $phaseDuration',
+                style: TextStyle(
+                  color: _phaseColor.withValues(alpha: 0.6),
+                  fontSize: 12,
+                  fontFamily: 'Arimo',
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(4, (i) {
+            final done = i < (widget.pomodoroRound % 4);
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: done ? 18 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: done ? TempusColors.accent : TempusColors.border,
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 
   Widget _buildPomodoroToggle() {
-    if (widget.isRunning) return const SizedBox.shrink();
     final isPaused = widget.currentDuration < widget.initialDuration;
-    if (isPaused) return const SizedBox.shrink();
+    if (widget.isRunning || isPaused) return const SizedBox.shrink();
 
     return GestureDetector(
       onTap: () {
@@ -275,12 +350,12 @@ class _TimerControlsState extends State<TimerControls> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: widget.isPomodoroMode
-              ? TempusColors.accent.withOpacity(0.12)
+              ? TempusColors.accent.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: widget.isPomodoroMode
-                ? TempusColors.accent.withOpacity(0.4)
+                ? TempusColors.accent.withValues(alpha: 0.4)
                 : TempusColors.border,
           ),
         ),
@@ -307,61 +382,6 @@ class _TimerControlsState extends State<TimerControls> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPresetButton(int minutes, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        widget.onDurationChanged?.call(minutes);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 58,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: isSelected ? TempusColors.gradient : null,
-          color: isSelected ? null : TempusColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? Colors.transparent
-                : TempusColors.border,
-          ),
-        ),
-        child: Text(
-          '$minutes',
-          style: TextStyle(
-            color: isSelected ? Colors.white : TempusColors.textSub,
-            fontSize: 14,
-            fontFamily: 'Arimo',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPickerButton() {
-    return GestureDetector(
-      onTap: () => _showCupertinoTimePicker(context),
-      child: Container(
-        width: 44,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: TempusColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: TempusColors.accent.withOpacity(0.4)),
-        ),
-        child: const Icon(
-          Icons.more_time_rounded,
-          color: TempusColors.accent,
-          size: 18,
         ),
       ),
     );
@@ -414,11 +434,14 @@ class _TimerControlsState extends State<TimerControls> {
 
   @override
   Widget build(BuildContext context) {
-    final isSubjectSelected = widget.selectedSubject != null;
-    final bool isPaused =
+    final screenWidth = MediaQuery.of(context).size.width;
+    final ringSize = (screenWidth * 0.72).clamp(200.0, 280.0);
+    final isPaused =
         widget.currentDuration < widget.initialDuration && !widget.isRunning;
+    final showReset = widget.isRunning || isPaused;
 
     String statusText;
+    final isSubjectSelected = widget.selectedSubject != null;
     if (!isSubjectSelected) {
       statusText = 'Selecione uma matéria';
     } else if (widget.isPomodoroMode) {
@@ -457,193 +480,114 @@ class _TimerControlsState extends State<TimerControls> {
       statusText = 'Pressione para começar';
     }
 
-    final playIcon = widget.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded;
-    final playLabel = widget.isRunning ? 'Pausar' : 'Iniciar Foco';
-    final showReset = widget.isRunning || isPaused;
-
     return Column(
       children: [
-        _buildTimerCircle(statusText),
+        _GyroTilt3D(child: _buildTimerRing(ringSize)),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        _buildTimeSelector(),
+        _buildStatusBadge(statusText),
+
+        const SizedBox(height: 32),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (showReset) ...[
+              _buildResetButton(),
+              const SizedBox(width: 24),
+            ],
+            _buildPlayButton(),
+            if (showReset) const SizedBox(width: 66),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+
+        _buildPresets(),
 
         const SizedBox(height: 16),
 
         _buildPomodoroToggle(),
-
-        const SizedBox(height: 24),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onToggleTimer,
-                  child: AnimatedOpacity(
-                    opacity: isSubjectSelected ? 1.0 : 0.4,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      height: 54,
-                      decoration: BoxDecoration(
-                        gradient: TempusColors.gradient,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: TempusColors.accent.withOpacity(0.25),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(playIcon, color: Colors.white, size: 22),
-                          const SizedBox(width: 8),
-                          Text(
-                            playLabel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontFamily: 'Arimo',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (showReset) ...[
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: widget.onResetTimer,
-                  child: Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: TempusColors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: TempusColors.border),
-                    ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        'lib/assets/icons/icon_back.svg',
-                        width: 22,
-                        height: 22,
-                        colorFilter: const ColorFilter.mode(
-                          TempusColors.textSub,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
       ],
     );
   }
 }
 
-class GradientPillThumb extends SliderComponentShape {
-  final LinearGradient gradient;
+// ── Gyroscope 3D tilt ─────────────────────────────────────────────
+// Wraps any child with a Matrix4 perspective transform driven by the
+// device accelerometer. AnimationController drives per-frame lerp so
+// movement stays fluid regardless of sensor sampling rate.
 
-  const GradientPillThumb({required this.gradient});
+class _GyroTilt3D extends StatefulWidget {
+  final Widget child;
+  const _GyroTilt3D({required this.child});
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(36, 24);
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required Size sizeWithOverflow,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double textScaleFactor,
-    required double value,
-  }) {
-    final canvas = context.canvas;
-    final rect = Rect.fromCenter(center: center, width: 36, height: 24);
-    final rr = RRect.fromRectAndRadius(rect, const Radius.circular(12));
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.translate(0, 2), const Radius.circular(12)),
-      Paint()
-        ..color = gradient.colors.last.withOpacity(0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-    );
-    canvas.drawRRect(rr, Paint()..shader = gradient.createShader(rect));
-  }
+  State<_GyroTilt3D> createState() => _GyroTilt3DState();
 }
 
-class RecessedTrackShape extends SliderTrackShape {
-  final Color baseColor;
-  final LinearGradient activeGradient;
+class _GyroTilt3DState extends State<_GyroTilt3D>
+    with SingleTickerProviderStateMixin {
+  StreamSubscription<AccelerometerEvent>? _accelSub;
+  late final AnimationController _driver;
 
-  const RecessedTrackShape({required this.baseColor, required this.activeGradient});
+  double _targetX = 0.0, _targetY = 0.0;
+  double _currentX = 0.0, _currentY = 0.0;
+
+  // ~6° max tilt in radians; lerp factor per 60fps frame
+  static const double _maxTilt = 0.105;
+  static const double _lerp = 0.06;
 
   @override
-  Rect getPreferredRect({
-    required RenderBox parentBox,
-    Offset offset = Offset.zero,
-    required SliderThemeData sliderTheme,
-    bool isEnabled = false,
-    bool isDiscrete = false,
-  }) {
-    final h = sliderTheme.trackHeight! * 1.5;
-    return Rect.fromLTWH(
-      offset.dx,
-      offset.dy + (parentBox.size.height - h) / 2,
-      parentBox.size.width,
-      h,
-    );
+  void initState() {
+    super.initState();
+
+    // AnimationController.repeat() drives a listener every vsync frame.
+    _driver = AnimationController(vsync: this, duration: const Duration(seconds: 1))
+      ..repeat()
+      ..addListener(_onFrame);
+
+    try {
+      // accelerometerEvents: gravity-inclusive stream, always available in
+      // sensors_plus 3.x. x/y components encode device tilt vs gravity.
+      _accelSub = accelerometerEvents.listen((AccelerometerEvent e) {
+        _targetY = (-e.x / 9.8 * _maxTilt).clamp(-_maxTilt, _maxTilt);
+        _targetX = (e.y / 9.8 * _maxTilt * 0.6).clamp(-_maxTilt, _maxTilt);
+      });
+    } catch (_) {
+      // Sensor unavailable (emulator) — widget renders without tilt.
+    }
+  }
+
+  void _onFrame() {
+    final nx = _currentX + (_targetX - _currentX) * _lerp;
+    final ny = _currentY + (_targetY - _currentY) * _lerp;
+    if ((nx - _currentX).abs() > 0.0003 || (ny - _currentY).abs() > 0.0003) {
+      setState(() {
+        _currentX = nx;
+        _currentY = ny;
+      });
+    }
   }
 
   @override
-  void paint(
-    PaintingContext context,
-    Offset offset, {
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required Animation<double> enableAnimation,
-    required TextDirection textDirection,
-    required Offset thumbCenter,
-    bool isDiscrete = false,
-    bool isEnabled = false,
-    Offset? secondaryOffset,
-  }) {
-    if (sliderTheme.trackHeight == 0) return;
-    final trackRect = getPreferredRect(
-      parentBox: parentBox,
-      offset: offset,
-      sliderTheme: sliderTheme,
-    );
-    final canvas = context.canvas;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(trackRect, const Radius.circular(6)),
-      Paint()..color = baseColor,
-    );
-    final activeRect = Rect.fromLTRB(
-      trackRect.left,
-      trackRect.top,
-      thumbCenter.dx,
-      trackRect.bottom,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(activeRect, const Radius.circular(6)),
-      Paint()..shader = activeGradient.createShader(activeRect),
+  void dispose() {
+    _driver.dispose();
+    _accelSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.001) // perspective depth
+        ..rotateX(_currentX)
+        ..rotateY(_currentY),
+      child: widget.child,
     );
   }
 }

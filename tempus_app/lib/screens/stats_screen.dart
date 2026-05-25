@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/supabase_service.dart';
 import '../models/task.dart';
+import '../models/subject.dart';
 import '../theme/app_theme.dart';
-import '../widgets/stats_components/time_stat_card.dart';
-import '../widgets/stats_components/summary_stat_card.dart';
+import '../widgets/stats_components/weekly_activity_card.dart';
+import '../widgets/stats_components/subjects_breakdown_card.dart';
+import '../widgets/common/skeleton_widget.dart';
+import 'session_history_screen.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -20,6 +24,11 @@ class _StatsScreenState extends State<StatsScreen> {
   int? _sessionStreak;
   int _completedTasks = 0;
   int _totalTasks = 0;
+  List<int> _weeklyActivity = List.filled(7, 0);
+  Map<String, int> _subjectBreakdown = {};
+  List<Subject> _subjects = [];
+  int _dailyGoalMinutes = 0;
+  int _dailyMinutes = 0;
 
   @override
   void initState() {
@@ -30,12 +39,20 @@ class _StatsScreenState extends State<StatsScreen> {
   Future<void> _fetchData() async {
     if (mounted) setState(() => _isLoading = true);
     final svc = context.read<SupabaseService>();
+
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _dailyGoalMinutes = prefs.getInt('daily_goal_minutes') ?? 0);
+
     try {
       final results = await Future.wait([
         svc.getSessionStats(),
         svc.getStreak(),
         svc.listTasks(),
         svc.getSessionTimeSummary(),
+        svc.getWeeklyActivity(),
+        svc.getSubjectBreakdown(),
+        svc.listCategories(),
+        svc.getDailyMinutes(),
       ]);
 
       if (mounted) {
@@ -46,6 +63,13 @@ class _StatsScreenState extends State<StatsScreen> {
           _totalTasks = tasks.length;
           _completedTasks = tasks.where((t) => t.done).length;
           _timeSummary = results[3] as Map<String, int>;
+          _weeklyActivity = results[4] as List<int>;
+          _subjectBreakdown = results[5] as Map<String, int>;
+          _subjects = (results[6] as List)
+              .map((c) => c.toSubject())
+              .toList()
+              .cast<Subject>();
+          _dailyMinutes = results[7] as int;
           _isLoading = false;
         });
       }
@@ -55,7 +79,7 @@ class _StatsScreenState extends State<StatsScreen> {
     }
   }
 
-  String _formatMinutes(int minutes) {
+  String _fmt(int minutes) {
     if (minutes == 0) return '0 min';
     if (minutes < 60) return '$minutes min';
     final h = minutes ~/ 60;
@@ -63,24 +87,21 @@ class _StatsScreenState extends State<StatsScreen> {
     return m > 0 ? '${h}h ${m}min' : '${h}h';
   }
 
+  bool get _hasAnySessions =>
+      (_timeSummary['real'] ?? 0) > 0 ||
+      ((_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0) > 0;
+
   @override
   Widget build(BuildContext context) {
-    // Tempo real e planejado calculados diretamente das linhas do banco,
-    // evitando a RPC que pode usar studying_minutes para ambos os campos.
     final int realMinutes = _timeSummary['real'] ?? 0;
     final int plannedMinutes = _timeSummary['planned'] ?? 0;
-
     final int finishedSessions =
         (_sessionStats?['finishedSessions'] as num?)?.toInt() ?? 0;
+    final int avgMinutes =
+        finishedSessions > 0 ? (realMinutes / finishedSessions).round() : 0;
 
-    // Média por sessão calculada a partir do tempo real
-    final int avgMinutes = finishedSessions > 0
-        ? (realMinutes / finishedSessions).round()
-        : (_sessionStats?['avgTimeStudied'] as int? ?? 0);
-
-    final displayTotal = _isLoading ? '...' : _formatMinutes(realMinutes);
-    final displaySupposed = _isLoading ? '...' : _formatMinutes(plannedMinutes);
-    final displayAvg = _isLoading ? '...' : _formatMinutes(avgMinutes);
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return RefreshIndicator(
       onRefresh: _fetchData,
@@ -88,139 +109,700 @@ class _StatsScreenState extends State<StatsScreen> {
       backgroundColor: TempusColors.surface,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+        padding:
+            EdgeInsets.fromLTRB(20, topPadding + 8, 20, bottomPadding + 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Padding(
-              padding: EdgeInsets.only(top: 8, bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Estatísticas',
-                    style: TextStyle(
-                      color: TempusColors.text,
-                      fontSize: 30,
-                      fontFamily: 'Arimo',
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Seu desempenho de estudos',
-                    style: TextStyle(
-                      color: TempusColors.textSub,
-                      fontSize: 13,
-                      fontFamily: 'Arimo',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            TimeStatCard(
-              realTime: displayTotal,
-              plannedTime: displaySupposed,
-              avgTime: displayAvg,
-              iconColors: const [Color(0x1A60A5FA), Color(0x0D3B82F6)],
-              barColors: const [Color(0xFF60A5FA), Color(0xFF3B82F6)],
-              icon: Icons.av_timer_rounded,
-            ),
-
-            const SizedBox(height: 16),
-
-            // 2-column row: Sessions + Tasks
-            IntrinsicHeight(
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 24),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: SummaryStatCard(
-                      title: 'Sessões Finalizadas',
-                      value: _isLoading ? '...' : '$finishedSessions',
-                      iconColors: const [Color(0x1AA855F7), Color(0x0D7C3AED)],
-                      barColors: const [Color(0xFFA855F7), Color(0xFF7C3AED)],
-                      icon: Icons.check_circle_outline_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) =>
+                              TempusColors.gradient.createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          ),
+                          child: const Text(
+                            'Estatísticas',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 34,
+                              fontFamily: 'Arimo',
+                              fontWeight: FontWeight.w700,
+                              height: 1.1,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Seu progresso de estudos',
+                          style: TextStyle(
+                            color: TempusColors.textSub,
+                            fontSize: 13,
+                            fontFamily: 'Arimo',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SummaryStatCard(
-                      title: 'Tarefas Concluídas',
-                      value: '$_completedTasks/$_totalTasks',
-                      iconColors: const [Color(0x1A34D399), Color(0x0D059669)],
-                      barColors: const [Color(0xFF34D399), Color(0xFF059669)],
-                      icon: Icons.task_alt_rounded,
-                    ),
-                  ),
+                  // Current date badge
+                  _DateBadge(),
                 ],
               ),
             ),
 
-            const SizedBox(height: 12),
+            // Empty state
+            if (!_isLoading && !_hasAnySessions) ...[
+              _EmptyStatsState(),
+            ] else ...[
+              // Loading skeleton
+              if (_isLoading) ...[
+                _SkeletonHeroCard(),
+                const SizedBox(height: 12),
+                _SkeletonChartCard(),
+                const SizedBox(height: 12),
+                Row(
+                  children: const [
+                    Expanded(child: SkeletonStatCard()),
+                    SizedBox(width: 12),
+                    Expanded(child: SkeletonStatCard()),
+                  ],
+                ),
+              ] else ...[
+                // Hero card: total time + streak
+                _StatsHeroCard(
+                  totalTime: _fmt(realMinutes),
+                  plannedTime: _fmt(plannedMinutes),
+                  avgTime: _fmt(avgMinutes),
+                  streak: _sessionStreak ?? 0,
+                ),
 
-            SummaryStatCard(
-              title: 'Sequência de sessões',
-              value: _isLoading ? '...' : '$_sessionStreak',
-              iconColors: const [Color(0x1AF59E0B), Color(0x0DD97706)],
-              barColors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
-              icon: Icons.local_fire_department_rounded,
-            ),
+                // Daily goal (if set)
+                if (_dailyGoalMinutes > 0) ...[
+                  const SizedBox(height: 12),
+                  _DailyGoalCard(
+                    dailyMinutes: _dailyMinutes,
+                    goalMinutes: _dailyGoalMinutes,
+                  ),
+                ],
 
-            const SizedBox(height: 32),
+                const SizedBox(height: 12),
 
-            _buildLogoutButton(context),
+                // Weekly activity
+                WeeklyActivityCard(barHeights: _weeklyActivity),
 
-            const SizedBox(height: 24),
+                const SizedBox(height: 12),
+
+                // Sessions + Tasks row
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _MiniStatCard(
+                          value: '$finishedSessions',
+                          label: 'Sessões',
+                          icon: Icons.check_circle_outline_rounded,
+                          color: TempusColors.accent,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _MiniStatCard(
+                          value: '$_completedTasks/$_totalTasks',
+                          label: 'Tarefas',
+                          icon: Icons.task_alt_rounded,
+                          color: TempusColors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Subject breakdown
+                if (_subjectBreakdown.isNotEmpty && _subjects.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SubjectsBreakdownCard(
+                    minutesBySubjectId: _subjectBreakdown,
+                    allSubjects: _subjects,
+                  ),
+                ],
+
+                // History button
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SessionHistoryScreen(),
+                    ),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: TempusColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: TempusColors.border),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history_rounded,
+                            color: TempusColors.textSub, size: 16),
+                        SizedBox(width: 8),
+                        Text(
+                          'Ver histórico completo',
+                          style: TextStyle(
+                            color: TempusColors.textSub,
+                            fontSize: 13,
+                            fontFamily: 'Arimo',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.chevron_right_rounded,
+                            color: TempusColors.textMuted, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLogoutButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final svc = context.read<SupabaseService>();
-        try {
-          await svc.signOut();
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Erro ao sair da conta.')),
-            );
-          }
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        height: 52,
-        decoration: BoxDecoration(
-          color: TempusColors.red.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: TempusColors.red.withOpacity(0.4),
+// ── Date badge ─────────────────────────────────────────────────
+
+class _DateBadge extends StatelessWidget {
+  static const _months = [
+    'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+    'jul', 'ago', 'set', 'out', 'nov', 'dez',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final label = '${now.day} ${_months[now.month - 1]}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: TempusColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: TempusColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.calendar_today_rounded,
+              color: TempusColors.textSub, size: 12),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: TempusColors.textSub,
+              fontSize: 12,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w500,
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Hero card ──────────────────────────────────────────────────
+
+class _StatsHeroCard extends StatelessWidget {
+  final String totalTime;
+  final String plannedTime;
+  final String avgTime;
+  final int streak;
+
+  const _StatsHeroCard({
+    required this.totalTime,
+    required this.plannedTime,
+    required this.avgTime,
+    required this.streak,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF130F1E), Color(0xFF0B0B18)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.logout_rounded, color: TempusColors.red, size: 18),
-            SizedBox(width: 8),
-            Text(
-              'Sair da Conta',
-              style: TextStyle(
-                color: TempusColors.red,
-                fontSize: 14,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: TempusColors.accent.withValues(alpha: 0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: TempusColors.accent.withValues(alpha: 0.10),
+            blurRadius: 32,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'Total Estudado',
+                style: TextStyle(
+                  color: TempusColors.textSub,
+                  fontSize: 13,
+                  fontFamily: 'Arimo',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (streak > 0) _StreakChip(streak: streak),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ShaderMask(
+            shaderCallback: (bounds) => TempusColors.gradient.createShader(
+              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+            ),
+            child: Text(
+              totalTime,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 44,
                 fontFamily: 'Arimo',
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -1.5,
+                height: 1.0,
               ),
             ),
-          ],
+          ),
+          const SizedBox(height: 20),
+          Container(height: 1, color: TempusColors.border),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _HeroStat(label: 'Planejado', value: plannedTime),
+              Container(
+                width: 1,
+                height: 32,
+                color: TempusColors.border,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              _HeroStat(label: 'Média/Sessão', value: avgTime),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakChip extends StatelessWidget {
+  final int streak;
+  const _StreakChip({required this.streak});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border:
+            Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🔥', style: TextStyle(fontSize: 13)),
+          const SizedBox(width: 5),
+          Text(
+            '$streak ${streak == 1 ? 'dia' : 'dias'}',
+            style: const TextStyle(
+              color: Color(0xFFF59E0B),
+              fontSize: 12,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _HeroStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: TempusColors.textSub,
+              fontSize: 11,
+              fontFamily: 'Arimo',
+            ),
+          ),
+          const SizedBox(height: 4),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            child: Text(
+              key: ValueKey(value),
+              value,
+              style: TextStyle(
+                color: value == '...' ? TempusColors.textSub : TempusColors.text,
+                fontSize: 18,
+                fontFamily: 'Arimo',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Mini stat card ─────────────────────────────────────────────
+
+class _MiniStatCard extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _MiniStatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: TempusColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: color.withValues(alpha: 0.25)),
+            ),
+            child: Center(child: Icon(icon, color: color, size: 17)),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                child: Text(
+                  key: ValueKey(value),
+                  value,
+                  style: const TextStyle(
+                    color: TempusColors.text,
+                    fontSize: 22,
+                    fontFamily: 'Arimo',
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: TempusColors.textSub,
+                  fontSize: 11,
+                  fontFamily: 'Arimo',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Daily goal card ────────────────────────────────────────────
+
+class _DailyGoalCard extends StatelessWidget {
+  final int dailyMinutes;
+  final int goalMinutes;
+
+  const _DailyGoalCard({required this.dailyMinutes, required this.goalMinutes});
+
+  String _fmt(int m) {
+    if (m == 0) return '0 min';
+    if (m < 60) return '$m min';
+    final h = m ~/ 60;
+    final min = m % 60;
+    return min > 0 ? '${h}h ${min}min' : '${h}h';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress =
+        goalMinutes > 0 ? (dailyMinutes / goalMinutes).clamp(0.0, 1.0) : 0.0;
+    final reached = progress >= 1.0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: reached
+              ? TempusColors.green.withValues(alpha: 0.4)
+              : TempusColors.border,
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                reached ? Icons.check_circle_rounded : Icons.flag_rounded,
+                color: reached ? TempusColors.green : TempusColors.textSub,
+                size: 14,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                reached ? 'Meta do dia atingida!' : 'Meta do dia',
+                style: TextStyle(
+                  color: reached ? TempusColors.green : TempusColors.textSub,
+                  fontSize: 12,
+                  fontFamily: 'Arimo',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${_fmt(dailyMinutes)} / ${_fmt(goalMinutes)}',
+                style: const TextStyle(
+                  color: TempusColors.text,
+                  fontSize: 12,
+                  fontFamily: 'Arimo',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: TempusColors.border,
+              valueColor: AlwaysStoppedAnimation(
+                reached ? TempusColors.green : TempusColors.accent,
+              ),
+              minHeight: 5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Skeletons ──────────────────────────────────────────────────
+
+class _SkeletonHeroCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: TempusColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SkeletonBox(width: 100, height: 12, borderRadius: BorderRadius.circular(6)),
+              SkeletonBox(width: 72, height: 24, borderRadius: BorderRadius.circular(12)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SkeletonBox(width: 160, height: 40, borderRadius: BorderRadius.circular(10)),
+          const SizedBox(height: 20),
+          Container(height: 1, color: TempusColors.border),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 60, height: 10, borderRadius: BorderRadius.circular(5)),
+                    const SizedBox(height: 6),
+                    SkeletonBox(width: 80, height: 18, borderRadius: BorderRadius.circular(8)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 40),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 80, height: 10, borderRadius: BorderRadius.circular(5)),
+                    const SizedBox(height: 6),
+                    SkeletonBox(width: 60, height: 18, borderRadius: BorderRadius.circular(8)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonChartCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 140,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: TempusColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: TempusColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SkeletonBox(width: 40, height: 40, borderRadius: BorderRadius.circular(12)),
+              const SizedBox(width: 12),
+              SkeletonBox(width: 120, height: 12, borderRadius: BorderRadius.circular(6)),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(
+              7,
+              (i) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: SkeletonBox(
+                    height: 8.0 + (i % 3 + 1) * 14.0,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Empty state ────────────────────────────────────────────────
+
+class _EmptyStatsState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  TempusColors.accent.withValues(alpha: 0.12),
+                  TempusColors.accentBlue.withValues(alpha: 0.07),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                  color: TempusColors.accent.withValues(alpha: 0.25)),
+            ),
+            child: const Center(
+              child: Icon(Icons.bar_chart_rounded,
+                  color: TempusColors.accent, size: 36),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Ainda sem dados',
+            style: TextStyle(
+              color: TempusColors.text,
+              fontSize: 20,
+              fontFamily: 'Arimo',
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Inicie sua primeira sessão de estudo\npara ver seu progresso aqui.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: TempusColors.textSub,
+              fontSize: 13,
+              fontFamily: 'Arimo',
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }
