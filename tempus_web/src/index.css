@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 * {
-  font-family: 'Arimo', sans-serif;
+  font-family: 'Inter', sans-serif;
   box-sizing: border-box;
 }
 
@@ -36,7 +36,8 @@ body {
   box-shadow: 0 4px 15px rgba(172, 70, 255, 0.3);
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.15s ease;
+  transition: opacity 0.1s ease, transform 0.1s ease;
+  will-change: transform;
 }
 
 .btn-gradient:hover {
@@ -61,6 +62,71 @@ html {
 .phone-float {
   animation: float 4.5s ease-in-out infinite;
 }
+
+/* Hero logo entrance */
+@keyframes hero-logo-enter {
+  from { opacity: 0; transform: scale(0.72); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.hero-logo-enter {
+  animation: hero-logo-enter 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Logo glow pulse */
+@keyframes logo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(172, 70, 255, 0.55)); }
+  50%       { filter: drop-shadow(0 0 18px rgba(43, 127, 255, 0.65)); }
+}
+
+.logo-glow {
+  animation: logo-pulse 3.5s ease-in-out infinite;
+}
+
+/* Feature card hover */
+.feature-card {
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  will-change: transform;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(172, 70, 255, 0.22) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+
+/* Highlight item in AppPreview */
+.highlight-item {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.highlight-item:hover {
+  background: rgba(172, 70, 255, 0.06);
+  border-color: rgba(172, 70, 255, 0.14);
+}
+
+/* Store badge hover */
+.store-badge {
+  transition: background 0.1s ease, border-color 0.1s ease, transform 0.1s ease;
+  will-change: transform;
+  cursor: pointer;
+}
+
+.store-badge:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  transform: translateY(-2px);
+}
+
+/* Side nav — hide below 1024px */
+@media (max-width: 1023px) {
+  .side-nav {
+    display: none !important;
+  }
+}
+
 
 /* Responsive navbar */
 @media (max-width: 640px) {

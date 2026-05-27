@@ -11,7 +11,8 @@ export default function Navbar() {
   }, [])
 
   const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    const el = document.getElementById(id)
+    if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' })
     setMenuOpen(false)
   }
 
@@ -29,11 +30,13 @@ export default function Navbar() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 clamp(16px, 4vw, 48px)',
-          transition: 'background 0.3s ease, border-color 0.3s ease',
-          background: scrolled ? 'rgba(6, 4, 10, 0.85)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(16px)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(16px)' : 'none',
-          borderBottom: `1px solid ${scrolled ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
+          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease',
+          background: scrolled
+            ? 'rgba(6, 4, 10, 0.38)'
+            : 'transparent',
+          backdropFilter: scrolled ? 'blur(28px) saturate(160%) brightness(1.08)' : 'none',
+          WebkitBackdropFilter: scrolled ? 'blur(28px) saturate(160%) brightness(1.08)' : 'none',
+          borderBottom: `1px solid ${scrolled ? 'rgba(255,255,255,0.09)' : 'transparent'}`,
         }}
       >
         {/* Logo */}
@@ -49,21 +52,14 @@ export default function Navbar() {
             padding: 0,
           }}
         >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, rgba(172,70,255,0.25), rgba(43,127,255,0.25))',
-              border: '1.5px solid rgba(255,255,255,0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 18,
-            }}
-          >
-            ⏱
-          </div>
+          <img
+            src="/icon_login.svg"
+            alt="Tempus"
+            width={30}
+            height={30}
+            className="logo-glow"
+            style={{ display: 'block' }}
+          />
           <span
             className="gradient-text"
             style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px' }}
@@ -72,35 +68,12 @@ export default function Navbar() {
           </span>
         </button>
 
-        {/* Desktop links */}
-        <div className="nav-desktop" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-          {[
-            { label: 'Funcionalidades', id: 'funcionalidades' },
-            { label: 'Como funciona', id: 'como-funciona' },
-          ].map(({ label, id }) => (
-            <button
-              key={id}
-              onClick={() => scrollTo(id)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 500,
-                color: '#A0A0A0',
-                padding: 0,
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#F4F4F4')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#A0A0A0')}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Desktop: only download button */}
+        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center' }}>
           <button
             className="btn-gradient"
             onClick={() => scrollTo('como-funciona')}
-            style={{ padding: '8px 22px', fontSize: 14 }}
+            style={{ padding: '9px 22px', fontSize: 13, letterSpacing: 0.2 }}
           >
             Baixar
           </button>
@@ -130,7 +103,7 @@ export default function Navbar() {
                 height: 2,
                 borderRadius: 2,
                 background: '#F4F4F4',
-                transition: 'opacity 0.2s, transform 0.2s',
+                transition: 'opacity 0.15s, transform 0.15s',
                 opacity: menuOpen && i === 1 ? 0 : 1,
                 transform:
                   menuOpen && i === 0 ? 'rotate(45deg) translate(5px, 5px)'
@@ -150,21 +123,22 @@ export default function Navbar() {
           left: 0,
           right: 0,
           zIndex: 199,
-          background: 'rgba(6, 4, 10, 0.97)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(6, 4, 10, 0.88)',
+          backdropFilter: 'blur(28px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
           padding: menuOpen ? '16px 24px 24px' : '0 24px',
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
           overflow: 'hidden',
           maxHeight: menuOpen ? 300 : 0,
-          transition: 'max-height 0.3s ease, padding 0.3s ease',
+          transition: 'max-height 0.25s ease, padding 0.25s ease',
         }}
         className="nav-mobile-menu"
       >
         {[
+          { label: 'Início', id: 'inicio' },
           { label: 'Funcionalidades', id: 'funcionalidades' },
           { label: 'Como funciona', id: 'como-funciona' },
         ].map(({ label, id }) => (

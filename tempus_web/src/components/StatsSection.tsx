@@ -51,7 +51,7 @@ export default function StatsSection() {
               <div
                 style={{
                   fontSize: 12,
-                  color: '#5A5A5A',
+                  color: '#808080',
                   marginTop: 6,
                   fontWeight: 500,
                   letterSpacing: 0.2,

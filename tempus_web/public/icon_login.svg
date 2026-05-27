@@ -1,0 +1,23 @@
+<svg width="108" height="108" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arcGrad" x1="54" y1="21" x2="87" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="tGrad" x1="35" y1="54" x2="73" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 270° arc: clockwise from 12 o'clock to 9 o'clock -->
+  <path d="M 54 21 A 33 33 0 1 1 21 54"
+        stroke="url(#arcGrad)" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Dot at arc tip -->
+  <circle cx="21" cy="54" r="4" fill="#60A5FA"/>
+
+  <!-- T letter with gradient fill -->
+  <path d="M 35 36 L 73 36 L 73 45 L 62 45 L 62 74 L 46 74 L 46 45 L 35 45 Z"
+        fill="url(#tGrad)"/>
+</svg>
