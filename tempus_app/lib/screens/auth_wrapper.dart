@@ -5,6 +5,7 @@ import '../main.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
 import 'splash_screen.dart';
+import '../core/demo.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -25,7 +26,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     _checkInitialState();
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      if (!mounted) return;
+      if (!mounted || kDemoMode) return;
       final authenticated = data.session != null;
       if (authenticated && !_isAuthenticated) {
         final done = await isOnboardingDone();
@@ -49,9 +50,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _checkInitialState() async {
     final session = Supabase.instance.client.auth.currentSession;
-    final authenticated = session != null;
+    final authenticated = kDemoMode || session != null;
     final results = await Future.wait([
-      authenticated ? isOnboardingDone() : Future.value(false),
+      kDemoMode
+          ? Future.value(true)
+          : authenticated
+              ? isOnboardingDone()
+              : Future.value(false),
       Future.delayed(const Duration(milliseconds: 1800)),
     ]);
     final done = results[0] as bool;

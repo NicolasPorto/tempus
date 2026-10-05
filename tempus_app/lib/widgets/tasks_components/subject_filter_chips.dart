@@ -64,16 +64,16 @@ class _Chip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.15) : TempusColors.surface,
+          color: isSelected ? color.withValues(alpha: 0.18) : TempusColors.surface.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? color.withOpacity(0.6) : TempusColors.border,
+            color: isSelected ? color.withValues(alpha: 0.6) : TempusColors.border,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isSelected) ...[
+            ...[
               Container(
                 width: 6,
                 height: 6,
@@ -84,10 +84,10 @@ class _Chip extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? color : TempusColors.textSub,
+                color: isSelected ? TempusColors.text : TempusColors.textSub,
                 fontSize: 13,
-                fontFamily: 'Arimo',
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontFamily: 'Manrope',
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
           ],

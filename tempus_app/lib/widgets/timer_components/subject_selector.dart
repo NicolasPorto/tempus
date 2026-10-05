@@ -42,70 +42,119 @@ class SubjectSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: TempusColors.accent,
-          ),
-        ),
-      );
-    }
-
     final hasSubject = selectedSubject != null;
     final subjectColor = hasSubject
         ? Color(selectedSubject!.colorValue)
         : TempusColors.textSub;
 
-    return GestureDetector(
-      onTap: subjects.isNotEmpty ? () => _showSubjectSheet(context) : onManageTap,
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: TempusColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: hasSubject
-                ? subjectColor.withValues(alpha: 0.4)
-                : TempusColors.border,
-          ),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: subjectColor,
-                shape: BoxShape.circle,
-              ),
+    return Semantics(
+      button: true,
+      label: 'Matéria: ${selectedSubject?.name ?? 'nenhuma'}',
+      child: GestureDetector(
+        onTap: isLoading
+            ? null
+            : subjects.isNotEmpty
+                ? () => _showSubjectSheet(context)
+                : onManageTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: TempusColors.surface.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(TempusRadius.lg),
+            border: Border.all(
+              color: hasSubject
+                  ? subjectColor.withValues(alpha: 0.35)
+                  : TempusColors.border,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                hasSubject ? selectedSubject!.name : 'Selecione a matéria',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: hasSubject ? TempusColors.text : TempusColors.textSub,
-                  fontSize: 14,
-                  fontFamily: 'Arimo',
-                  fontWeight:
-                      hasSubject ? FontWeight.w500 : FontWeight.w400,
+          ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: subjectColor.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Center(
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: TempusColors.accent,
+                          ),
+                        )
+                      : Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: subjectColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: subjectColor.withValues(alpha: 0.6),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
               ),
-            ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: TempusColors.textSub,
-              size: 18,
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ESTUDANDO',
+                      style: TextStyle(
+                        color: TempusColors.textSub,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isLoading
+                          ? 'Carregando…'
+                          : hasSubject
+                              ? selectedSubject!.name
+                              : 'Selecione a matéria',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: hasSubject
+                            ? TempusColors.text
+                            : TempusColors.textSub,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: TempusColors.surfaceHigh,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.unfold_more_rounded,
+                  color: TempusColors.textSub,
+                  size: 18,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -134,7 +183,7 @@ class _SubjectBottomSheet extends StatelessWidget {
       builder: (_, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xFF111111),
+            color: TempusColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             border: Border(
               top: BorderSide(color: TempusColors.border),
@@ -162,7 +211,7 @@ class _SubjectBottomSheet extends StatelessWidget {
                       style: TextStyle(
                         color: TempusColors.text,
                         fontSize: 17,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -181,7 +230,7 @@ class _SubjectBottomSheet extends StatelessWidget {
                           style: TextStyle(
                             color: TempusColors.textSub,
                             fontSize: 12,
-                            fontFamily: 'Arimo',
+                            fontFamily: 'Manrope',
                           ),
                         ),
                       ),
@@ -234,9 +283,9 @@ class _SubjectBottomSheet extends StatelessWidget {
                                 style: TextStyle(
                                   color: isSelected
                                       ? TempusColors.text
-                                      : const Color(0xFFCCCCCC),
+                                      : TempusColors.textSub,
                                   fontSize: 15,
-                                  fontFamily: 'Arimo',
+                                  fontFamily: 'Manrope',
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.w400,

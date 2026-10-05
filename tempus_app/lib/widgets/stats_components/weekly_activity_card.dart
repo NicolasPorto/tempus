@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../common/ui.dart';
 
 class WeeklyActivityCard extends StatefulWidget {
   final List<String> days;
@@ -55,125 +56,164 @@ class _WeeklyActivityCardState extends State<WeeklyActivityCard>
     super.dispose();
   }
 
+  String _short(int m) {
+    if (m < 60) return '${m}m';
+    final h = m ~/ 60;
+    final r = m % 60;
+    return r == 0 ? '${h}h' : '${h}h${r.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    const double minH = 8.0;
-    const double maxH = 80.0;
+    const double minH = 6.0;
+    const double maxH = 96.0;
     final int peak = widget.barHeights.reduce((a, b) => a > b ? a : b);
+    final int total = widget.barHeights.fold(0, (a, b) => a + b);
+    final activeDays = widget.barHeights.where((v) => v > 0).length;
     final today = DateTime.now().weekday; // 1=Mon, 7=Sun
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: TempusColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TempusColors.border),
-      ),
+    return TempusCard(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: TempusColors.accentBlue.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: TempusColors.accentBlue.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.bar_chart_rounded,
-                    color: TempusColors.accentBlue,
-                    size: 18,
-                  ),
+              const IconTile(
+                  icon: Icons.bar_chart_rounded, color: TempusColors.accentBlue),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Esta semana',
+                      style: TextStyle(
+                        color: TempusColors.text,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      '$activeDays de 7 dias com estudo',
+                      style: const TextStyle(
+                        color: TempusColors.textSub,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Atividade — 7 Dias',
-                style: TextStyle(
-                  color: TempusColors.textSub,
-                  fontSize: 13,
-                  fontFamily: 'Arimo',
-                  fontWeight: FontWeight.w500,
+              Text(
+                formatMinutes(total),
+                style: const TextStyle(
+                  color: TempusColors.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: widget.days.asMap().entries.map((entry) {
-              final index = entry.key;
-              final day = entry.value;
-              final value = widget.barHeights[index];
-              final targetH =
-                  (peak > 0 ? (value / peak) * maxH : minH).clamp(minH, maxH);
-              final isToday = (index + 1) == today;
-              final anim = _barAnims[index]; // cached — not recreated
+          const SizedBox(height: 18),
+          SizedBox(
+            height: maxH + 40,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: widget.days.asMap().entries.map((entry) {
+                final index = entry.key;
+                final day = entry.value;
+                final value = widget.barHeights[index];
+                final targetH = (peak > 0 ? (value / peak) * maxH : minH)
+                    .clamp(minH, maxH);
+                final isToday = (index + 1) == today;
+                final isFuture = (index + 1) > today;
+                final anim = _barAnims[index]; // cached — not recreated
 
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedBuilder(
-                        animation: anim,
-                        builder: (_, __) => Container(
-                          height: minH + (targetH - minH) * anim.value,
-                          decoration: BoxDecoration(
-                            gradient: value > 0
-                                ? TempusColors.gradient
-                                : LinearGradient(colors: [
-                                    isToday
-                                        ? TempusColors.border
-                                            .withValues(alpha: 2.0)
-                                        : TempusColors.border,
-                                    isToday
-                                        ? TempusColors.border
-                                            .withValues(alpha: 2.0)
-                                        : TempusColors.border,
-                                  ]),
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6),
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (value > 0)
+                          FadeTransition(
+                            opacity: anim,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                _short(value),
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: isToday
+                                      ? TempusColors.text
+                                      : TempusColors.textSub,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
-                            border: isToday && value == 0
-                                ? Border.all(
-                                    color: TempusColors.accent
-                                        .withValues(alpha: 0.4),
-                                    width: 1,
-                                  )
-                                : null,
+                          ),
+                        AnimatedBuilder(
+                          animation: anim,
+                          builder: (_, __) => Container(
+                            height: minH + (targetH - minH) * anim.value,
+                            decoration: BoxDecoration(
+                              gradient: value > 0
+                                  ? LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: isToday
+                                          ? const [
+                                              Color(0xFFC084FC),
+                                              TempusColors.accent,
+                                            ]
+                                          : [
+                                              TempusColors.accent
+                                                  .withValues(alpha: 0.55),
+                                              TempusColors.accent
+                                                  .withValues(alpha: 0.30),
+                                            ],
+                                    )
+                                  : null,
+                              color: value > 0
+                                  ? null
+                                  : isFuture
+                                      ? TempusColors.surfaceHigh
+                                      : TempusColors.surfaceHigher,
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: isToday && value > 0
+                                  ? [
+                                      BoxShadow(
+                                        color: TempusColors.accent
+                                            .withValues(alpha: 0.35),
+                                        blurRadius: 12,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        day,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: isToday
-                              ? TempusColors.accent
-                              : TempusColors.textSub,
-                          fontSize: 9,
-                          fontFamily: 'Arimo',
-                          fontWeight: isToday
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                        const SizedBox(height: 8),
+                        Text(
+                          day,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isToday
+                                ? TempusColors.accentSoft
+                                : TempusColors.textMuted,
+                            fontSize: 10,
+                            fontWeight:
+                                isToday ? FontWeight.w800 : FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),

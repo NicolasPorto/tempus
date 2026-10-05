@@ -13,6 +13,13 @@ class SupabaseService {
 
   Stream<AuthState> get onAuthStateChange => _supabase.auth.onAuthStateChange;
 
+  String get displayName =>
+      (currentUser?.userMetadata?['full_name'] as String?) ?? 'Estudante';
+
+  String get email => currentUser?.email ?? '';
+
+  String? get avatarUrl => currentUser?.userMetadata?['avatar_url'] as String?;
+
   Future<void> signInWithGoogle() async {
     await _supabase.auth.signInWithOAuth(
       OAuthProvider.google,
@@ -34,7 +41,7 @@ class SupabaseService {
           .order('created_at');
       return (data as List).map((e) => Category.fromJson(e)).toList();
     } catch (e) {
-      print('Error listing categories: $e');
+      debugPrint('Error listing categories: $e');
       return [];
     }
   }
@@ -61,7 +68,7 @@ class SupabaseService {
           .order('created_at');
       return (data as List).map((e) => TaskItem.fromJson(e)).toList();
     } catch (e) {
-      print('Error listing tasks: $e');
+      debugPrint('Error listing tasks: $e');
       return [];
     }
   }
@@ -77,7 +84,7 @@ class SupabaseService {
       });
       return true;
     } catch (e) {
-      print('Error creating task: $e');
+      debugPrint('Error creating task: $e');
       return false;
     }
   }
@@ -87,7 +94,7 @@ class SupabaseService {
       await _supabase.from('tasks').update({'done': done}).eq('id', id);
       return true;
     } catch (e) {
-      print('Error toggling task: $e');
+      debugPrint('Error toggling task: $e');
       return false;
     }
   }
@@ -130,7 +137,7 @@ class SupabaseService {
           .single();
       return response['id'] as String?;
     } catch (e) {
-      print('Error starting session: $e');
+      debugPrint('Error starting session: $e');
       return null;
     }
   }
@@ -145,7 +152,7 @@ class SupabaseService {
           'studying_minutes': realMinutes,
       }).eq('id', sessionId);
     } catch (e) {
-      print('Error stopping session: $e');
+      debugPrint('Error stopping session: $e');
     }
   }
 
@@ -173,7 +180,7 @@ class SupabaseService {
 
       return {'real': totalReal, 'planned': totalPlanned};
     } catch (e) {
-      print('Error getting session time summary: $e');
+      debugPrint('Error getting session time summary: $e');
       return {'real': 0, 'planned': 0};
     }
   }
@@ -188,7 +195,7 @@ class SupabaseService {
       );
       return (response as Map<String, dynamic>?) ?? {};
     } catch (e) {
-      print('Error fetching session stats: $e');
+      debugPrint('Error fetching session stats: $e');
       return {};
     }
   }
@@ -201,7 +208,7 @@ class SupabaseService {
       );
       return (response as num?)?.toInt() ?? 0;
     } catch (e) {
-      print('Error fetching streak: $e');
+      debugPrint('Error fetching streak: $e');
       return 0;
     }
   }
@@ -238,7 +245,7 @@ class SupabaseService {
       }
       return total;
     } catch (e) {
-      print('Error fetching daily minutes: $e');
+      debugPrint('Error fetching daily minutes: $e');
       return 0;
     }
   }
@@ -260,7 +267,34 @@ class SupabaseService {
       }
       return breakdown;
     } catch (e) {
-      print('Error fetching subject breakdown: $e');
+      debugPrint('Error fetching subject breakdown: $e');
+      return {};
+    }
+  }
+
+  /// Minutos estudados por dia nos últimos [days] dias (chave = data local
+  /// à meia-noite). Alimenta o mapa de consistência.
+  Future<Map<DateTime, int>> getDailyActivity({int days = 84}) async {
+    try {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: days - 1));
+      final data = await _supabase
+          .from('session_focus')
+          .select('start_dt, studying_minutes')
+          .not('finish_dt', 'is', null)
+          .gte('start_dt', start.toIso8601String());
+      final Map<DateTime, int> result = {};
+      for (final row in (data as List)) {
+        final dt = DateTime.tryParse(row['start_dt'] ?? '');
+        if (dt == null) continue;
+        final day = DateTime(dt.year, dt.month, dt.day);
+        result[day] =
+            (result[day] ?? 0) + ((row['studying_minutes'] as num?)?.toInt() ?? 0);
+      }
+      return result;
+    } catch (e) {
+      debugPrint('Error fetching daily activity: $e');
       return {};
     }
   }
@@ -288,7 +322,7 @@ class SupabaseService {
       }
       return minutes;
     } catch (e) {
-      print('Error fetching weekly activity: $e');
+      debugPrint('Error fetching weekly activity: $e');
       return List.filled(7, 0);
     }
   }

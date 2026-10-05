@@ -119,7 +119,7 @@ class _EmptyTasksViewState extends State<EmptyTasksView>
                 style: const TextStyle(
                   color: TempusColors.text,
                   fontSize: 17,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
                 ),
@@ -133,7 +133,7 @@ class _EmptyTasksViewState extends State<EmptyTasksView>
                 style: const TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 13,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   height: 1.55,
                 ),
               ),
@@ -165,7 +165,7 @@ class _EmptyTasksViewState extends State<EmptyTasksView>
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,
-                            fontFamily: 'Arimo',
+                            fontFamily: 'Manrope',
                             fontWeight: FontWeight.w600,
                           ),
                         ),

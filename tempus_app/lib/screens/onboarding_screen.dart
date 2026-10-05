@@ -98,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     style: TextStyle(
                       color: TempusColors.textSub,
                       fontSize: 13,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -166,7 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.1,
                         ),
@@ -282,7 +282,7 @@ class _SlideViewState extends State<_SlideView>
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 30,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                     height: 1.15,
@@ -298,7 +298,7 @@ class _SlideViewState extends State<_SlideView>
                 style: const TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 15,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   height: 1.65,
                 ),
               ),

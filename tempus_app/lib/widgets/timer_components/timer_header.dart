@@ -17,7 +17,7 @@ class TimerHeader extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.text,
               fontSize: 30,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w700,
               height: 1.2,
             ),
@@ -28,7 +28,7 @@ class TimerHeader extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.textSub,
               fontSize: 13,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w400,
             ),
           ),

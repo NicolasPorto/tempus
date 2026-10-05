@@ -11,6 +11,9 @@ import '../widgets/stats_components/weekly_activity_card.dart';
 import '../widgets/stats_components/subjects_breakdown_card.dart';
 import '../widgets/common/skeleton_widget.dart';
 import 'session_history_screen.dart';
+import '../widgets/stats_components/consistency_heatmap_card.dart';
+import '../widgets/common/ui.dart';
+import '../libraries/globals.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -34,15 +37,26 @@ class _StatsScreenState extends State<StatsScreen> {
   int _dailyGoalMinutes = 0;
   int _dailyMinutes = 0;
   Map<String, int> _subjectGoals = {};
+  Map<DateTime, int> _dailyActivity = {};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
+    tempusGlobals.dataVersion.addListener(_refreshSilently);
   }
 
-  Future<void> _fetchData() async {
-    if (mounted) setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    tempusGlobals.dataVersion.removeListener(_refreshSilently);
+    super.dispose();
+  }
+
+  void _refreshSilently() => _fetchData(silent: true);
+
+  Future<void> _fetchData({bool silent = false}) async {
+    if (!mounted) return;
+    if (!silent) setState(() => _isLoading = true);
     final svc = context.read<SupabaseService>();
 
     final prefs = await SharedPreferences.getInstance();
@@ -70,6 +84,7 @@ class _StatsScreenState extends State<StatsScreen> {
         svc.getSubjectBreakdown(),
         svc.listCategories(),
         svc.getDailyMinutes(),
+        svc.getDailyActivity(days: 84),
       ]);
 
       if (mounted) {
@@ -87,6 +102,7 @@ class _StatsScreenState extends State<StatsScreen> {
               .toList()
               .cast<Subject>();
           _dailyMinutes = results[7] as int;
+          _dailyActivity = results[8] as Map<DateTime, int>;
           _isLoading = false;
         });
       }
@@ -144,92 +160,51 @@ class _StatsScreenState extends State<StatsScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return RefreshIndicator(
-      onRefresh: _fetchData,
+      onRefresh: () => _fetchData(silent: true),
       color: TempusColors.accent,
       backgroundColor: TempusColors.surface,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding:
-            EdgeInsets.fromLTRB(20, topPadding + 8, 20, bottomPadding + 120),
+            EdgeInsets.fromLTRB(20, topPadding + 4, 20, bottomPadding + 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 24),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) =>
-                              TempusColors.gradient.createShader(
-                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+            PageHeader(
+              eyebrow: 'Seu progresso',
+              title: 'Estatísticas',
+              subtitle: const Text('Cada minuto de foco, registrado'),
+              trailing: !_isLoading && _hasAnySessions
+                  ? Tooltip(
+                      message: 'Compartilhar',
+                      child: Pressable(
+                        onTap: _shareStats,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: TempusColors.surfaceHigh,
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(color: TempusColors.border),
                           ),
-                          child: const Text(
-                            'Estatísticas',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontFamily: 'Arimo',
-                              fontWeight: FontWeight.w700,
-                              height: 1.1,
-                              letterSpacing: -0.5,
-                            ),
+                          child: Center(
+                            child: _isSharing
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: TempusColors.accent,
+                                    ),
+                                  )
+                                : const Icon(Icons.ios_share_rounded,
+                                    color: TempusColors.text, size: 18),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Seu progresso de estudos',
-                          style: TextStyle(
-                            color: TempusColors.textSub,
-                            fontSize: 13,
-                            fontFamily: 'Arimo',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Share icon button
-                  if (!_isLoading && _hasAnySessions) ...[
-                    GestureDetector(
-                      onTap: _shareStats,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: _isSharing
-                              ? TempusColors.accent.withValues(alpha: 0.2)
-                              : TempusColors.accent.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: TempusColors.accent.withValues(alpha: 0.35)),
-                        ),
-                        child: Center(
-                          child: _isSharing
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: TempusColors.accent,
-                                  ),
-                                )
-                              : const Icon(Icons.ios_share_rounded,
-                                  color: TempusColors.accent, size: 16),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  // Current date badge
-                  _DateBadge(),
-                ],
-              ),
+                    )
+                  : null,
             ),
 
             // Empty state
@@ -271,6 +246,10 @@ class _StatsScreenState extends State<StatsScreen> {
 
                 // Weekly activity
                 WeeklyActivityCard(barHeights: _weeklyActivity),
+
+                const SizedBox(height: 12),
+
+                ConsistencyHeatmapCard(minutesByDay: _dailyActivity),
 
                 const SizedBox(height: 12),
 
@@ -355,7 +334,7 @@ class _StatsScreenState extends State<StatsScreen> {
                           style: TextStyle(
                             color: TempusColors.textSub,
                             fontSize: 13,
-                            fontFamily: 'Arimo',
+                            fontFamily: 'Manrope',
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -371,46 +350,6 @@ class _StatsScreenState extends State<StatsScreen> {
 
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ── Date badge ─────────────────────────────────────────────────
-
-class _DateBadge extends StatelessWidget {
-  static const _months = [
-    'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-    'jul', 'ago', 'set', 'out', 'nov', 'dez',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final label = '${now.day} ${_months[now.month - 1]}';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: TempusColors.surfaceHigh,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: TempusColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.calendar_today_rounded,
-              color: TempusColors.textSub, size: 12),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: TempusColors.textSub,
-              fontSize: 12,
-              fontFamily: 'Arimo',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -446,7 +385,7 @@ class _StatsHeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF130F1E), Color(0xFF0B0B18)],
+          colors: [Color(0xFF1A1428), Color(0xFF0D0B16)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -472,7 +411,7 @@ class _StatsHeroCard extends StatelessWidget {
                 style: TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 13,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -494,7 +433,7 @@ class _StatsHeroCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 44,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w700,
                   letterSpacing: -1.5,
                   height: 1.0,
@@ -598,7 +537,7 @@ class _StreakChipState extends State<_StreakChip>
                 style: const TextStyle(
                   color: _amber,
                   fontSize: 12,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -626,7 +565,7 @@ class _HeroStat extends StatelessWidget {
             style: const TextStyle(
               color: TempusColors.textSub,
               fontSize: 11,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
             ),
           ),
           const SizedBox(height: 4),
@@ -638,7 +577,7 @@ class _HeroStat extends StatelessWidget {
               style: TextStyle(
                 color: value == '...' ? TempusColors.textSub : TempusColors.text,
                 fontSize: 18,
-                fontFamily: 'Arimo',
+                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -697,7 +636,7 @@ class _MiniStatCard extends StatelessWidget {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 22,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
                     height: 1.0,
@@ -710,7 +649,7 @@ class _MiniStatCard extends StatelessWidget {
                 style: const TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 11,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                 ),
               ),
             ],
@@ -771,7 +710,7 @@ class _DailyGoalCard extends StatelessWidget {
                 style: TextStyle(
                   color: reached ? TempusColors.green : TempusColors.textSub,
                   fontSize: 12,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -781,7 +720,7 @@ class _DailyGoalCard extends StatelessWidget {
                 style: const TextStyle(
                   color: TempusColors.text,
                   fontSize: 12,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -953,7 +892,7 @@ class _StatsShareCard extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 22,
-                fontFamily: 'Arimo',
+                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
               ),
@@ -965,7 +904,7 @@ class _StatsShareCard extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.textSub,
               fontSize: 13,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
             ),
           ),
           const SizedBox(height: 28),
@@ -976,7 +915,7 @@ class _StatsShareCard extends StatelessWidget {
             style: const TextStyle(
               color: TempusColors.text,
               fontSize: 44,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w700,
               letterSpacing: -1,
               height: 1,
@@ -988,7 +927,7 @@ class _StatsShareCard extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.textSub,
               fontSize: 13,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
             ),
           ),
 
@@ -1013,7 +952,7 @@ class _StatsShareCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Color(0xFFF59E0B),
                       fontSize: 13,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1059,7 +998,7 @@ class _StatsShareCard extends StatelessWidget {
                               ? TempusColors.accent
                               : TempusColors.textMuted,
                           fontSize: 10,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: isToday
                               ? FontWeight.w700
                               : FontWeight.w400,
@@ -1086,7 +1025,7 @@ class _StatsShareCard extends StatelessWidget {
                 style: TextStyle(
                   color: TempusColors.textMuted,
                   fontSize: 11,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                 ),
               ),
             ],
@@ -1133,7 +1072,7 @@ class _EmptyStatsState extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.text,
               fontSize: 20,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
             ),
@@ -1145,7 +1084,7 @@ class _EmptyStatsState extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.textSub,
               fontSize: 13,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               height: 1.6,
             ),
           ),

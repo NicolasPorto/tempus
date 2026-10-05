@@ -136,7 +136,7 @@ class _SessionHistoryScreenState extends State<SessionHistoryScreen> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 26,
-                            fontFamily: 'Arimo',
+                            fontFamily: 'Manrope',
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.5,
                           ),
@@ -147,7 +147,7 @@ class _SessionHistoryScreenState extends State<SessionHistoryScreen> {
                         style: TextStyle(
                           color: TempusColors.textSub,
                           fontSize: 12,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                         ),
                       ),
                     ],
@@ -207,7 +207,7 @@ class _SessionHistoryScreenState extends State<SessionHistoryScreen> {
                       style: const TextStyle(
                         color: TempusColors.text,
                         fontSize: 13,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -224,7 +224,7 @@ class _SessionHistoryScreenState extends State<SessionHistoryScreen> {
                         style: const TextStyle(
                           color: TempusColors.textSub,
                           fontSize: 11,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -298,7 +298,7 @@ class _SessionRow extends StatelessWidget {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 13,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -308,7 +308,7 @@ class _SessionRow extends StatelessWidget {
                     style: const TextStyle(
                       color: TempusColors.textSub,
                       fontSize: 11,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                     ),
                   ),
               ],
@@ -326,7 +326,7 @@ class _SessionRow extends StatelessWidget {
               style: const TextStyle(
                 color: TempusColors.textSub,
                 fontSize: 12,
-                fontFamily: 'Arimo',
+                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -354,7 +354,7 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.textSub,
               fontSize: 15,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -365,7 +365,7 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
               color: TempusColors.textMuted,
               fontSize: 12,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               height: 1.5,
             ),
           ),
@@ -392,7 +392,7 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message,
               style: const TextStyle(
-                  color: TempusColors.textSub, fontFamily: 'Arimo')),
+                  color: TempusColors.textSub, fontFamily: 'Manrope')),
           const SizedBox(height: 16),
           GestureDetector(
             onTap: onRetry,
@@ -407,7 +407,7 @@ class _ErrorState extends StatelessWidget {
                 'Tentar novamente',
                 style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w600),
               ),
             ),

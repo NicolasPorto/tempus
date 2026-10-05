@@ -14,6 +14,8 @@ import '../widgets/tasks_components/add_task_sheet.dart';
 import '../widgets/tasks_components/edit_task_sheet.dart';
 import '../widgets/subject_manager_modal.dart';
 import '../widgets/common/skeleton_widget.dart';
+import '../controller/timer_controller.dart';
+import '../libraries/globals.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -61,9 +63,28 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
     super.initState();
     _svc = context.read<SupabaseService>();
     _loadData();
+    tempusGlobals.dataVersion.addListener(_loadData);
+  }
+
+  /// Leva ao Timer já configurado com a matéria e a meta da tarefa.
+  void _focusOnTask(TaskItem task) {
+    final timer = context.read<TimerController>();
+    if (timer.isRunning || timer.isPaused) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(const SnackBar(
+          content: Text('Encerre a sessão atual antes de trocar de tarefa.'),
+        ));
+      return;
+    }
+    if (timer.focusOnTask(task)) {
+      HapticFeedback.mediumImpact();
+      tempusGlobals.goToTab(0);
+    }
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -83,7 +104,11 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           _subjects =
               categories.map((c) => c.toSubject()).toList().cast<Subject>();
           _subjectMap = {for (final s in _subjects) s.id: s};
-          final rawTasks = tasks.cast<TaskItem>();
+          // Não "ressuscita" a tarefa cuja exclusão ainda pode ser desfeita.
+          final rawTasks = tasks
+              .cast<TaskItem>()
+              .where((t) => t.id != _pendingDeleteTask?.id)
+              .toList();
           _tasks = _sortByOrder(rawTasks);
 
           if (_selectedSubjectId != null &&
@@ -137,6 +162,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
 
   @override
   void dispose() {
+    tempusGlobals.dataVersion.removeListener(_loadData);
     if (_pendingDeleteTask != null) {
       _svc.deleteTask(_pendingDeleteTask!.id);
     }
@@ -201,7 +227,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
       SnackBar(
         content: Text(
           '"${task.title}" removida',
-          style: const TextStyle(fontFamily: 'Arimo'),
+          style: const TextStyle(fontFamily: 'Manrope'),
         ),
         duration: const Duration(seconds: 4),
         backgroundColor: TempusColors.surface,
@@ -248,6 +274,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
   @override
   Widget build(BuildContext context) {
     final pendingCount = _tasks.where((t) => !t.done).length;
+    final completedCount = _tasks.length - pendingCount;
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
@@ -261,12 +288,13 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           displacement: 60,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(20, topPadding + 8, 20, 0),
+            padding: EdgeInsets.fromLTRB(20, topPadding + 4, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TasksHeader(
                   pendingCount: pendingCount,
+                  completedCount: completedCount,
                   onManageSubjects: _manageSubjects,
                 ),
                 const SizedBox(height: 16),
@@ -289,7 +317,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
           ),
         ),
         Positioned(
-          bottom: bottomPadding + 100,
+          bottom: bottomPadding + 98,
           right: 24,
           child: _buildFab(),
         ),
@@ -365,7 +393,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
                 style: const TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 13,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                 ),
               ),
             )
@@ -385,6 +413,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
                   onToggle: (_) => _toggleTask(t),
                   onDelete: () => _deleteTask(t),
                   onEdit: () => _openEditTaskSheet(t),
+                  onFocus: () => _focusOnTask(t),
                   dragIndex: i,
                 );
               },
@@ -424,7 +453,7 @@ class _TasksScreenContentState extends State<_TasksScreenContent> {
                   style: const TextStyle(
                     color: TempusColors.textSub,
                     fontSize: 13,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w500,
                   ),
                 ),

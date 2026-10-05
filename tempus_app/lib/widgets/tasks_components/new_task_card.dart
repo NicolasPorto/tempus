@@ -90,7 +90,7 @@ class NewTaskCard extends StatelessWidget {
                       style: TextStyle(
                         color: TempusColors.text,
                         fontSize: 16,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -129,7 +129,7 @@ class NewTaskCard extends StatelessWidget {
                 style: TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 11,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.5,
                 ),
@@ -149,7 +149,7 @@ class NewTaskCard extends StatelessWidget {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 14,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                   ),
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -157,7 +157,7 @@ class NewTaskCard extends StatelessWidget {
                     hintStyle: TextStyle(
                       color: TempusColors.textMuted,
                       fontSize: 14,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                     ),
                     border: InputBorder.none,
                   ),
@@ -177,7 +177,7 @@ class NewTaskCard extends StatelessWidget {
               style: TextStyle(
                 color: TempusColors.textSub,
                 fontSize: 11,
-                fontFamily: 'Arimo',
+                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
               ),
@@ -205,7 +205,7 @@ class NewTaskCard extends StatelessWidget {
                       child: Text(
                         '$index',
                         style: TextStyle(
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontSize: 14,
                           fontWeight: isSelected
                               ? FontWeight.w700
@@ -233,7 +233,7 @@ class NewTaskCard extends StatelessWidget {
           style: TextStyle(
             color: TempusColors.textSub,
             fontSize: 11,
-            fontFamily: 'Arimo',
+            fontFamily: 'Manrope',
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),
@@ -245,7 +245,7 @@ class NewTaskCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: subjects.isEmpty
-                ? TempusColors.surfaceHigh.withOpacity(0.5)
+                ? TempusColors.surfaceHigh.withValues(alpha: 0.5)
                 : TempusColors.surfaceHigh,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: TempusColors.border),
@@ -271,7 +271,7 @@ class NewTaskCard extends StatelessWidget {
                 style: TextStyle(
                   color: TempusColors.textMuted,
                   fontSize: 14,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                 ),
               ),
               items: subjects.map((s) {
@@ -296,7 +296,7 @@ class NewTaskCard extends StatelessWidget {
                         style: TextStyle(
                           color: isSelected ? TempusColors.text : const Color(0xFFCCCCCC),
                           fontSize: 14,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
@@ -329,7 +329,7 @@ class NewTaskCard extends StatelessWidget {
                         style: const TextStyle(
                           color: TempusColors.text,
                           fontSize: 14,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                         ),
                       ),
                     ],
@@ -357,7 +357,7 @@ class NewTaskCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: TempusColors.accent.withOpacity(0.2),
+                color: TempusColors.accent.withValues(alpha: 0.2),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -373,7 +373,7 @@ class NewTaskCard extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
                 ),
               ),

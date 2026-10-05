@@ -87,7 +87,7 @@ class _EmptySubjectCardState extends State<EmptySubjectCard>
                 style: TextStyle(
                   color: TempusColors.text,
                   fontSize: 17,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
                 ),
@@ -99,7 +99,7 @@ class _EmptySubjectCardState extends State<EmptySubjectCard>
                 style: TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 13,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   height: 1.55,
                 ),
               ),
@@ -130,7 +130,7 @@ class _EmptySubjectCardState extends State<EmptySubjectCard>
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.1,
                         ),

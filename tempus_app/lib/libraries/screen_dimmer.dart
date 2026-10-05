@@ -15,7 +15,7 @@ class ScreenDimmer with ChangeNotifier {
   double _blackoutOpacity = 0.0;
   bool _isActive = false;
   double _dragOffset = 0.0;
-  double _minimumDragOffSet = -150.0;
+  final double _minimumDragOffSet = -150.0;
 
   VoidCallback? onReveal;
 
@@ -51,7 +51,7 @@ class ScreenDimmer with ChangeNotifier {
           }
         },
         onError: (Object e) {
-          print('Recorder Error: $e');
+          debugPrint('Recorder Error: $e');
           _stopListening();
         },
       );
@@ -63,7 +63,7 @@ class ScreenDimmer with ChangeNotifier {
         codec: Codec.amrNB,
       );
     } else {
-      print('Microphone permission denied.');
+      debugPrint('Microphone permission denied.');
     }
   }
 
@@ -92,9 +92,9 @@ class ScreenDimmer with ChangeNotifier {
       notifyListeners();
 
       await WakelockPlus.enable();
-      print('Escurecimento do App ativo.');
+      debugPrint('Escurecimento do App ativo.');
     } catch (e) {
-      print('Erro ao iniciar escurecimento: $e');
+      debugPrint('Erro ao iniciar escurecimento: $e');
       _isActive = false;
     }
   }
@@ -113,7 +113,7 @@ class ScreenDimmer with ChangeNotifier {
 
     await WakelockPlus.disable();
 
-    print('Escurecimento do App parado. Visualização restaurada.');
+    debugPrint('Escurecimento do App parado. Visualização restaurada.');
   }
 
   @override

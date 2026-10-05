@@ -86,7 +86,7 @@ class SummaryStatCard extends StatelessWidget {
                             ? TempusColors.textSub
                             : TempusColors.text,
                         fontSize: 34,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w700,
                         height: 1.0,
                         letterSpacing: -0.5,
@@ -101,7 +101,7 @@ class SummaryStatCard extends StatelessWidget {
                     style: const TextStyle(
                       color: TempusColors.textSub,
                       fontSize: 12,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontWeight: FontWeight.w400,
                     ),
                   ),

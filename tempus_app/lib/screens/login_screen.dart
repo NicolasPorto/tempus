@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen>
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 44,
-                              fontFamily: 'Arimo',
+                              fontFamily: 'Manrope',
                               fontWeight: FontWeight.w700,
                               letterSpacing: -1.5,
                               height: 1.0,
@@ -201,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen>
                           style: TextStyle(
                             color: TempusColors.textSub,
                             fontSize: 16,
-                            fontFamily: 'Arimo',
+                            fontFamily: 'Manrope',
                             fontWeight: FontWeight.w400,
                             height: 1.55,
                           ),
@@ -304,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 16,
-                                            fontFamily: 'Arimo',
+                                            fontFamily: 'Manrope',
                                             fontWeight: FontWeight.w600,
                                             letterSpacing: 0.1,
                                           ),
@@ -331,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen>
                             style: TextStyle(
                               color: TempusColors.textMuted,
                               fontSize: 11,
-                              fontFamily: 'Arimo',
+                              fontFamily: 'Manrope',
                             ),
                           ),
                         ],
@@ -394,7 +394,7 @@ class _FeatureRow extends StatelessWidget {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 14,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -404,7 +404,7 @@ class _FeatureRow extends StatelessWidget {
                   style: const TextStyle(
                     color: TempusColors.textSub,
                     fontSize: 12,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                   ),
                 ),
               ],

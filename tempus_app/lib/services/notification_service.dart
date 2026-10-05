@@ -10,6 +10,7 @@ const _kReminderMinute = 'notif_reminder_minute';
 
 const _idReminder = 1;
 const _idGoalReached = 2;
+const _idSessionEnd = 3;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -58,12 +59,14 @@ class NotificationService {
     await prefs.setInt(_kReminderHour, hour);
     await prefs.setInt(_kReminderMinute, minute);
 
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day, hour, minute);
-    if (scheduled.isBefore(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
+    // tz.local nunca é configurado (fica em UTC), então montamos o horário
+    // no fuso do aparelho e convertemos para um instante absoluto em UTC.
+    final now = DateTime.now();
+    var local = DateTime(now.year, now.month, now.day, hour, minute);
+    if (local.isBefore(now)) {
+      local = local.add(const Duration(days: 1));
     }
+    final scheduled = tz.TZDateTime.from(local, tz.UTC);
 
     try {
       await _plugin.zonedSchedule(
@@ -118,6 +121,44 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint('Error showing goal notification: $e');
+    }
+  }
+
+  /// Agenda o aviso de fim de sessão — garante o alerta mesmo se o sistema
+  /// suspender o app em segundo plano.
+  Future<void> scheduleSessionEnd(DateTime at, {required String body}) async {
+    if (!_initialized) await init();
+    try {
+      await _plugin.cancel(_idSessionEnd);
+      await _plugin.zonedSchedule(
+        _idSessionEnd,
+        '✅ Sessão concluída!',
+        body,
+        tz.TZDateTime.from(at, tz.UTC),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'tempus_session',
+            'Fim de sessão',
+            channelDescription: 'Aviso quando uma sessão de foco termina',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling session end: $e');
+    }
+  }
+
+  Future<void> cancelSessionEnd() async {
+    try {
+      await _plugin.cancel(_idSessionEnd);
+    } catch (e) {
+      debugPrint('Error cancelling session end: $e');
     }
   }
 

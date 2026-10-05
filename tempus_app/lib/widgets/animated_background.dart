@@ -1,10 +1,17 @@
 import 'dart:math';
-import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import '../controller/timer_controller.dart' show isFocusModeGlobalNotifier;
+import '../theme/app_theme.dart';
 
+/// Fundo "aurora" com orbes de luz que flutuam lentamente.
+///
+/// Os orbes são pintados com gradientes radiais (bordas naturalmente suaves),
+/// o que dispensa o BackdropFilter de tela cheia usado antes — esse blur era
+/// recalculado a cada frame e dominava o custo de GPU do app. A animação
+/// também pausa no modo foco, quando o fundo fica coberto.
 class AnimatedBackground extends StatefulWidget {
   final Widget child;
-  const AnimatedBackground({Key? key, required this.child}) : super(key: key);
+  const AnimatedBackground({super.key, required this.child});
 
   @override
   State<AnimatedBackground> createState() => _AnimatedBackgroundState();
@@ -12,13 +19,12 @@ class AnimatedBackground extends StatefulWidget {
 
 class _AnimatedBackgroundState extends State<AnimatedBackground>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final AnimationController _controller;
 
-  // 3 orbs instead of 4 — fewer blur draws per frame
-  final List<_Orb> _orbs = [
-    _Orb(color: Color(0x2D7C3AED), radius: 150, speed: 0.16, phase: 0.0),
-    _Orb(color: Color(0x1F4338CA), radius: 110, speed: 0.27, phase: 2.1),
-    _Orb(color: Color(0x176D28D9), radius: 90, speed: 0.41, phase: 4.3),
+  static const List<_Orb> _orbs = [
+    _Orb(color: Color(0x557C3AED), radius: 0.62, speed: 0.16, phase: 0.0, ox: 0.15, oy: 0.10),
+    _Orb(color: Color(0x383B5BDB), radius: 0.50, speed: 0.27, phase: 2.1, ox: 0.85, oy: 0.55),
+    _Orb(color: Color(0x30C026D3), radius: 0.42, speed: 0.41, phase: 4.3, ox: 0.30, oy: 0.95),
   ];
 
   @override
@@ -26,12 +32,22 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 40),
+      duration: const Duration(seconds: 60),
     )..repeat();
+    isFocusModeGlobalNotifier.addListener(_onFocusChanged);
+  }
+
+  void _onFocusChanged() {
+    if (isFocusModeGlobalNotifier.value) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override
   void dispose() {
+    isFocusModeGlobalNotifier.removeListener(_onFocusChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -40,30 +56,22 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(color: Colors.black),
+        const Positioned.fill(child: ColoredBox(color: TempusColors.bg)),
         Positioned.fill(
           child: RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (_, __) => CustomPaint(
-                painter: _OrbPainter(_controller.value, _orbs),
-              ),
-            ),
+            child: CustomPaint(painter: _OrbPainter(_controller, _orbs)),
           ),
         ),
-        // Liquid glass layer — blurs the orbs, content sits sharp on top
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 64, sigmaY: 64),
-            child: Container(
-              decoration: const BoxDecoration(
+        // Vinheta: escurece as bordas e mantém o conteúdo legível.
+        const Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0x1A0F0A1E), // roxo-escuro muito sutil, top
-                    Color(0x220A0812), // quase preto, bottom
-                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x00000000), Color(0x66000000), Color(0xCC05040A)],
+                  stops: [0.0, 0.55, 1.0],
                 ),
               ),
             ),
@@ -77,40 +85,46 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
 
 class _Orb {
   final Color color;
-  final double radius;
+  final double radius; // fração da largura da tela
   final double speed;
   final double phase;
+  final double ox, oy; // centro da órbita (fração da tela)
 
   const _Orb({
     required this.color,
     required this.radius,
     required this.speed,
     required this.phase,
+    required this.ox,
+    required this.oy,
   });
 }
 
 class _OrbPainter extends CustomPainter {
-  final double progress;
+  final Animation<double> progress;
   final List<_Orb> orbs;
 
-  _OrbPainter(this.progress, this.orbs);
+  _OrbPainter(this.progress, this.orbs) : super(repaint: progress);
 
-  // Static: created once for the lifetime of the app. Blur radius 28 (was 48)
-  // — cost scales with r², so 28²/48² ≈ 34% of the original GPU cost.
-  static final _paint = Paint()
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28);
+  final Paint _paint = Paint();
 
   @override
   void paint(Canvas canvas, Size size) {
+    final t = progress.value * 2 * pi;
     for (final orb in orbs) {
-      final double angle = (progress * 2 * pi * orb.speed) + orb.phase;
-      final double x = (size.width / 2) + cos(angle) * (size.width * 0.38);
-      final double y = (size.height / 2) + sin(angle) * (size.height * 0.38);
-      _paint.color = orb.color;
-      canvas.drawCircle(Offset(x, y), orb.radius, _paint);
+      final angle = t * orb.speed * 3 + orb.phase;
+      final c = Offset(
+        size.width * orb.ox + cos(angle) * size.width * 0.18,
+        size.height * orb.oy + sin(angle * 0.8) * size.height * 0.08,
+      );
+      final r = size.width * orb.radius;
+      _paint.shader = RadialGradient(
+        colors: [orb.color, orb.color.withValues(alpha: 0)],
+      ).createShader(Rect.fromCircle(center: c, radius: r));
+      canvas.drawCircle(c, r, _paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _OrbPainter old) => progress != old.progress;
+  bool shouldRepaint(covariant _OrbPainter old) => false;
 }

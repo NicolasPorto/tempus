@@ -108,7 +108,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                   'Meta — ${subj.name}',
                   style: const TextStyle(
                     color: TempusColors.text,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w700,
                     fontSize: 17,
                   ),
@@ -123,7 +123,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                 'Quanto quer estudar esta matéria por semana?',
                 style: TextStyle(
                   color: TempusColors.textSub,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontSize: 13,
                 ),
               ),
@@ -134,7 +134,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                     : '${selected ~/ 60}h${selected % 60 > 0 ? ' ${selected % 60}min' : ''}',
                 style: const TextStyle(
                   color: TempusColors.text,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w700,
                   fontSize: 28,
                   letterSpacing: -0.5,
@@ -156,12 +156,12 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                       style: TextStyle(
                           color: TempusColors.textSub,
                           fontSize: 11,
-                          fontFamily: 'Arimo')),
+                          fontFamily: 'Manrope')),
                   Text('8h',
                       style: TextStyle(
                           color: TempusColors.textSub,
                           fontSize: 11,
-                          fontFamily: 'Arimo')),
+                          fontFamily: 'Manrope')),
                 ],
               ),
             ],
@@ -175,13 +175,13 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                 },
                 child: const Text('Remover',
                     style: TextStyle(
-                        color: TempusColors.red, fontFamily: 'Arimo')),
+                        color: TempusColors.red, fontFamily: 'Manrope')),
               ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Cancelar',
                   style: TextStyle(
-                      color: TempusColors.textSub, fontFamily: 'Arimo')),
+                      color: TempusColors.textSub, fontFamily: 'Manrope')),
             ),
             TextButton(
               onPressed: () {
@@ -191,7 +191,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
               child: const Text('Salvar',
                   style: TextStyle(
                       color: TempusColors.accent,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontWeight: FontWeight.w600)),
             ),
           ],
@@ -259,7 +259,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                         style: TextStyle(
                           color: TempusColors.textSub,
                           fontSize: 13,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -272,7 +272,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                       style: TextStyle(
                         color: TempusColors.textSub,
                         fontSize: 13,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                       ),
                     ),
                   ] else ...[
@@ -328,7 +328,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                                         style: const TextStyle(
                                           color: TempusColors.text,
                                           fontSize: 13,
-                                          fontFamily: 'Arimo',
+                                          fontFamily: 'Manrope',
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -349,7 +349,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                                         style: const TextStyle(
                                           color: TempusColors.textSub,
                                           fontSize: 12,
-                                          fontFamily: 'Arimo',
+                                          fontFamily: 'Manrope',
                                           fontWeight: FontWeight.w400,
                                         ),
                                       ),
@@ -402,7 +402,7 @@ class _SubjectsBreakdownCardState extends State<SubjectsBreakdownCard>
                               style: TextStyle(
                                 color: TempusColors.textMuted,
                                 fontSize: 11,
-                                fontFamily: 'Arimo',
+                                fontFamily: 'Manrope',
                               ),
                             ),
                           ],

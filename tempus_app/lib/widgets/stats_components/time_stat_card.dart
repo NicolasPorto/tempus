@@ -72,7 +72,7 @@ class TimeStatCard extends StatelessWidget {
                         style: TextStyle(
                           color: TempusColors.textSub,
                           fontSize: 13,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -129,7 +129,7 @@ class _StatCol extends StatelessWidget {
             style: const TextStyle(
               color: TempusColors.textSub,
               fontSize: 11,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -157,7 +157,7 @@ class _StatCol extends StatelessWidget {
               style: TextStyle(
                 color: value == '...' ? TempusColors.textSub : TempusColors.text,
                 fontSize: 20,
-                fontFamily: 'Arimo',
+                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w700,
               ),
             ),

@@ -123,7 +123,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                       style: TextStyle(
                         color: TempusColors.text,
                         fontSize: 17,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -141,14 +141,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 15,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                   ),
                   decoration: InputDecoration(
                     hintText: 'Ex: Resolver exercícios de cálculo...',
                     hintStyle: const TextStyle(
                       color: TempusColors.textMuted,
                       fontSize: 14,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                     ),
                     filled: true,
                     fillColor: TempusColors.surfaceHigh,
@@ -189,12 +189,12 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? TempusColors.accent.withOpacity(0.15)
+                                ? TempusColors.accent.withValues(alpha: 0.15)
                                 : TempusColors.surfaceHigh,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isSelected
-                                  ? TempusColors.accent.withOpacity(0.6)
+                                  ? TempusColors.accent.withValues(alpha: 0.6)
                                   : TempusColors.border,
                             ),
                           ),
@@ -205,7 +205,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                                   ? TempusColors.accent
                                   : TempusColors.textSub,
                               fontSize: 13,
-                              fontFamily: 'Arimo',
+                              fontFamily: 'Manrope',
                               fontWeight: isSelected
                                   ? FontWeight.w700
                                   : FontWeight.w400,
@@ -226,7 +226,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     'Nenhuma matéria criada. Adicione uma matéria primeiro.',
                     style: TextStyle(
                       color: TempusColors.textMuted,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontSize: 13,
                     ),
                   )
@@ -246,12 +246,12 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                               horizontal: 12, vertical: 7),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? color.withOpacity(0.15)
+                                ? color.withValues(alpha: 0.15)
                                 : TempusColors.surfaceHigh,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isSelected
-                                  ? color.withOpacity(0.7)
+                                  ? color.withValues(alpha: 0.7)
                                   : TempusColors.border,
                             ),
                           ),
@@ -272,7 +272,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                                       ? color
                                       : TempusColors.textSub,
                                   fontSize: 13,
-                                  fontFamily: 'Arimo',
+                                  fontFamily: 'Manrope',
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.w400,
@@ -301,7 +301,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: TempusColors.accent.withOpacity(0.25),
+                            color: TempusColors.accent.withValues(alpha: 0.25),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -327,7 +327,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,
-                                    fontFamily: 'Arimo',
+                                    fontFamily: 'Manrope',
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -349,7 +349,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         style: const TextStyle(
           color: TempusColors.textSub,
           fontSize: 11,
-          fontFamily: 'Arimo',
+          fontFamily: 'Manrope',
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
         ),

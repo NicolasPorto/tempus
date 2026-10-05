@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:tempus_app/widgets/animated_background.dart';
 import 'package:tempus_app/libraries/globals.dart';
@@ -12,6 +13,8 @@ import 'package:tempus_app/core/supabase/supabase_client.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:tempus_app/services/notification_service.dart';
 import 'package:tempus_app/theme/app_theme.dart';
+import 'package:tempus_app/core/demo.dart';
+import 'package:tempus_app/services/demo_supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,13 +26,15 @@ void main() async {
   ));
   await SupabaseClientConfig.initialize();
   // Não bloqueia o startup: a inicialização dos ads roda em background.
-  MobileAds.instance.initialize();
+  if (!kDemoMode) MobileAds.instance.initialize();
   await NotificationService().init();
 
   runApp(
     MultiProvider(
       providers: [
-        Provider(create: (_) => SupabaseService()),
+        Provider<SupabaseService>(
+          create: (_) => kDemoMode ? DemoSupabaseService() : SupabaseService(),
+        ),
         ChangeNotifierProvider.value(value: tempusGlobals),
         ChangeNotifierProvider<ScreenDimmer>(create: (_) => screenDimmer),
       ],
@@ -49,6 +54,13 @@ class TempusApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.transparent,
       ),
       debugShowCheckedModeBanner: false,
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: Stack(
         children: [
           const AnimatedBackground(child: AuthWrapper()),
@@ -118,7 +130,7 @@ class BlackoutWrapper extends StatelessWidget {
                         color: Colors.transparent,
                         child: Icon(
                           Icons.keyboard_arrow_up,
-                          color: Colors.white54.withOpacity(textOpacity),
+                          color: Colors.white54.withValues(alpha: textOpacity),
                           size: 64.0,
                         ),
                       ),
@@ -157,7 +169,7 @@ class AudioWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.15)
+      ..color = Colors.white.withValues(alpha: 0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 

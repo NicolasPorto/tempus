@@ -120,7 +120,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: Color(colorValue).withOpacity(0.5),
+                color: Color(colorValue).withValues(alpha: 0.5),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -161,7 +161,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
             style: TextStyle(
               color: TempusColors.textSub,
               fontSize: 13,
-              fontFamily: 'Arimo',
+              fontFamily: 'Manrope',
             ),
           ),
         ),
@@ -196,7 +196,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 14,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w400,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -233,7 +233,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
           'Remover matéria?',
           style: TextStyle(
             color: TempusColors.text,
-            fontFamily: 'Arimo',
+            fontFamily: 'Manrope',
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -241,7 +241,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
           '"${cat.name}" será removida permanentemente.',
           style: const TextStyle(
             color: TempusColors.textSub,
-            fontFamily: 'Arimo',
+            fontFamily: 'Manrope',
           ),
         ),
         actions: [
@@ -310,7 +310,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                     style: TextStyle(
                       color: TempusColors.text,
                       fontSize: 18,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -353,7 +353,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                       style: TextStyle(
                         color: TempusColors.textSub,
                         fontSize: 11,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -372,7 +372,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                         style: const TextStyle(
                           color: TempusColors.text,
                           fontSize: 14,
-                          fontFamily: 'Arimo',
+                          fontFamily: 'Manrope',
                         ),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -380,7 +380,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                           hintStyle: TextStyle(
                             color: TempusColors.textMuted,
                             fontSize: 14,
-                            fontFamily: 'Arimo',
+                            fontFamily: 'Manrope',
                           ),
                           border: InputBorder.none,
                         ),
@@ -394,7 +394,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                       style: TextStyle(
                         color: TempusColors.textSub,
                         fontSize: 11,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -434,7 +434,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
-                                    fontFamily: 'Arimo',
+                                    fontFamily: 'Manrope',
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -452,7 +452,7 @@ class _SubjectManagerModalState extends State<SubjectManagerModal> {
                 style: TextStyle(
                   color: TempusColors.textSub,
                   fontSize: 11,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),

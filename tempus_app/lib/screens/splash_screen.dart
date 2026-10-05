@@ -142,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 34,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                       fontWeight: FontWeight.w800,
                       letterSpacing: 9,
                     ),
@@ -161,7 +161,7 @@ class _SplashScreenState extends State<SplashScreen>
                 style: TextStyle(
                   color: Color(0xFF4B4B5C),
                   fontSize: 11,
-                  fontFamily: 'Arimo',
+                  fontFamily: 'Manrope',
                   fontWeight: FontWeight.w400,
                   letterSpacing: 2.2,
                 ),

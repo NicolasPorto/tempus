@@ -119,7 +119,7 @@ class _EditTaskSheetState extends State<EditTaskSheet> {
                       style: TextStyle(
                         color: TempusColors.text,
                         fontSize: 17,
-                        fontFamily: 'Arimo',
+                        fontFamily: 'Manrope',
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -137,14 +137,14 @@ class _EditTaskSheetState extends State<EditTaskSheet> {
                   style: const TextStyle(
                     color: TempusColors.text,
                     fontSize: 15,
-                    fontFamily: 'Arimo',
+                    fontFamily: 'Manrope',
                   ),
                   decoration: InputDecoration(
                     hintText: 'Título da tarefa...',
                     hintStyle: const TextStyle(
                       color: TempusColors.textMuted,
                       fontSize: 14,
-                      fontFamily: 'Arimo',
+                      fontFamily: 'Manrope',
                     ),
                     filled: true,
                     fillColor: TempusColors.surfaceHigh,
@@ -197,7 +197,7 @@ class _EditTaskSheetState extends State<EditTaskSheet> {
                             style: TextStyle(
                               color: isSelected ? TempusColors.accent : TempusColors.textSub,
                               fontSize: 13,
-                              fontFamily: 'Arimo',
+                              fontFamily: 'Manrope',
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                             ),
                           ),
@@ -247,7 +247,7 @@ class _EditTaskSheetState extends State<EditTaskSheet> {
                               style: TextStyle(
                                 color: isSelected ? color : TempusColors.textSub,
                                 fontSize: 13,
-                                fontFamily: 'Arimo',
+                                fontFamily: 'Manrope',
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                               ),
                             ),
@@ -296,7 +296,7 @@ class _EditTaskSheetState extends State<EditTaskSheet> {
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,
-                                    fontFamily: 'Arimo',
+                                    fontFamily: 'Manrope',
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -318,7 +318,7 @@ class _EditTaskSheetState extends State<EditTaskSheet> {
         style: const TextStyle(
           color: TempusColors.textSub,
           fontSize: 11,
-          fontFamily: 'Arimo',
+          fontFamily: 'Manrope',
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
         ),
