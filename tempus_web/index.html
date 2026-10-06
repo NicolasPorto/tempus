@@ -2,26 +2,60 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Tempus — Estude com foco | Timer Pomodoro grátis para Android</title>
+    <meta
+      name="description"
+      content="Timer Pomodoro, tarefas por matéria, estatísticas e conquistas. O Tempus apaga a tela durante o foco e mostra sua evolução. Grátis no Google Play."
+    />
+    <meta name="theme-color" content="#05040A" />
     <link rel="icon" type="image/svg+xml" href="/icon_login.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tempus — Estude com foco</title>
-    <meta name="description" content="Organize seus estudos com o método Pomodoro. Timer inteligente, gerenciamento de tarefas e estatísticas detalhadas. Gratuito para Android e iOS." />
+    <link rel="apple-touch-icon" href="/og/icon-512.png" />
+
+    <!-- Android: oferece o app da Play Store -->
+    <meta name="google-play-app" content="app-id=com.dev.tempusapp" />
 
     <!-- Open Graph -->
-    <meta property="og:type"        content="website" />
-    <meta property="og:title"       content="Tempus — Estude com foco" />
-    <meta property="og:description" content="Organize seus estudos com o método Pomodoro. Timer inteligente, gerenciamento de tarefas e estatísticas detalhadas. Gratuito." />
-    <meta property="og:image"       content="/icon_login.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Tempus" />
+    <meta property="og:title" content="Tempus — Estude com foco" />
+    <meta
+      property="og:description"
+      content="Timer Pomodoro, tarefas e estatísticas num app que apaga a tela e deixa as distrações do lado de fora. Grátis no Google Play."
+    />
+    <meta property="og:image" content="/og/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Tempus — Estude com foco. Timer Pomodoro grátis para Android." />
 
     <!-- Twitter -->
-    <meta name="twitter:card"        content="summary" />
-    <meta name="twitter:title"       content="Tempus — Estude com foco" />
-    <meta name="twitter:description" content="Organize seus estudos com o método Pomodoro. Timer inteligente, gratuito para Android e iOS." />
-    <meta name="twitter:image"       content="/icon_login.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tempus — Estude com foco" />
+    <meta name="twitter:description" content="Timer Pomodoro, tarefas e estatísticas. Grátis no Google Play." />
+    <meta name="twitter:image" content="/og/og-image.png" />
+
+    <!-- Dados estruturados (app) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        "name": "Tempus",
+        "operatingSystem": "Android",
+        "applicationCategory": "EducationalApplication",
+        "description": "Timer Pomodoro, tarefas por matéria, estatísticas e conquistas para estudar com foco.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" },
+        "installUrl": "https://play.google.com/store/apps/details?id=com.dev.tempusapp&hl=pt_BR"
+      }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preload" as="image" href="/screens/modo-foco.webp" type="image/webp" />
   </head>
   <body>
     <div id="root"></div>

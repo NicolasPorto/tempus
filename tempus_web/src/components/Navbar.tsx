@@ -1,173 +1,101 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Logo, PlayStoreButton } from './ui'
+
+const links = [
+  { label: 'Recursos', href: '#recursos' },
+  { label: 'O app', href: '#app' },
+  { label: 'Como funciona', href: '#como-funciona' },
+  { label: 'Dúvidas', href: '#faq' },
+]
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30)
+    const onScroll = () => setScrolled(window.scrollY > 24)
+    onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' })
-    setMenuOpen(false)
-  }
-
   return (
-    <>
+    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-3 sm:px-6">
       <nav
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 200,
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 clamp(16px, 4vw, 48px)',
-          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease',
-          background: scrolled
-            ? 'rgba(6, 4, 10, 0.38)'
-            : 'transparent',
-          backdropFilter: scrolled ? 'blur(28px) saturate(160%) brightness(1.08)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(28px) saturate(160%) brightness(1.08)' : 'none',
-          borderBottom: `1px solid ${scrolled ? 'rgba(255,255,255,0.09)' : 'transparent'}`,
-        }}
+        className={`mx-auto flex h-16 max-w-page items-center justify-between rounded-2xl border px-4 transition-all duration-300 sm:px-5 ${
+          scrolled || open
+            ? 'border-white/[0.08] bg-[#0f0d16]/75 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] backdrop-blur-xl'
+            : 'border-transparent bg-transparent'
+        }`}
+        aria-label="Principal"
       >
-        {/* Logo */}
-        <button
-          onClick={() => scrollTo('inicio')}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: 0,
-          }}
-        >
-          <img
-            src="/icon_login.svg"
-            alt="Tempus"
-            width={30}
-            height={30}
-            className="logo-glow"
-            style={{ display: 'block' }}
-          />
-          <span
-            className="gradient-text"
-            style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px' }}
-          >
-            Tempus
-          </span>
-        </button>
+        <a href="#inicio" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+          <Logo size={30} />
+          <span className="text-xl font-extrabold tracking-tight">Tempus</span>
+        </a>
 
-        {/* Desktop: only download button */}
-        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center' }}>
+        <ul className="hidden items-center gap-1 md:flex">
+          {links.map(l => (
+            <li key={l.href}>
+              <a
+                href={l.href}
+                className="rounded-xl px-3.5 py-2 text-sm font-semibold text-sub transition-colors hover:bg-white/[0.05] hover:text-ink"
+              >
+                {l.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex items-center gap-2">
+          <PlayStoreButton size="md" label="Baixar grátis" className="hidden sm:inline-flex" />
           <button
-            className="btn-gradient"
-            onClick={() => scrollTo('como-funciona')}
-            style={{ padding: '9px 22px', fontSize: 13, letterSpacing: 0.2 }}
+            type="button"
+            className="grid h-11 w-11 place-items-center rounded-xl text-ink md:hidden"
+            aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={open}
+            onClick={() => setOpen(o => !o)}
           >
-            Baixar
+            <span className="relative block h-3.5 w-5">
+              {[0, 1, 2].map(i => (
+                <span
+                  key={i}
+                  className="absolute left-0 h-0.5 w-5 rounded bg-current transition-all duration-200"
+                  style={{
+                    top: open ? 6 : i * 6,
+                    opacity: open && i === 1 ? 0 : 1,
+                    transform: open ? `rotate(${i === 0 ? 45 : i === 2 ? -45 : 0}deg)` : 'none',
+                  }}
+                />
+              ))}
+            </span>
           </button>
         </div>
-
-        {/* Hamburger (mobile) */}
-        <button
-          className="nav-hamburger"
-          onClick={() => setMenuOpen(o => !o)}
-          aria-label="Menu"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 5,
-            padding: 4,
-          }}
-        >
-          {[0, 1, 2].map(i => (
-            <span
-              key={i}
-              style={{
-                display: 'block',
-                width: 22,
-                height: 2,
-                borderRadius: 2,
-                background: '#F4F4F4',
-                transition: 'opacity 0.15s, transform 0.15s',
-                opacity: menuOpen && i === 1 ? 0 : 1,
-                transform:
-                  menuOpen && i === 0 ? 'rotate(45deg) translate(5px, 5px)'
-                  : menuOpen && i === 2 ? 'rotate(-45deg) translate(5px, -5px)'
-                  : 'none',
-              }}
-            />
-          ))}
-        </button>
       </nav>
 
-      {/* Mobile dropdown */}
+      {/* Mobile menu */}
       <div
-        style={{
-          position: 'fixed',
-          top: 64,
-          left: 0,
-          right: 0,
-          zIndex: 199,
-          background: 'rgba(6, 4, 10, 0.88)',
-          backdropFilter: 'blur(28px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(160%)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          padding: menuOpen ? '16px 24px 24px' : '0 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          overflow: 'hidden',
-          maxHeight: menuOpen ? 300 : 0,
-          transition: 'max-height 0.25s ease, padding 0.25s ease',
-        }}
-        className="nav-mobile-menu"
+        className={`mx-auto mt-2 max-w-page overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0f0d16]/90 backdrop-blur-xl transition-all duration-300 md:hidden ${
+          open ? 'max-h-96 opacity-100' : 'pointer-events-none max-h-0 opacity-0'
+        }`}
       >
-        {[
-          { label: 'Início', id: 'inicio' },
-          { label: 'Funcionalidades', id: 'funcionalidades' },
-          { label: 'Como funciona', id: 'como-funciona' },
-        ].map(({ label, id }) => (
-          <button
-            key={id}
-            onClick={() => scrollTo(id)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 16,
-              fontWeight: 500,
-              color: '#D4D4D4',
-              padding: '12px 0',
-              textAlign: 'left',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            {label}
-          </button>
-        ))}
-        <button
-          className="btn-gradient"
-          style={{ marginTop: 12, padding: '13px 0', fontSize: 15, width: '100%' }}
-          onClick={() => scrollTo('como-funciona')}
-        >
-          Baixar o Tempus
-        </button>
+        <ul className="p-2">
+          {links.map(l => (
+            <li key={l.href}>
+              <a
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-4 py-3.5 text-base font-semibold text-ink/90 hover:bg-white/[0.05]"
+              >
+                {l.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div className="p-3 pt-0">
+          <PlayStoreButton className="w-full" />
+        </div>
       </div>
-    </>
+    </header>
   )
 }

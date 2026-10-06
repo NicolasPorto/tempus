@@ -1,165 +1,96 @@
-import { useState } from 'react'
-import RevealWrapper from './RevealWrapper'
+import { useId, useState } from 'react'
+import { Reveal, SectionHeader } from './ui'
 
 const faqs = [
   {
     q: 'O Tempus é gratuito?',
-    a: 'Sim, totalmente gratuito. Sem assinaturas, sem anúncios intrusivos e sem limitações de uso. O app completo está disponível para todos.',
+    a: 'Sim. Você baixa e usa todos os recursos sem pagar nada e sem assinatura. Para manter o app gratuito, às vezes aparece um anúncio quando você encerra os estudos do dia — nunca no meio de uma sessão de foco.',
   },
   {
-    q: 'Funciona sem internet?',
-    a: 'Sim. O Tempus funciona completamente offline. Todas as suas sessões, tarefas e estatísticas são salvas localmente no dispositivo.',
+    q: 'Está disponível para iPhone?',
+    a: 'Por enquanto o Tempus está disponível para Android, no Google Play.',
   },
   {
-    q: 'Posso personalizar o tempo das sessões?',
-    a: 'Sim. Temos presets rápidos de 15, 20, 25 e 30 minutos. Você também pode definir qualquer duração personalizada que preferir.',
+    q: 'Meus dados ficam salvos se eu trocar de celular?',
+    a: 'Ficam. Você entra com sua conta Google e suas matérias, tarefas e histórico de sessões são sincronizados na nuvem. É só entrar com a mesma conta no aparelho novo.',
   },
   {
-    q: 'Está disponível para iOS e Android?',
-    a: 'Sim, o Tempus está disponível nas duas plataformas. Baixe gratuitamente na App Store ou no Google Play.',
+    q: 'Precisa de internet?',
+    a: 'Para entrar e sincronizar seu histórico, sim. O cronômetro em si roda normalmente durante a sessão, e você é avisado quando ela termina mesmo com o app em segundo plano.',
   },
   {
-    q: 'Meus dados ficam salvos?',
-    a: 'Seu histórico de sessões, sequência diária (streak), tarefas e estatísticas ficam salvos localmente no seu dispositivo.',
+    q: 'Posso escolher o tempo das sessões?',
+    a: 'Pode. Há atalhos de 15, 25 e 45 minutos, 1h e 1h30, qualquer duração personalizada e o modo Pomodoro (25 min de foco, 5 de pausa e pausa longa a cada 4 ciclos). Durante a sessão dá para adicionar +5 min.',
+  },
+  {
+    q: 'Por que a tela escurece durante o foco?',
+    a: 'Para cortar a tentação de mexer no celular e economizar bateria. Alguns segundos depois do play a tela apaga; para ver o tempo, é só deslizar para cima.',
   },
 ]
 
-function ChevronIcon({ open }: { open: boolean }) {
+function Item({ q, a, open, onToggle }: { q: string; a: string; open: boolean; onToggle: () => void }) {
+  const id = useId()
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      style={{
-        transition: 'transform 0.2s ease',
-        transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-        flexShrink: 0,
-      }}
+    <div
+      className={`overflow-hidden rounded-2xl border transition-colors duration-200 ${
+        open ? 'border-violet/30 bg-violet/[0.06]' : 'border-line bg-surface/70'
+      }`}
     >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
+      <h3>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={onToggle}
+          className="flex w-full items-center justify-between gap-6 px-6 py-5 text-left"
+        >
+          <span className={`text-base font-bold sm:text-lg ${open ? 'text-ink' : 'text-ink/85'}`}>{q}</span>
+          <span
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-all duration-300 ${
+              open ? 'rotate-45 border-violet/50 bg-violet text-white' : 'border-line text-sub'
+            }`}
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        </button>
+      </h3>
+      <div
+        id={id}
+        role="region"
+        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          <p className="px-6 pb-6 leading-relaxed text-sub">{a}</p>
+        </div>
+      </div>
+    </div>
   )
 }
 
 export default function FAQSection() {
-  const [open, setOpen] = useState<number | null>(null)
-
+  const [open, setOpen] = useState<number | null>(0)
   return (
-    <section
-      id="faq"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        padding: '80px 16px',
-        maxWidth: 720,
-        margin: '0 auto',
-      }}
-    >
-      <RevealWrapper delay={0} style={{ textAlign: 'center', marginBottom: 60 }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '5px 14px',
-            background: 'rgba(172, 70, 255, 0.08)',
-            border: '1px solid rgba(172, 70, 255, 0.2)',
-            borderRadius: 100,
-            fontSize: 12,
-            color: '#AC46FF',
-            fontWeight: 600,
-            marginBottom: 20,
-            letterSpacing: 0.3,
-          }}
-        >
-          ✦ Dúvidas frequentes
+    <section id="faq" className="relative z-10 px-5 py-24 lg:py-32">
+      <div className="mx-auto max-w-3xl">
+        <SectionHeader
+          eyebrow="Dúvidas"
+          title={
+            <>
+              Perguntas <span className="text-gradient">frequentes</span>
+            </>
+          }
+        />
+        <div className="space-y-3">
+          {faqs.map((f, i) => (
+            <Reveal key={f.q} delay={i * 60}>
+              <Item q={f.q} a={f.a} open={open === i} onToggle={() => setOpen(open === i ? null : i)} />
+            </Reveal>
+          ))}
         </div>
-        <h2
-          style={{
-            fontSize: 'clamp(28px, 5vw, 42px)',
-            fontWeight: 700,
-            color: '#F0F0F0',
-            margin: '0 0 14px',
-            letterSpacing: '-1px',
-          }}
-        >
-          Perguntas <span className="gradient-text">frequentes</span>
-        </h2>
-        <p style={{ fontSize: 16, color: '#606060', margin: 0 }}>
-          Tudo que você precisa saber antes de baixar
-        </p>
-      </RevealWrapper>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {faqs.map((faq, i) => (
-          <RevealWrapper key={faq.q} delay={i * 80}>
-            <div
-              style={{
-                background: open === i ? 'rgba(172, 70, 255, 0.05)' : 'rgba(18, 14, 28, 0.6)',
-                border: `1px solid ${open === i ? 'rgba(172, 70, 255, 0.2)' : 'rgba(255,255,255,0.07)'}`,
-                borderRadius: 14,
-                overflow: 'hidden',
-                transition: 'background 0.2s ease, border-color 0.2s ease',
-              }}
-            >
-              {/* Question */}
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 16,
-                  padding: '20px 22px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: open === i ? '#F0F0F0' : '#C8C8C8',
-                    transition: 'color 0.2s ease',
-                  }}
-                >
-                  {faq.q}
-                </span>
-                <span style={{ color: open === i ? '#AC46FF' : '#484848', transition: 'color 0.2s ease' }}>
-                  <ChevronIcon open={open === i} />
-                </span>
-              </button>
-
-              {/* Answer */}
-              <div
-                style={{
-                  maxHeight: open === i ? 200 : 0,
-                  overflow: 'hidden',
-                  transition: 'max-height 0.28s ease',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: '#808080',
-                    lineHeight: 1.75,
-                    margin: 0,
-                    padding: '0 22px 20px',
-                  }}
-                >
-                  {faq.a}
-                </p>
-              </div>
-            </div>
-          </RevealWrapper>
-        ))}
       </div>
     </section>
   )

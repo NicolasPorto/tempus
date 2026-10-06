@@ -1,166 +1,71 @@
-import RevealWrapper from './RevealWrapper'
+import { Reveal, SectionHeader } from './ui'
 
-interface StepProps {
-  number: string
-  title: string
-  description: string
-  isLast?: boolean
-}
-
-function Step({ number, title, description }: StepProps) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1 }}>
-      {/* Number circle */}
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #AC46FF, #2B7FFF)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 24,
-          fontWeight: 700,
-          color: 'white',
-          marginBottom: 20,
-          flexShrink: 0,
-          boxShadow: '0 8px 24px rgba(172, 70, 255, 0.3)',
-        }}
-      >
-        {number}
-      </div>
-
-      <h3 style={{ fontSize: 20, fontWeight: 700, color: '#F4F4F4', margin: '0 0 10px' }}>
-        {title}
-      </h3>
-      <p style={{ fontSize: 14, color: '#A0A0A0', lineHeight: 1.65, margin: 0, maxWidth: 220 }}>
-        {description}
-      </p>
-    </div>
-  )
-}
-
-function Arrow() {
-  return (
-    <div
-      style={{
-        color: 'rgba(172, 70, 255, 0.4)',
-        fontSize: 24,
-        padding: '0 8px',
-        alignSelf: 'flex-start',
-        marginTop: 20,
-        flexShrink: 0,
-      }}
-    >
-      →
-    </div>
-  )
-}
+const steps = [
+  {
+    n: '01',
+    title: 'Escolha',
+    body: 'Selecione a matéria — ou uma tarefa — e o tempo: 15, 25, 45 min, 1h, 1h30, personalizado ou Pomodoro.',
+    icon: (
+      <path d="M4 6h16M4 12h10M4 18h7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    ),
+  },
+  {
+    n: '02',
+    title: 'Foque',
+    body: 'Dê o play. A tela escurece, os alertas a cada 5 min te mantêm no ritmo e você é avisado quando terminar.',
+    icon: (
+      <>
+        <circle cx="12" cy="13" r="7.5" stroke="currentColor" strokeWidth="2.2" />
+        <path d="M12 9.5V13l2.5 2M9.5 3h5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
+    n: '03',
+    title: 'Evolua',
+    body: 'Acompanhe horas, sequência e consistência. Suba de nível, bata a meta do dia e desbloqueie conquistas.',
+    icon: (
+      <path d="M4 17l5-5 4 4 7-8M15 8h5v5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    ),
+  },
+]
 
 export default function HowItWorksSection() {
   return (
-    <section
-      id="como-funciona"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        padding: '80px 16px',
-        maxWidth: 900,
-        margin: '0 auto',
-      }}
-    >
-      {/* Section header */}
-      <RevealWrapper delay={0} style={{ textAlign: 'center', marginBottom: 64 }}>
-        <h2
-          style={{
-            fontSize: 'clamp(28px, 5vw, 40px)',
-            fontWeight: 700,
-            color: '#F4F4F4',
-            margin: '0 0 12px',
-          }}
-        >
-          Como <span className="gradient-text">funciona</span>
-        </h2>
-        <p style={{ fontSize: 16, color: '#A0A0A0', margin: 0 }}>
-          Três passos simples para uma sessão de foco produtiva
-        </p>
-      </RevealWrapper>
-
-      {/* Steps */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 8,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
-        <RevealWrapper delay={100} style={{ flex: 1, minWidth: 180 }}>
-          <Step
-            number="1"
-            title="Selecione"
-            description="Escolha a matéria e defina o tempo de foco: 15, 20, 25 ou 30 minutos"
+    <section id="como-funciona" className="relative z-10 px-5 py-24 lg:py-32">
+      <div className="mx-auto max-w-page">
+        <SectionHeader
+          eyebrow="Como funciona"
+          title={
+            <>
+              Três passos. <span className="text-gradient">Zero enrolação.</span>
+            </>
+          }
+        />
+        <ol className="relative grid gap-5 md:grid-cols-3">
+          {/* connector */}
+          <div
+            className="pointer-events-none absolute left-[16%] right-[16%] top-[52px] hidden h-px md:block"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(168,85,247,0.5), rgba(96,165,250,0.5), transparent)' }}
           />
-        </RevealWrapper>
-
-        <RevealWrapper delay={200} style={{ alignSelf: 'flex-start', paddingTop: 20 }}>
-          <Arrow />
-        </RevealWrapper>
-
-        <RevealWrapper delay={300} style={{ flex: 1, minWidth: 180 }}>
-          <Step
-            number="2"
-            title="Foque"
-            description="O timer conta regressivamente enquanto a tela escurece automaticamente para eliminar distrações"
-          />
-        </RevealWrapper>
-
-        <RevealWrapper delay={400} style={{ alignSelf: 'flex-start', paddingTop: 20 }}>
-          <Arrow />
-        </RevealWrapper>
-
-        <RevealWrapper delay={500} style={{ flex: 1, minWidth: 180 }}>
-          <Step
-            number="3"
-            title="Revise"
-            description="Analise suas estatísticas, mantenha sua sequência diária e veja seu progresso crescer"
-            isLast
-          />
-        </RevealWrapper>
+          {steps.map((s, i) => (
+            <Reveal as="li" key={s.n} delay={i * 120} className="relative">
+              <div className="card h-full p-7 text-center">
+                <div className="relative mx-auto mb-6 grid h-[72px] w-[72px] place-items-center rounded-2xl bg-gradient-to-br from-violet to-sky text-white shadow-[0_16px_40px_-10px_rgba(168,85,247,0.7)]">
+                  <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" aria-hidden="true">
+                    {s.icon}
+                  </svg>
+                  <span className="absolute -right-2 -top-2 rounded-lg border border-line bg-bg px-1.5 py-0.5 text-[11px] font-extrabold tabular-nums text-sub">
+                    {s.n}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-extrabold tracking-tight">{s.title}</h3>
+                <p className="mx-auto mt-3 max-w-xs leading-relaxed text-sub">{s.body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </ol>
       </div>
-
-      {/* Bottom CTA card */}
-      <RevealWrapper delay={100} style={{ marginTop: 72 }}>
-        <div
-          className="glass-card"
-          style={{
-            padding: '36px 32px',
-            textAlign: 'center',
-          }}
-        >
-          <p
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: '#F4F4F4',
-              margin: '0 0 8px',
-            }}
-          >
-            Pronto para estudar com mais foco?
-          </p>
-          <p style={{ fontSize: 14, color: '#A0A0A0', margin: '0 0 24px' }}>
-            Gratuito. Sem anúncios intrusivos. Feito para estudantes.
-          </p>
-          <button
-            className="btn-gradient"
-            style={{ padding: '14px 36px', fontSize: 16 }}
-          >
-            Baixar o Tempus
-          </button>
-        </div>
-      </RevealWrapper>
     </section>
   )
 }
